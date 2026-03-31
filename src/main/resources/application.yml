@@ -1,0 +1,25 @@
+server:
+  port: ${SERVER_PORT:8800}
+
+spring:
+  application:
+    name: consignment-frontend
+  mvc:
+    view:
+      prefix: /WEB-INF/jsp/
+      suffix: .jsp
+  web:
+    resources:
+      static-locations: /static/
+
+app:
+  mode: ${APP_MODE:dev}
+  gateway:
+    base-url: ${GATEWAY_BASE_URL:http://localhost:8080}
+  services:
+    auth: ${SERVICE_AUTH:/auth}
+    trace-log: ${SERVICE_TRACE_LOG:/api/trace-log}
+    master-setup: ${SERVICE_MASTER_SETUP:/api/master-setup}
+    transaction: ${SERVICE_TRANSACTION:/api/transaction}
+    settlement: ${SERVICE_SETTLEMENT:/api/settlement}
+    report: ${SERVICE_REPORT:/api/report}
