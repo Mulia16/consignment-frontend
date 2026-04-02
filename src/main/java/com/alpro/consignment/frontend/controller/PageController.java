@@ -82,6 +82,17 @@ public class PageController {
         return "inbound/goods-receipt";
     }
 
+    // ─── Consignment Transaction ────────────────────────────
+    @GetMapping("/consignment/receiving")
+    public String consignmentReceivingList() {
+        return "consignment/receiving/list";
+    }
+
+    @GetMapping("/consignment/receiving/details")
+    public String consignmentReceivingDetails() {
+        return "consignment/receiving/details";
+    }
+
     // ─── Outbound ───────────────────────────────────────────
     @GetMapping("/outbound/sales-orders")
     public String salesOrders() {
