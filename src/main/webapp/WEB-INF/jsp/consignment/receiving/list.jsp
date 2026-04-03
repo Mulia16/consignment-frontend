@@ -285,8 +285,9 @@ async function batchRelease() {
 }
 
 function batchPrint() {
-    if (getSelectedIds().length === 0) { AppUtils.showToast('Please select a document to print', 'warning'); return; }
-    AppUtils.showToast('Printing transaction listing report...', 'info');
+    var ids = getSelectedIds();
+    if (ids.length === 0) { AppUtils.showToast('Please select a document to print', 'warning'); return; }
+    window.open('/consignment/receiving/print?id=' + ids[0], '_blank');
 }
 
 function batchDelete() {

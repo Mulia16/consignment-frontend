@@ -93,6 +93,11 @@ public class PageController {
         return "consignment/receiving/details";
     }
 
+    @GetMapping("/consignment/receiving/print")
+    public String consignmentReceivingPrint() {
+        return "consignment/receiving/print-slip";
+    }
+
     // ─── Outbound ───────────────────────────────────────────
     @GetMapping("/outbound/sales-orders")
     public String salesOrders() {

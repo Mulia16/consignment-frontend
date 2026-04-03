@@ -359,7 +359,8 @@ function saveDocument() {
 }
 
 function printSlip() {
-    AppUtils.showToast("Printing single transaction slip...", "info");
+    var id = docId || 1;
+    window.open('/consignment/receiving/print?id=' + id, '_blank');
 }
 </script>
 
