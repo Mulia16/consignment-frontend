@@ -65,8 +65,10 @@
                 <ul class="submenu">
                     <li><a href="/outbound/sales-orders" id="nav-so"><i class="fas fa-file-invoice-dollar"></i> Sales
                             Orders</a></li>
-                    <li><a href="/outbound/delivery" id="nav-delivery"><i class="fas fa-shipping-fast"></i> Delivery
-                            Orders</a></li>
+                    <li><a href="/consignment/stock-out" id="nav-consignment-stockout"><i class="fas fa-box"></i>
+                            Consignment Stock Out</a></li>
+                    <li><a href="/consignment/delivery-order" id="nav-consignment-delivery-order"><i
+                                class="fas fa-truck-loading"></i> Consignment Delivery Order</a></li>
                 </ul>
             </li>
             <li class="has-submenu" id="menu-returns">
