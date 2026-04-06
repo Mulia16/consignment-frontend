@@ -19,8 +19,12 @@ var Auth = {
 
             if (response.ok) {
                 var data = await response.json();
-                if (data.success && data.data) {
-                    this.setSession(data.data.accessToken, data.data.refreshToken, data.data.user);
+                if (data.token) {
+                    var user = {
+                        username: data.username,
+                        roles: data.roles
+                    };
+                    this.setSession(data.token, null, user);
                     return true;
                 }
             }
@@ -40,7 +44,9 @@ var Auth = {
 
     setSession: function(token, refreshToken, user) {
         localStorage.setItem(this.TOKEN_KEY, token);
-        localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
+        if (refreshToken) {
+            localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
+        }
         localStorage.setItem(this.USER_KEY, JSON.stringify(user));
     },
 
@@ -71,7 +77,7 @@ var Auth = {
         var user = this.getUser();
         if (user) {
             $('.user-name').text(user.fullName || user.username);
-            $('.user-role').text(user.role || 'User');
+            $('.user-role').text(user.role || (user.roles ? user.roles.join(', ') : 'User'));
             if (API_CONFIG.isDevMode()) {
                 $('.user-name').text('Dev Mode Admin');
             }

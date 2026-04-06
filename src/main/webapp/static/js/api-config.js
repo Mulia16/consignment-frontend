@@ -1,13 +1,13 @@
 var API_CONFIG = {
     APP_MODE: '',
     GATEWAY_BASE_URL: '',
+    // Service configuration aligned with backend API architecture
+    // See plans/api-endpoint.md for full API documentation
     SERVICES: {
-        AUTH: '',
-        TRACE_LOG: '',
-        MASTER_SETUP: '',
-        TRANSACTION: '',
-        SETTLEMENT: '',
-        REPORT: ''
+        AUTH: '',         // Auth Service: /auth (login, register, validate)
+        CONSIGNMENT: '',  // Consignment Service: /api (56 endpoints)
+        INVENTORY: '',    // Inventory Service: /api/v1/inventory (2 endpoints)
+        BATCH: ''         // Batch Job Service: /batch (2 endpoints)
     },
     
     isDevMode: function() {

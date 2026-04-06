@@ -12,14 +12,19 @@ spring:
     resources:
       static-locations: /static/
 
+# API Service Configuration
+# Aligned with backend API architecture (see plans/api-endpoint.md)
+# Services:
+# - AUTH: Auth Service (/auth) - 3 endpoints
+# - CONSIGNMENT: Consignment Service (/api) - 56 endpoints
+# - INVENTORY: Inventory Service (/api/v1/inventory) - 2 endpoints
+# - BATCH: Batch Job Service (/batch) - 2 endpoints
 app:
   mode: ${APP_MODE:dev}
   gateway:
     base-url: ${GATEWAY_BASE_URL:http://localhost:8080}
   services:
     auth: ${SERVICE_AUTH:/auth}
-    trace-log: ${SERVICE_TRACE_LOG:/api/trace-log}
-    master-setup: ${SERVICE_MASTER_SETUP:/api/master-setup}
-    transaction: ${SERVICE_TRANSACTION:/api/transaction}
-    settlement: ${SERVICE_SETTLEMENT:/api/settlement}
-    report: ${SERVICE_REPORT:/api/report}
+    consignment: ${SERVICE_CONSIGNMENT:/api}
+    inventory: ${SERVICE_INVENTORY:/api/v1/inventory}
+    batch: ${SERVICE_BATCH:/batch}

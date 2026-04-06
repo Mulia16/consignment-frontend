@@ -101,41 +101,144 @@ var ApiClient = {
         let items = [];
         for (let i = 1; i <= count; i++) {
             let item = { id: i, status: 'ACTIVE' };
-            if (serviceName === 'MASTER_SETUP') {
-                if (path.includes('consignment-items')) {
-                    item.sku = '1001082' + (40+i); item.name = 'CANDY CONCESS ITEM ' + String.fromCharCode(64+i); item.variant = 'Merchandize > Candy'; item.price = 20.00 + i;
-                } else if (path.includes('product')) {
-                    item.sku = 'SKU-100' + i; item.name = 'Sample Item ' + i; item.category = 'Category A'; item.price = 99.99; item.stock = 50;
-                } else if (path.includes('supplier')) {
-                    item.supplierCode = 'SUP-0' + i; item.supplierName = 'Supplier ' + i; item.contactPerson = 'John Doe'; item.phone = '555-010' + i;
-                } else if (path.includes('warehouse')) {
-                    item.warehouseCode = 'WH-0' + i; item.warehouseName = 'Warehouse ' + i; item.location = 'Zone ' + (i%5+1); item.capacity = 1000;
-                } else {
-                    item.configKey = 'KEY_' + i; item.configValue = 'Value ' + i; item.description = 'Config Description ' + i; item.category = 'SYSTEM';
-                    item.dataType = 'TYPE_' + i; item.dataCode = 'CODE_' + i; item.dataValue = 'Value ' + i;
+            
+            // CONSIGNMENT Service - All consignment-related endpoints
+            if (serviceName === 'CONSIGNMENT') {
+                // Consignment Setup Items
+                if (path.includes('consignment-setup') || path.includes('consignment-items')) {
+                    item.itemCode = 'ITEM-' + (1000 + i);
+                    item.itemName = 'Consignment Item ' + i;
+                    item.supplierCount = Math.floor(Math.random() * 5) + 1;
                 }
-            } else if (serviceName === 'TRANSACTION') {
-                if (path.includes('stock-balance') || path.includes('stock-movement')) {
-                    item.productName = 'Product ' + i; item.warehouseName = 'Main WH'; item.quantityOnHand = 100; item.quantityReserved = 10; item.quantityAvailable = 90; item.unit = 'PCS';
-                    item.movementDate = '2024-03-31'; item.movementType = i%2==0 ? 'IN' : 'OUT'; item.quantity = 50; item.fromWarehouse = 'Supplier'; item.toWarehouse = 'Main WH';
-                } else if (path.includes('purchase-order') || path.includes('goods-receipt')) {
-                    item.poNumber = 'PO-2024-' + (1000+i); item.supplierName = 'Supplier ' + i; item.poDate = '2024-03-31'; item.totalItems = 5; item.totalAmount = 1500.00; item.status = ['DRAFT','APPROVED','RECEIVED'][i%3];
-                    item.grNumber = 'GR-2024-' + (1000+i); item.poReference = 'PO-' + (i); item.receiptDate = '2024-03-31';
-                } else if (path.includes('sales-order') || path.includes('delivery')) {
-                    item.soNumber = 'SO-2024-' + (1000+i); item.customerName = 'Customer ' + i; item.orderDate = '2024-03-31'; item.totalItems = 3; item.totalAmount = 750.00; item.status = ['DRAFT','CONFIRMED','SHIPPED'][i%3];
-                    item.doNumber = 'DO-2024-' + (1000+i); item.soReference = 'SO-' + (i); item.deliveryDate = '2024-04-01'; item.driverName = 'Driver ' + i;
-                } else if (path.includes('return') || path.includes('adjustment')) {
-                    item.returnNumber = 'RET-2024-' + (1000+i); item.returnType = 'RETURN_TO_SUPPLIER'; item.referenceNo = 'INV-' + i; item.reason = 'Defective'; item.returnDate = '2024-03-31'; item.totalItems = 2; item.status = 'COMPLETED';
-                    item.adjustmentNumber = 'ADJ-2024-' + (1000+i); item.productName = 'Product ' + i; item.warehouseName = 'WH ' + i; item.adjustmentType = 'DECREASE'; item.quantity = 5; item.adjustmentDate = '2024-03-31';
-                } else if (path.includes('transaction')) {
-                    item.receiptNumber = 'RCP-2024-' + (1000+i); item.transactionDate = '2024-03-31 14:30'; item.cashierName = 'Cashier ' + (i%3+1); item.totalItems = 4; item.totalAmount = 250.00; item.paymentMethod = 'CASH'; item.status = 'COMPLETED';
+                // CSA - Consignment Stock Adjustment
+                else if (path.includes('/csa')) {
+                    item.id = 'CSA-' + (1000 + i);
+                    item.docNo = 'CSA-2024-' + (1000 + i);
+                    item.company = 'COMP-01';
+                    item.store = 'STORE-' + i;
+                    item.supplierCode = 'SUP-' + (100 + i);
+                    item.transactionType = ['ADJUSTMENT_IN', 'ADJUSTMENT_OUT'][i % 2];
+                    item.status = ['DRAFT', 'RELEASED', 'COMPLETED'][i % 3];
+                    item.createdAt = '2024-03-31T10:00:00Z';
                 }
-            } else if (serviceName === 'SETTLEMENT') {
-                item.settlementNumber = 'STL-2024-' + (1000+i); item.period = '2024-03'; item.partnerName = 'Partner ' + i; item.totalSales = 5000.00; item.commissionAmount = 500.00; item.netAmount = 4500.00; item.status = ['DRAFT','SUBMITTED','APPROVED','SETTLED'][i%4];
-                item.paymentNumber = 'PAY-2024-' + (1000+i); item.settlementReference = 'STL-' + i; item.amount = 4500.00; item.paymentDate = '2024-04-05'; item.paymentMethod = 'BANK_TRANSFER';
-            } else if (serviceName === 'TRACE_LOG') {
-                item.timestamp = '2024-03-31 10:00:00'; item.username = 'admin'; item.action = ['CREATE','UPDATE','DELETE','LOGIN'][i%4]; item.entityType = 'Product'; item.entityId = '10' + i; item.ipAddress = '192.168.1.' + i; item.details = 'Action performed successfully';
+                // CSO - Consignment Stock Out
+                else if (path.includes('/cso')) {
+                    item.id = 'CSO-' + (1000 + i);
+                    item.docNo = 'CSO-2024-' + (1000 + i);
+                    item.company = 'COMP-01';
+                    item.store = 'STORE-' + i;
+                    item.customerCode = 'CUST-' + (100 + i);
+                    item.supplierCode = 'SUP-' + (100 + i);
+                    item.status = ['DRAFT', 'RELEASED', 'COMPLETED'][i % 3];
+                    item.createdAt = '2024-03-31T10:00:00Z';
+                }
+                // CSR - Consignment Stock Return
+                else if (path.includes('/csr')) {
+                    item.id = 'CSR-' + (1000 + i);
+                    item.docNo = 'CSR-2024-' + (1000 + i);
+                    item.company = 'COMP-01';
+                    item.store = 'STORE-' + i;
+                    item.supplierCode = 'SUP-' + (100 + i);
+                    item.status = ['DRAFT', 'RELEASED', 'COMPLETED'][i % 3];
+                    item.createdAt = '2024-03-31T10:00:00Z';
+                }
+                // CSRQ - Consignment Stock Requisition
+                else if (path.includes('/csrq')) {
+                    item.id = 'CSRQ-' + (1000 + i);
+                    item.docNo = 'CSRQ-2024-' + (1000 + i);
+                    item.company = 'COMP-01';
+                    item.store = 'STORE-' + i;
+                    item.supplierCode = 'SUP-' + (100 + i);
+                    item.status = ['DRAFT', 'RELEASED', 'COMPLETED'][i % 3];
+                    item.createdAt = '2024-03-31T10:00:00Z';
+                }
+                // CSRV - Consignment Stock Receive
+                else if (path.includes('/csrv')) {
+                    item.id = 'CSRV-' + (1000 + i);
+                    item.docNo = 'CSRV-2024-' + (1000 + i);
+                    item.company = 'COMP-01';
+                    item.receivingStore = 'STORE-' + i;
+                    item.supplierCode = 'SUP-' + (100 + i);
+                    item.status = ['DRAFT', 'RELEASED', 'COMPLETED'][i % 3];
+                    item.createdAt = '2024-03-31T10:00:00Z';
+                }
+                // CSDO - Consignment Stock Delivery Order
+                else if (path.includes('/csdo')) {
+                    item.id = 'CSDO-' + (1000 + i);
+                    item.docNo = 'CSDO-2024-' + (1000 + i);
+                    item.company = 'COMP-01';
+                    item.store = 'STORE-' + i;
+                    item.customerCode = 'CUST-' + (100 + i);
+                    item.status = ['DRAFT', 'RELEASED', 'COMPLETED'][i % 3];
+                    item.createdAt = '2024-03-31T10:00:00Z';
+                }
+                // Settlement
+                else if (path.includes('/settlement')) {
+                    item.id = 'STL-' + (1000 + i);
+                    item.docNo = 'STL-2024-' + (1000 + i);
+                    item.company = 'COMP-01';
+                    item.store = 'STORE-' + i;
+                    item.settlementType = ['SUPPLIER', 'CUSTOMER'][i % 2];
+                    item.supplierCode = 'SUP-' + (100 + i);
+                    item.totalAmount = 5000.00 + (i * 100);
+                    item.currency = 'IDR';
+                    item.status = ['DRAFT', 'PREPARED', 'BILLED', 'SETTLED'][i % 4];
+                    item.createdAt = '2024-03-31T10:00:00Z';
+                }
+                // Reports
+                else if (path.includes('/reports')) {
+                    item.docNo = 'RPT-2024-' + (1000 + i);
+                    item.documentType = ['CSRQ', 'CSRV', 'CSO', 'CSDO', 'CSR', 'CSA'][i % 6];
+                    item.company = 'COMP-01';
+                    item.store = 'STORE-' + i;
+                    item.supplierCode = 'SUP-' + (100 + i);
+                    item.itemCode = 'ITEM-' + (1000 + i);
+                    item.qty = 10 + i;
+                    item.uom = 'PCS';
+                    item.status = 'COMPLETED';
+                    item.businessDate = '2024-03-31';
+                }
+                // Consignments (default)
+                else if (path.includes('/consignments')) {
+                    item.requestId = 'REQ-' + (1000 + i);
+                    item.sku = 'SKU-' + (1000 + i);
+                    item.quantity = 10 + i;
+                    item.requestStore = 'STORE-' + i;
+                    item.supplier = 'SUP-' + (100 + i);
+                    item.status = ['PENDING', 'APPROVED', 'REJECTED'][i % 3];
+                    item.createdAt = '2024-03-31T10:00:00Z';
+                }
+                // Master Sync
+                else if (path.includes('/master-sync')) {
+                    item.syncedCount = 10 + i;
+                    item.message = 'Sync completed successfully';
+                }
             }
+            // INVENTORY Service
+            else if (serviceName === 'INVENTORY') {
+                item.sku = 'SKU-' + (1000 + i);
+                item.available = 100 + (i * 10);
+                item.requestedQty = 10;
+                item.reserved = i % 2 === 0;
+                item.remainingAvailable = 90 + (i * 10);
+            }
+            // BATCH Service
+            else if (serviceName === 'BATCH') {
+                item.status = 'COMPLETED';
+                item.jobId = 10000 + i;
+                item.jobName = 'Batch Job ' + i;
+                item.startTime = '2024-03-31T10:00:00Z';
+                item.endTime = '2024-03-31T10:05:00Z';
+            }
+            // AUTH Service
+            else if (serviceName === 'AUTH') {
+                item.token = 'mock-jwt-token-' + i;
+                item.tokenType = 'Bearer';
+                item.expiresIn = 86400;
+                item.username = 'user' + i;
+                item.roles = ['ROLE_USER', 'ROLE_ADMIN'][i % 2];
+            }
+            
             items.push(item);
         }
         return items;

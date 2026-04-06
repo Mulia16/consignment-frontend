@@ -9,6 +9,17 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * API Configuration Controller
+ * Provides frontend with service endpoint configuration aligned with backend API architecture.
+ * See plans/api-endpoint.md for full API documentation.
+ * 
+ * Services:
+ * - AUTH: Auth Service (/auth) - 3 endpoints
+ * - CONSIGNMENT: Consignment Service (/api) - 56 endpoints
+ * - INVENTORY: Inventory Service (/api/v1/inventory) - 2 endpoints
+ * - BATCH: Batch Job Service (/batch) - 2 endpoints
+ */
 @RestController
 @RequestMapping("/api/config")
 public class ApiConfigController {
@@ -22,20 +33,14 @@ public class ApiConfigController {
     @Value("${app.services.auth:/auth}")
     private String serviceAuth;
 
-    @Value("${app.services.trace-log:/api/trace-log}")
-    private String serviceTraceLog;
+    @Value("${app.services.consignment:/api}")
+    private String serviceConsignment;
 
-    @Value("${app.services.master-setup:/api/master-setup}")
-    private String serviceMasterSetup;
+    @Value("${app.services.inventory:/api/v1/inventory}")
+    private String serviceInventory;
 
-    @Value("${app.services.transaction:/api/transaction}")
-    private String serviceTransaction;
-
-    @Value("${app.services.settlement:/api/settlement}")
-    private String serviceSettlement;
-
-    @Value("${app.services.report:/api/report}")
-    private String serviceReport;
+    @Value("${app.services.batch:/batch}")
+    private String serviceBatch;
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> getConfig() {
@@ -45,11 +50,9 @@ public class ApiConfigController {
         
         Map<String, String> services = new HashMap<>();
         services.put("AUTH", serviceAuth);
-        services.put("TRACE_LOG", serviceTraceLog);
-        services.put("MASTER_SETUP", serviceMasterSetup);
-        services.put("TRANSACTION", serviceTransaction);
-        services.put("SETTLEMENT", serviceSettlement);
-        services.put("REPORT", serviceReport);
+        services.put("CONSIGNMENT", serviceConsignment);
+        services.put("INVENTORY", serviceInventory);
+        services.put("BATCH", serviceBatch);
         
         config.put("SERVICES", services);
         
