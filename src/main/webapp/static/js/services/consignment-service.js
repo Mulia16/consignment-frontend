@@ -65,11 +65,31 @@ var ConsignmentService = {
     // ══════════════════════════════════════════════════════════
 
     /**
-     * List Setup Items
+     * List Setup Items with pagination and filters
      * GET /api/consignment-setup/items
+     * @param {Object} params - Query parameters (optional)
+     * @param {number} params.page - Page number (default: 1)
+     * @param {number} params.perPage - Items per page (default: 20)
+     * @param {string} params.itemCode - Filter by item code
+     * @param {string} params.itemName - Filter by item name
+     * @param {string} params.variant - Filter by variant
+     * @param {string} params.hierarchy - CONSIGNMENT / OUTRIGHT
+     * @param {string} params.categoryL1 - Filter by category L1
+     * @param {string} params.categoryL2 - Filter by category L2
      */
-    listSetupItems: async function() {
-        return ApiClient.get('CONSIGNMENT', '/consignment-setup/items');
+    listSetupItems: async function(params = {}) {
+        var query = new URLSearchParams();
+        if (params.page) query.append('page', params.page);
+        if (params.perPage) query.append('perPage', params.perPage);
+        if (params.itemCode) query.append('itemCode', params.itemCode);
+        if (params.itemName) query.append('itemName', params.itemName);
+        if (params.variant) query.append('variant', params.variant);
+        if (params.hierarchy) query.append('hierarchy', params.hierarchy);
+        if (params.categoryL1) query.append('categoryL1', params.categoryL1);
+        if (params.categoryL2) query.append('categoryL2', params.categoryL2);
+        
+        var queryString = query.toString();
+        return ApiClient.get('CONSIGNMENT', '/consignment-setup/items' + (queryString ? '?' + queryString : ''));
     },
 
     /**
@@ -81,8 +101,45 @@ var ConsignmentService = {
     },
 
     /**
+     * Create Item Setup
+     * POST /api/consignment-setup/items
+     * @param {Object} data - Item setup data
+     * @param {string} data.itemCode - Item code (required)
+     * @param {string} data.itemName - Item name (required)
+     * @param {string} data.variant - Item variant
+     * @param {string} data.hierarchy - CONSIGNMENT / OUTRIGHT
+     * @param {string} data.itemModel - Item model
+     * @param {number} data.unitRetail - Unit retail price
+     * @param {number} data.mvc - MVC value
+     * @param {string} data.categoryL1 - Category level 1
+     * @param {string} data.categoryL2 - Category level 2
+     * @param {string} data.categoryL3 - Category level 3
+     */
+    createItemSetup: async function(data) {
+        return ApiClient.post('CONSIGNMENT', '/consignment-setup/items', data);
+    },
+
+    /**
+     * Update Item Setup
+     * PUT /api/consignment-setup/item/{itemCode}
+     * @param {string} itemCode - Item code to update
+     * @param {Object} data - Updated item data (same fields as create)
+     */
+    updateItemSetup: async function(itemCode, data) {
+        return ApiClient.put('CONSIGNMENT', '/consignment-setup/item/' + itemCode, data);
+    },
+
+    /**
      * Create External Supplier Setup
      * POST /api/consignment-setup/item/{itemCode}/external-supplier
+     * @param {string} itemCode - Item code
+     * @param {Object} data - Supplier data
+     * @param {string} data.supplierCode - Supplier code (required)
+     * @param {string} data.supplierType - Supplier type (EXTERNAL)
+     * @param {string} data.contractNumber - Contract number
+     * @param {string} data.consigneeCompany - Consignee company
+     * @param {string} data.consigneeStore - Consignee store
+     * @param {number} data.currentInventoryQty - Current inventory qty
      */
     createExternalSupplierSetup: async function(itemCode, data) {
         return ApiClient.post('CONSIGNMENT', '/consignment-setup/item/' + itemCode + '/external-supplier', data);
@@ -107,9 +164,31 @@ var ConsignmentService = {
     /**
      * Create Internal Supplier Setup
      * POST /api/consignment-setup/item/{itemCode}/internal-supplier
+     * @param {string} itemCode - Item code
+     * @param {Object} data - Supplier data
+     * @param {string} data.supplierCode - Supplier code (required)
+     * @param {string} data.supplierStore - Supplier store
+     * @param {string} data.consigneeCompany - Consignee company
+     * @param {string} data.consigneeStore - Consignee store
      */
     createInternalSupplierSetup: async function(itemCode, data) {
         return ApiClient.post('CONSIGNMENT', '/consignment-setup/item/' + itemCode + '/internal-supplier', data);
+    },
+
+    /**
+     * Update Internal Supplier Setup
+     * PUT /api/consignment-setup/item/{itemCode}/internal-supplier/{id}
+     */
+    updateInternalSupplierSetup: async function(itemCode, id, data) {
+        return ApiClient.put('CONSIGNMENT', '/consignment-setup/item/' + itemCode + '/internal-supplier/' + id, data);
+    },
+
+    /**
+     * Delete Internal Supplier Setup
+     * DELETE /api/consignment-setup/item/{itemCode}/internal-supplier/{id}
+     */
+    deleteInternalSupplierSetup: async function(itemCode, id) {
+        return ApiClient.delete('CONSIGNMENT', '/consignment-setup/item/' + itemCode + '/internal-supplier/' + id);
     },
 
     // ══════════════════════════════════════════════════════════

@@ -65,6 +65,9 @@
 
 <jsp:include page="/WEB-INF/jsp/common/footer.jsp" />
 
+<!-- Consignment Service -->
+<script src="/static/js/services/consignment-service.js"></script>
+
 <script>
 var currentPage = 0;
 
@@ -78,17 +81,29 @@ async function loadItems(page) {
     
     try {
         var keyword = $('#searchInput').val();
-        var path = '/consignment-items?page=' + currentPage + '&size=12';
-        if (keyword) path += '&keyword=' + encodeURIComponent(keyword);
-
-        var data = await ApiClient.get('MASTER_SETUP', path);
+        var params = {
+            page: currentPage + 1,  // API uses 1-based pagination
+            perPage: 12
+        };
         
-        if (data && data.data) {
-            renderItems(data.data.content);
-            $('#itemCount').text(data.data.totalElements || data.data.content.length);
-            AppUtils.buildPagination('paginationContainer', currentPage, data.data.totalPages || 1, loadItems);
+        // Add search filter if keyword exists
+        if (keyword) {
+            params.itemName = keyword;  // Search by item name
+        }
+        
+        // Use ConsignmentService instead of direct ApiClient
+        var response = await ConsignmentService.listSetupItems(params);
+        
+        // API response: { message, status, data: [...], meta: { page, perPage, totalData, totalPage } }
+        if (response && response.data) {
+            var items = response.data;  // data is an array directly
+            var meta = response.meta || {};
+            renderItems(items);
+            $('#itemCount').text(meta.totalData || items.length);
+            AppUtils.buildPagination('paginationContainer', currentPage, meta.totalPage || 1, loadItems);
         }
     } catch (e) {
+        console.error('Failed to load items:', e);
         $('#itemsGrid').html('<div class="col-12 text-center text-danger py-5"><i class="fas fa-exclamation-triangle fa-3x mb-3"></i><br>Failed to load consignment items</div>');
     }
 }
@@ -103,18 +118,21 @@ function renderItems(items) {
     }
 
     items.forEach(function(item) {
-        // Mock data structure fallback based on ApiClient
-        var sku = item.sku || ('SKU-' + item.id);
-        var name = item.name || item.configValue || ('Item ' + item.id);
+        // Map API response fields
+        var itemCode = item.itemCode || item.sku || ('ITEM-' + item.id);
+        var itemName = item.itemName || item.name || 'Unknown Item';
         var variant = item.variant || 'Standard';
-        var price = item.price || 20.00;
+        var unitRetail = item.unitRetail || item.price || 0;
+        var hierarchy = item.hierarchy || 'CONSIGNMENT';
         
         var card = `
         <div class="col-md-6 mb-3">
             <div class="item-card p-3 h-100 position-relative">
                 <div class="position-absolute" style="top: 15px; right: 15px;">
-                    <span class="badge-active">Active</span>
-                    <i class="fas fa-ellipsis-h text-muted ml-2" style="cursor:pointer"></i>
+                    <span class="badge-active">\${hierarchy}</span>
+                    <a href="/setup/consignment-items/setup?code=\${itemCode}" class="text-primary ml-2" title="Edit Supplier Setup">
+                        <i class="fas fa-pencil-alt"></i>
+                    </a>
                 </div>
                 
                 <div class="d-flex">
@@ -125,18 +143,15 @@ function renderItems(items) {
                     </div>
                     <div class="flex-grow-1">
                         <div class="d-flex align-items-center mb-1">
-                            <span class="item-sku text-secondary mr-2">\${sku}</span>
-                            <a href="/setup/consignment-items/setup?id=\${item.id}" class="text-primary" title="Edit Supplier Setup">
-                                <i class="fas fa-pencil-alt"></i>
-                            </a>
+                            <span class="item-sku text-secondary mr-2">\${itemCode}</span>
                         </div>
-                        <div class="item-title mb-1">\${name.toUpperCase()}</div>
+                        <div class="item-title mb-1">\${itemName.toUpperCase()}</div>
                         <div class="item-desc mb-2">Variant: \${variant}</div>
                         
                         <div class="row mt-3">
                             <div class="col-6">
                                 <div class="text-muted" style="font-size:0.75rem">Unit Retail (Incl. Tax)</div>
-                                <div class="font-weight-bold">MYR \${price.toFixed(2)} / UNIT</div>
+                                <div class="font-weight-bold">MYR \${unitRetail.toFixed(2)} / UNIT</div>
                             </div>
                         </div>
                     </div>

@@ -75,12 +75,13 @@ var ApiClient = {
     getMockResponse: function(serviceName, path, method) {
         return new Promise((resolve) => {
             setTimeout(() => {
-                let mockData = { success: true, data: { content: [], totalElements: 0, totalPages: 1 } };
+                // Default response structure matching actual API
+                let mockData = { message: 'success', status: 200, data: [], meta: { page: 1, perPage: 20, totalData: 0, totalPage: 1 } };
                 
                 if (method === 'GET' && path.includes('?')) {
-                    mockData.data.content = this.generateMockItems(serviceName, path, 15);
-                    mockData.data.totalElements = 45;
-                    mockData.data.totalPages = 3;
+                    mockData.data = this.generateMockItems(serviceName, path, 15);
+                    mockData.meta.totalData = 45;
+                    mockData.meta.totalPage = 3;
                 } else if (method === 'GET' && serviceName === 'MASTER_SETUP' && path === '/dashboard/summary') {
                     mockData = { success: true, data: {
                         totalProducts: 1250, totalSuppliers: 45, lowStockItems: 12, pendingOrders: 8,
@@ -108,7 +109,24 @@ var ApiClient = {
                 if (path.includes('consignment-setup') || path.includes('consignment-items')) {
                     item.itemCode = 'ITEM-' + (1000 + i);
                     item.itemName = 'Consignment Item ' + i;
-                    item.supplierCount = Math.floor(Math.random() * 5) + 1;
+                    item.variant = ['16GB/256GB', '32GB/512GB', '64GB/1TB'][i % 3];
+                    item.hierarchy = ['CONSIGNMENT', 'OUTRIGHT'][i % 2];
+                    item.itemModel = 'MODEL-' + (100 + i);
+                    item.unitRetail = 1000000 + (i * 100000);
+                    item.mvc = 800000 + (i * 80000);
+                    item.category = ['Electronics', 'Fashion', 'Home'][i % 3];
+                    item.externalSuppliers = [
+                        {
+                            id: 'ext-sup-' + i + '-1',
+                            supplierCode: 'SUP-' + (100 + i),
+                            supplierType: 'EXTERNAL',
+                            contractNumber: 'CONTRACT-2024-' + (1000 + i),
+                            consigneeCompany: 'COMP01',
+                            consigneeStore: 'STORE01',
+                            currentInventoryQty: 0
+                        }
+                    ];
+                    item.internalSuppliers = [];
                 }
                 // CSA - Consignment Stock Adjustment
                 else if (path.includes('/csa')) {
