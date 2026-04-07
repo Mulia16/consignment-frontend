@@ -32,6 +32,7 @@
             </nav>
             <div id="topActions" style="display: none;">
                <button class="btn btn-sm btn-outline-secondary mr-2" onclick="printSlip()"><i class="fas fa-print mr-1"></i> Print Slip</button>
+               <button class="btn btn-sm btn-success mr-2" id="btnRelease" onclick="releaseDocument()"><i class="fas fa-check-circle mr-1"></i> Release</button>
                <span id="headerStatusBadge" class="badge badge-warning" style="font-size: 0.9rem;">HELD</span>
             </div>
         </div>
@@ -47,24 +48,19 @@
                         <div class="col-md-4 mb-3">
                             <label class="small text-muted mb-1">Company <span class="text-danger">*</span></label>
                             <select class="form-control" name="company" required id="hCompany">
-                                <option value="001 - ALPRO PHARMACY SDN BHD">001 - ALPRO PHARMACY SDN BHD</option>
+                                <option value="COMP01">COMP01 - ALPRO PHARMACY SDN BHD</option>
                             </select>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="small text-muted mb-1">Receiving Store <span class="text-danger">*</span></label>
-                            <select class="form-control" name="store" required id="hStore">
-                                <option value="IPOH MALL">IPOH MALL STORE</option>
-                                <option value="SERAI">SERAI STORE</option>
+                            <select class="form-control" name="receivingStore" required id="hStore">
+                                <option value="STORE01">STORE01 - IPOH MALL STORE</option>
+                                <option value="STORE02">STORE02 - SERAI STORE</option>
                             </select>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="small text-muted mb-1">Document Number <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" name="docNumber" id="hDocNumber" placeholder="Search CSRQ prefix..." required>
-                                <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button"><i class="fas fa-search"></i></button>
-                                </div>
-                            </div>
+                            <label class="small text-muted mb-1">Document Number</label>
+                            <input type="text" class="form-control bg-light" name="docNo" id="hDocNo" placeholder="Auto-generated" readonly>
                         </div>
                     </div>
                     <div class="row">
@@ -77,16 +73,37 @@
                             <input type="text" class="form-control bg-light" value="Consignment Stock Receiving" readonly>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="small text-muted mb-1">Supplier DO Number <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="supplierDO" id="hSupplierDO" required>
+                            <label class="small text-muted mb-1">Supplier Code <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="supplierCode" id="hSupplierCode" required placeholder="Enter supplier code">
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-4 mb-3">
+                            <label class="small text-muted mb-1">Supplier Contract <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="supplierContract" id="hSupplierContract" required placeholder="Enter supplier contract">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="small text-muted mb-1">Supplier DO Number <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="supplierDoNo" id="hSupplierDO" required placeholder="Enter supplier DO number">
+                        </div>
+                        <div class="col-md-4 mb-3">
                             <label class="small text-muted mb-1">Delivery Date</label>
                             <input type="date" class="form-control" name="deliveryDate" id="hDeliveryDate">
                         </div>
-                        <div class="col-md-8 mb-3">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="small text-muted mb-1">Created Method</label>
+                            <select class="form-control" name="createdMethod" id="hCreatedMethod">
+                                <option value="MANUAL">Manual</option>
+                                <option value="AUTO">Auto (ACMM Integration)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="small text-muted mb-1">Created By</label>
+                            <input type="text" class="form-control" name="createdBy" id="hCreatedBy" value="user01">
+                        </div>
+                        <div class="col-md-4 mb-3">
                             <label class="small text-muted mb-1">Remark</label>
                             <textarea class="form-control" rows="2" name="remark" id="hRemark" maxlength="150" placeholder="Maximum 150 characters"></textarea>
                         </div>
@@ -95,7 +112,7 @@
             </div>
             <div class="card-footer bg-light d-flex justify-content-end">
                 <button type="button" class="btn btn-outline-secondary mr-2" onclick="window.history.back()">Cancel</button>
-                <button type="button" class="btn btn-light mr-2" onclick="$('#headerForm')[0].reset()">Reset</button>
+                <button type="button" class="btn btn-light mr-2" onclick="resetHeaderForm()">Reset</button>
                 <button type="button" class="btn btn-primary px-4" onclick="proceedToDetails()">Next</button>
             </div>
         </div>
@@ -104,17 +121,21 @@
         <div class="card shadow-sm" id="step2-items" style="display: none;">
             <div class="card-body bg-light border-bottom">
                 <div class="row text-center text-md-left">
-                    <div class="col-md-4 mb-2 mb-md-0">
-                        <small class="text-muted d-block">Receipt Number</small>
-                        <strong id="dispReceiptNumber">Will be generated upon save</strong>
+                    <div class="col-md-3 mb-2 mb-md-0">
+                        <small class="text-muted d-block">Document Number</small>
+                        <strong id="dispDocNo">-</strong>
                     </div>
-                    <div class="col-md-4 mb-2 mb-md-0">
+                    <div class="col-md-3 mb-2 mb-md-0">
                         <small class="text-muted d-block">Receiving Store</small>
-                        <strong id="dispStore">IPOH MALL STORE</strong>
+                        <strong id="dispStore">-</strong>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3 mb-2 mb-md-0">
                         <small class="text-muted d-block">Supplier</small>
-                        <strong id="dispSupplier">SUPP WON INDENT NON TAX</strong>
+                        <strong id="dispSupplier">-</strong>
+                    </div>
+                    <div class="col-md-3">
+                        <small class="text-muted d-block">Supplier Contract</small>
+                        <strong id="dispContract">-</strong>
                     </div>
                 </div>
             </div>
@@ -129,7 +150,7 @@
                         </tr>
                         <tr>
                             <th width="40" class="text-center">No.</th>
-                            <th>Item</th>
+                            <th>Item Code</th>
                             <th class="text-right">Quantity Available</th>
                             <th class="text-center">UOM</th>
                             <th class="text-right bg-light w-15">Request Quantity</th>
@@ -141,10 +162,34 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Add Item Row -->
+            <div class="card-body bg-light border-top" id="addItemSection">
+                <div class="row align-items-end">
+                    <div class="col-md-3 mb-2">
+                        <label class="small text-muted mb-1">Item Code <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-sm" id="newItemCode" placeholder="Enter item code">
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <label class="small text-muted mb-1">Request Qty</label>
+                        <input type="number" class="form-control form-control-sm text-right" id="newRequestQty" value="0" step="0.0001">
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <label class="small text-muted mb-1">Receiving Qty <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control form-control-sm text-right" id="newReceivingQty" value="0" step="0.0001">
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary btn-block" onclick="addItemRow()"><i class="fas fa-plus mr-1"></i> Add Item</button>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary btn-block" onclick="goBackToHeader()"><i class="fas fa-arrow-left mr-1"></i> Back to Header</button>
+                    </div>
+                </div>
+            </div>
             
             <div class="card-footer bg-light d-flex justify-content-end" id="actionFooter">
                 <button type="button" class="btn btn-outline-secondary mr-2" onclick="window.history.back()">Cancel</button>
-                <button type="button" class="btn btn-primary px-4" onclick="saveDocument()">Save</button>
+                <button type="button" class="btn btn-primary px-4" id="btnSave" onclick="saveDocument()"><i class="fas fa-save mr-1"></i> Save</button>
             </div>
         </div>
 
@@ -190,16 +235,16 @@
 
 <jsp:include page="/WEB-INF/jsp/common/footer.jsp" />
 
+<script src="/static/js/services/consignment-service.js"></script>
+
 <script>
 var docId = new URLSearchParams(window.location.search).get('id');
 var currentStatus = '';
+var documentData = null;
 
+var currentItems = [];
 var currentReceivedBatchInfo = [];
 var activeItemRowIndex = -1;
-
-var mockItemDetails = [
-    { no: 1, itemCode: '100152275', itemName: 'ITEM WON INDENT GENERAL 1', qtyAvail: 110.00, uom: 'UNIT', reqQty: 22.00, recvQty: 22.00, batches: [] }
-];
 
 document.addEventListener('configLoaded', function() {
     var now = new Date();
@@ -207,10 +252,16 @@ document.addEventListener('configLoaded', function() {
     document.getElementById('hCreatedDate').value = now.toISOString().slice(0,16);
 
     if (docId) {
-        // Edit/View Mode
         loadDocument(docId);
     }
 });
+
+function resetHeaderForm() {
+    $('#headerForm')[0].reset();
+    var now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById('hCreatedDate').value = now.toISOString().slice(0,16);
+}
 
 function proceedToDetails() {
     if (!$('#headerForm')[0].checkValidity()) {
@@ -218,8 +269,16 @@ function proceedToDetails() {
         return;
     }
     
-    // Simulate finding the Request and getting items
+    // If editing existing document, keep existing items
+    if (!docId) {
+        currentItems = [];
+    }
+    
+    // Display summary info
+    $('#dispDocNo').text($('#hDocNo').val() || 'Will be generated upon save');
     $('#dispStore').text($('#hStore option:selected').text());
+    $('#dispSupplier').text($('#hSupplierCode').val() || '-');
+    $('#dispContract').text($('#hSupplierContract').val() || '-');
     
     $('#step1-header').hide();
     $('#step2-items').show();
@@ -227,42 +286,100 @@ function proceedToDetails() {
     renderItems();
 }
 
+function goBackToHeader() {
+    $('#step2-items').hide();
+    $('#step1-header').show();
+}
+
+function addItemRow() {
+    var itemCode = $('#newItemCode').val().trim();
+    var requestQty = parseFloat($('#newRequestQty').val()) || 0;
+    var receivingQty = parseFloat($('#newReceivingQty').val()) || 0;
+
+    if (!itemCode) {
+        AppUtils.showToast('Item code is required', 'warning');
+        return;
+    }
+    if (receivingQty <= 0) {
+        AppUtils.showToast('Receiving quantity must be greater than 0', 'warning');
+        return;
+    }
+
+    // Check duplicate
+    var exists = currentItems.find(function(item) { return item.itemCode === itemCode; });
+    if (exists) {
+        AppUtils.showToast('Item code already exists in the list', 'warning');
+        return;
+    }
+
+    currentItems.push({
+        itemCode: itemCode,
+        availableQty: 0,
+        requestQty: requestQty,
+        receivingQty: receivingQty,
+        batches: []
+    });
+
+    $('#newItemCode').val('');
+    $('#newRequestQty').val('0');
+    $('#newReceivingQty').val('0');
+
+    renderItems();
+    AppUtils.showToast('Item added successfully', 'success');
+}
+
+function removeItemRow(index) {
+    if (currentStatus === 'RELEASED') {
+        AppUtils.showToast("Cannot remove items from RELEASED document.", "warning");
+        return;
+    }
+    currentItems.splice(index, 1);
+    renderItems();
+}
+
 function renderItems() {
     var tbody = $('#itemTableBody');
     tbody.empty();
     
-    mockItemDetails.forEach((item, index) => {
-        var inputState = (currentStatus === 'RELEASED') ? 'disabled' : '';
-        var linkState = (currentStatus === 'RELEASED') ? 'text-muted' : 'text-primary';
+    if (currentItems.length === 0) {
+        tbody.html('<tr><td colspan="6" class="text-center py-3 text-muted">No items added. Use the form below to add items.</td></tr>');
+        return;
+    }
+    
+    currentItems.forEach(function(item, index) {
+        var isReleased = currentStatus === 'RELEASED';
+        var inputDisabled = isReleased ? 'disabled' : '';
+        var linkState = isReleased ? 'text-muted' : 'text-primary';
+        var removeBtn = isReleased ? '' : '<button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="removeItemRow(' + index + ')" title="Remove"><i class="fas fa-trash-alt"></i></button>';
         
-        var row = `<tr>
-            <td class="text-center">\${item.no}</td>
-            <td>
-                <div>\${item.itemCode}</div>
-                <small class="text-muted">\${item.itemName}</small>
-            </td>
-            <td class="text-right">\${item.qtyAvail.toFixed(6)}</td>
-            <td class="text-center">\${item.uom}</td>
-            <td class="text-right bg-light font-weight-bold">\${item.reqQty.toFixed(6)}</td>
-            <td class="text-center align-middle">
-                <div>
-                    <input type="number" class="form-control form-control-sm text-right mx-auto received-qty" 
-                        style="width:100px" value="\${item.recvQty.toFixed(6)}" \${inputState}
-                        onchange="updateMainQty(\${index}, this.value)">
-                </div>
-                <div class="mt-1">
-                    <a href="javascript:void(0)" class="\${linkState} small font-weight-bold" onclick="openBatchModal(\${index})" style="text-decoration:none;">
-                        <i class="fas fa-edit"></i> Batch Details
-                    </a>
-                </div>
-            </td>
-        </tr>`;
+        var row = '<tr>' +
+            '<td class="text-center">' + (index + 1) + '</td>' +
+            '<td>' +
+                '<div class="font-weight-bold">' + item.itemCode + '</div>' +
+            '</td>' +
+            '<td class="text-right">' + (item.availableQty || 0).toFixed(4) + '</td>' +
+            '<td class="text-center">UNIT</td>' +
+            '<td class="text-right bg-light font-weight-bold">' + (item.requestQty || 0).toFixed(4) + '</td>' +
+            '<td class="text-center align-middle">' +
+                '<div class="d-flex align-items-center justify-content-center">' +
+                    '<input type="number" class="form-control form-control-sm text-right received-qty" ' +
+                        'style="width:100px" value="' + (item.receivingQty || 0).toFixed(4) + '" ' + inputDisabled +
+                        ' onchange="updateReceivingQty(' + index + ', this.value)">' +
+                    removeBtn +
+                '</div>' +
+                '<div class="mt-1">' +
+                    '<a href="javascript:void(0)" class="' + linkState + ' small font-weight-bold" onclick="openBatchModal(' + index + ')" style="text-decoration:none;">' +
+                        '<i class="fas fa-edit"></i> Batch Details' +
+                    '</a>' +
+                '</div>' +
+            '</td>' +
+            '</tr>';
         tbody.append(row);
     });
 }
 
-function updateMainQty(index, val) {
-    mockItemDetails[index].recvQty = parseFloat(val) || 0;
+function updateReceivingQty(index, val) {
+    currentItems[index].receivingQty = parseFloat(val) || 0;
 }
 
 function openBatchModal(index) {
@@ -272,8 +389,8 @@ function openBatchModal(index) {
     }
     
     activeItemRowIndex = index;
-    var item = mockItemDetails[index];
-    currentReceivedBatchInfo = JSON.parse(JSON.stringify(item.batches || [])); // clone
+    var item = currentItems[index];
+    currentReceivedBatchInfo = JSON.parse(JSON.stringify(item.batches || []));
     
     $('#batchModalTitle').text('Batch Details - ' + item.itemCode);
     renderBatchRows();
@@ -285,14 +402,14 @@ function renderBatchRows() {
     tbody.empty();
     
     var total = 0;
-    currentReceivedBatchInfo.forEach((b, i) => {
+    currentReceivedBatchInfo.forEach(function(b, i) {
         total += parseFloat(b.qty) || 0;
-        var row = `<tr>
-            <td><input type="text" class="form-control form-control-sm border-0" value="\${b.batchNo}" onchange="updateBatchField(\${i}, 'batchNo', this.value)"></td>
-            <td><input type="date" class="form-control form-control-sm border-0" value="\${b.expiry}" onchange="updateBatchField(\${i}, 'expiry', this.value)"></td>
-            <td><input type="number" class="form-control form-control-sm border-0 text-right" value="\${b.qty}" onchange="updateBatchField(\${i}, 'qty', this.value); renderBatchRows();"></td>
-            <td class="text-center"><i class="fas fa-trash-alt text-danger" style="cursor:pointer" onclick="removeBatchRow(\${i})"></i></td>
-        </tr>`;
+        var row = '<tr>' +
+            '<td><input type="text" class="form-control form-control-sm border-0" value="' + (b.batchNo || '') + '" onchange="updateBatchField(' + i + ', \'batchNo\', this.value)"></td>' +
+            '<td><input type="date" class="form-control form-control-sm border-0" value="' + (b.expiry || '') + '" onchange="updateBatchField(' + i + ', \'expiry\', this.value)"></td>' +
+            '<td><input type="number" class="form-control form-control-sm border-0 text-right" value="' + (b.qty || 0) + '" onchange="updateBatchField(' + i + ', \'qty\', this.value); renderBatchRows();"></td>' +
+            '<td class="text-center"><i class="fas fa-trash-alt text-danger" style="cursor:pointer" onclick="removeBatchRow(' + i + ')"></i></td>' +
+            '</tr>';
         tbody.append(row);
     });
     $('#batchTotalQty').text(total.toFixed(3));
@@ -313,53 +430,204 @@ function removeBatchRow(index) {
 }
 
 function saveBatchInfo() {
-    var item = mockItemDetails[activeItemRowIndex];
+    var item = currentItems[activeItemRowIndex];
     item.batches = currentReceivedBatchInfo;
-    var total = currentReceivedBatchInfo.reduce((sum, b) => sum + (parseFloat(b.qty)||0), 0);
-    if(total > 0) {
-        item.recvQty = total;
-        renderItems(); // update main input
+    var total = currentReceivedBatchInfo.reduce(function(sum, b) { return sum + (parseFloat(b.qty) || 0); }, 0);
+    if (total > 0) {
+        item.receivingQty = total;
+        renderItems();
     }
     $('#batchModal').modal('hide');
 }
 
-function loadDocument(id) {
-    // Mock getting document details
-    var isReleased = id == 1; // Assuming id 1 is released from list mock
-    currentStatus = isReleased ? 'RELEASED' : 'HELD';
-    
-    $('#breadcrumbDocNumber').text('Doc #' + (id === 1 ? '000100006295' : '000100006294'));
-    $('#dispReceiptNumber').text(id === 1 ? '000100006295' : '000100006294');
-    
-    $('#headerStatusBadge').text(currentStatus)
-        .removeClass('badge-warning').addClass(currentStatus === 'RELEASED' ? 'badge-success' : 'badge-warning');
-    $('#topActions').show();
-    
-    if(isReleased) {
-        // Read-only mode
-        $('#headerForm :input').prop('disabled', true);
-        $('#actionFooter').hide(); // Hide save button
+async function loadDocument(id) {
+    try {
+        AppUtils.showToast('Loading document...', 'info');
+        var response = await ConsignmentService.getCSRV(id);
+        var data = response.data;
+        
+        if (!data) {
+            AppUtils.showToast('Document not found', 'danger');
+            return;
+        }
+
+        documentData = data;
+        currentStatus = data.status || 'HELD';
+
+        // Populate header form
+        $('#hCompany').val(data.company || '');
+        $('#hStore').val(data.receivingStore || '');
+        $('#hDocNo').val(data.docNo || '');
+        $('#hSupplierCode').val(data.supplierCode || '');
+        $('#hSupplierContract').val(data.supplierContract || '');
+        $('#hSupplierDO').val(data.supplierDoNo || '');
+        $('#hDeliveryDate').val(data.deliveryDate || '');
+        $('#hRemark').val(data.remark || '');
+        $('#hCreatedMethod').val(data.createdMethod || 'MANUAL');
+        $('#hCreatedBy').val(data.createdBy || '');
+
+        if (data.createdAt) {
+            var d = new Date(data.createdAt);
+            d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+            $('#hCreatedDate').val(d.toISOString().slice(0, 16));
+        }
+
+        // Update breadcrumb
+        $('#breadcrumbDocNumber').text(data.docNo || 'Document');
+
+        // Update status badge
+        $('#headerStatusBadge').text(currentStatus)
+            .removeClass('badge-warning badge-success')
+            .addClass(currentStatus === 'RELEASED' ? 'badge-success' : 'badge-warning');
+        $('#topActions').show();
+
+        // Populate items
+        currentItems = (data.items || []).map(function(item) {
+            return {
+                id: item.id,
+                itemCode: item.itemCode,
+                availableQty: item.availableQty || 0,
+                requestQty: item.requestQty || 0,
+                receivingQty: item.receivingQty || 0,
+                batches: []
+            };
+        });
+
+        // Display summary info
+        $('#dispDocNo').text(data.docNo || '-');
+        $('#dispStore').text(data.receivingStore || '-');
+        $('#dispSupplier').text(data.supplierCode || '-');
+        $('#dispContract').text(data.supplierContract || '-');
+
+        if (currentStatus === 'RELEASED') {
+            // Read-only mode
+            $('#headerForm :input').prop('disabled', true);
+            $('#btnSave').hide();
+            $('#btnRelease').hide();
+            $('#addItemSection').hide();
+        } else {
+            $('#btnRelease').show();
+            $('#btnSave').show();
+            $('#addItemSection').show();
+        }
+
+        // Jump to step 2
+        $('#step1-header').hide();
+        $('#step2-items').show();
+        
+        renderItems();
+    } catch (error) {
+        console.error('Error loading document:', error);
+        AppUtils.showToast('Failed to load document', 'danger');
     }
-    
-    // Jump to step 2 visually
-    $('#step1-header').hide();
-    $('#step2-items').show();
-    
-    // Assuming mockItemDetails is populated from API
-    renderItems();
 }
 
-function saveDocument() {
+function buildSavePayload() {
+    return {
+        company: $('#hCompany').val(),
+        receivingStore: $('#hStore').val(),
+        supplierCode: $('#hSupplierCode').val(),
+        supplierContract: $('#hSupplierContract').val(),
+        supplierDoNo: $('#hSupplierDO').val(),
+        deliveryDate: $('#hDeliveryDate').val() || null,
+        createdBy: $('#hCreatedBy').val() || 'user01',
+        createdMethod: $('#hCreatedMethod').val() || 'MANUAL',
+        remark: $('#hRemark').val() || null,
+        items: currentItems.map(function(item) {
+            return {
+                itemCode: item.itemCode,
+                availableQty: item.availableQty || 0,
+                requestQty: item.requestQty || 0,
+                receivingQty: item.receivingQty || 0
+            };
+        })
+    };
+}
+
+async function saveDocument() {
     if (currentStatus === 'RELEASED') return;
-    AppUtils.showToast("Document saved with status HELD.", "success");
-    currentStatus = 'HELD';
-    $('#topActions').show();
-    $('#headerStatusBadge').text('HELD').removeClass('badge-success').addClass('badge-warning');
-    setTimeout(() => { window.location.href = '/consignment/receiving'; }, 1500);
+
+    if (currentItems.length === 0) {
+        AppUtils.showToast('Please add at least one item', 'warning');
+        return;
+    }
+
+    var payload = buildSavePayload();
+    var saveBtn = $('#btnSave');
+    saveBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Saving...');
+
+    try {
+        var response;
+        if (docId) {
+            // For existing documents, create is not available - show message
+            // The API only supports create, not update. Re-create is not applicable.
+            AppUtils.showToast('Update is not supported. Document already saved.', 'info');
+            saveBtn.prop('disabled', false).html('<i class="fas fa-save mr-1"></i> Save');
+            return;
+        } else {
+            response = await ConsignmentService.createCSRV(payload);
+        }
+
+        var savedData = response.data;
+        AppUtils.showToast('Document saved successfully with status HELD.', 'success');
+        
+        // Redirect to the saved document
+        if (savedData && savedData.id) {
+            setTimeout(function() {
+                window.location.href = '/consignment/receiving/details?id=' + savedData.id;
+            }, 1000);
+        } else {
+            setTimeout(function() {
+                window.location.href = '/consignment/receiving';
+            }, 1500);
+        }
+    } catch (error) {
+        console.error('Error saving document:', error);
+        AppUtils.showToast('Failed to save document: ' + (error.message || 'Unknown error'), 'danger');
+        saveBtn.prop('disabled', false).html('<i class="fas fa-save mr-1"></i> Save');
+    }
+}
+
+async function releaseDocument() {
+    if (!docId) {
+        AppUtils.showToast('Please save the document first before releasing.', 'warning');
+        return;
+    }
+
+    if (currentStatus === 'RELEASED') {
+        AppUtils.showToast('Document is already released.', 'info');
+        return;
+    }
+
+    if (!confirm('Release this document? System will post stock to supplier inventory.')) {
+        return;
+    }
+
+    var releaseBtn = $('#btnRelease');
+    releaseBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Releasing...');
+
+    try {
+        var response = await ConsignmentService.releaseCSRV(docId);
+        var data = response.data;
+
+        AppUtils.showToast('Document successfully released and inventory posted.', 'success');
+        
+        // Reload document to reflect updated state
+        currentStatus = 'RELEASED';
+        loadDocument(docId);
+    } catch (error) {
+        console.error('Error releasing document:', error);
+        AppUtils.showToast('Failed to release document: ' + (error.message || 'Unknown error'), 'danger');
+        releaseBtn.prop('disabled', false).html('<i class="fas fa-check-circle mr-1"></i> Release');
+    }
 }
 
 function printSlip() {
-    var id = docId || 1;
+    var id = docId || '';
+    if (!id) {
+        AppUtils.showToast('No document to print', 'warning');
+        return;
+    }
     window.open('/consignment/receiving/print?id=' + id, '_blank');
 }
 </script>

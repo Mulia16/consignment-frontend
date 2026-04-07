@@ -54,7 +54,7 @@
                         </div>
                         <div class="col-md-3 mb-3">
                             <label class="small text-muted mb-1">Consignment Stock Receiving Number</label>
-                            <input type="text" class="form-control form-control-sm" name="docNumber">
+                            <input type="text" class="form-control form-control-sm" name="docNo">
                         </div>
                         <div class="col-md-3 mb-3">
                             <label class="small text-muted mb-1">Status</label>
@@ -69,15 +69,15 @@
                     <div class="row">
                         <div class="col-md-3 mb-3">
                             <label class="small text-muted mb-1">Create Method</label>
-                            <select class="form-control form-control-sm" name="createMethod">
+                            <select class="form-control form-control-sm" name="createdMethod">
                                 <option value="">Select</option>
-                                <option value="Manual">Manual</option>
-                                <option value="API">Trigger from ACMM through API</option>
+                                <option value="MANUAL">Manual</option>
+                                <option value="AUTO">Trigger from ACMM through API</option>
                             </select>
                         </div>
                         <div class="col-md-3 mb-3">
                             <label class="small text-muted mb-1">Reference Number</label>
-                            <input type="text" class="form-control form-control-sm" name="referenceNumber">
+                            <input type="text" class="form-control form-control-sm" name="referenceNo">
                         </div>
                         <div class="col-md-3 mb-3">
                             <label class="small text-muted mb-1">Item Code</label>
@@ -95,8 +95,8 @@
 
                     <div class="row">
                         <div class="col-md-3 mb-3">
-                            <label class="small text-muted mb-1">Received By</label>
-                            <input type="text" class="form-control form-control-sm" name="receivedBy">
+                            <label class="small text-muted mb-1">Created By</label>
+                            <input type="text" class="form-control form-control-sm" name="createdBy">
                         </div>
                         <div class="col-md-3 mb-3">
                             <label class="small text-muted mb-1">Created Date</label>
@@ -106,23 +106,9 @@
                             </div>
                         </div>
                         <div class="col-md-3 mb-3">
-                            <label class="small text-muted mb-1">Released By</label>
-                            <input type="text" class="form-control form-control-sm" name="releasedBy">
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label class="small text-muted mb-1">Released Date</label>
-                            <div class="input-group input-group-sm">
-                                <input type="date" class="form-control" name="releasedDateFrom">
-                                <input type="date" class="form-control" name="releasedDateTo">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
                             <label class="small text-muted mb-1">Supplier</label>
                             <div class="input-group input-group-sm">
-                                <input type="text" class="form-control" name="supplier">
+                                <input type="text" class="form-control" name="supplierCode">
                                 <div class="input-group-append">
                                     <span class="input-group-text"><i class="fas fa-truck"></i></span>
                                 </div>
@@ -132,20 +118,16 @@
                             <label class="small text-muted mb-1">Supplier Contract</label>
                             <input type="text" class="form-control form-control-sm" name="supplierContract">
                         </div>
+                    </div>
+
+                    <div class="row">
                         <div class="col-md-3 mb-3">
                             <label class="small text-muted mb-1">Branch</label>
                             <input type="text" class="form-control form-control-sm" name="branch">
                         </div>
                         <div class="col-md-3 mb-3">
-                            <label class="small text-muted mb-1">Internal Supplier Store</label>
-                            <input type="text" class="form-control form-control-sm" name="internalSupplierStore">
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
                             <label class="small text-muted mb-1">Supplier DO Number</label>
-                            <input type="text" class="form-control form-control-sm" name="supplierDO">
+                            <input type="text" class="form-control form-control-sm" name="supplierDoNo">
                         </div>
                         <div class="col-md-3 mb-3">
                             <label class="small text-muted mb-1">Delivery Date</label>
@@ -154,8 +136,8 @@
                                 <input type="date" class="form-control" name="deliveryDateTo">
                             </div>
                         </div>
-                        <div class="col-md-6 mb-3 d-flex align-items-end justify-content-end">
-                            <button type="button" class="btn btn-sm btn-light mr-2" onclick="$('#filterForm')[0].reset(); loadData(0);">Clear Filter</button>
+                        <div class="col-md-3 mb-3 d-flex align-items-end justify-content-end">
+                            <button type="button" class="btn btn-sm btn-light mr-2" onclick="clearFilter()">Clear Filter</button>
                             <button type="button" class="btn btn-sm btn-primary" onclick="loadData(0)"><i class="fas fa-search mr-1"></i> Search</button>
                         </div>
                     </div>
@@ -178,7 +160,7 @@
                             <th>Branch</th>
                             <th>Supplier DO Number</th>
                             <th>Created Date</th>
-                            <th>Released By</th>
+                            <th>Created By</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -188,6 +170,7 @@
                 </table>
             </div>
             <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+                <small class="text-muted" id="totalInfo">Showing 0 of 0 records</small>
                 <div id="paginationContainer"></div>
             </div>
         </div>
@@ -204,12 +187,11 @@
 
 <jsp:include page="/WEB-INF/jsp/common/footer.jsp" />
 
+<script src="/static/js/services/consignment-service.js"></script>
+
 <script>
 var currentPage = 0;
-var mockData = [
-    { id: 1, docNumber: '000100006295', refNumber: '5576', supplier: '0000000725', contract: 'MD-00001', branch: '00', supplierDO: 'DO128454', createdDate: '2025-08-29', releasedBy: 'SYSTEM OPERATOR', status: 'RELEASED' },
-    { id: 2, docNumber: '000100006294', refNumber: '000110013565', supplier: '0000000725', contract: 'MD-00001', branch: '00', supplierDO: 'DO2508261', createdDate: '2025-08-28', releasedBy: '', status: 'HELD' }
-];
+var totalRecords = 0;
 
 document.addEventListener('configLoaded', function() {
     loadData(0);
@@ -219,37 +201,79 @@ document.addEventListener('configLoaded', function() {
     });
 });
 
+function getFilterParams() {
+    var params = {};
+    var formData = $('#filterForm').serializeArray();
+    formData.forEach(function(field) {
+        if (field.value) params[field.name] = field.value;
+    });
+    return params;
+}
+
+function clearFilter() {
+    $('#filterForm')[0].reset();
+    loadData(0);
+}
+
 async function loadData(page) {
     currentPage = page || 0;
     var tbody = $('#resultTable tbody');
-    tbody.empty();
+    tbody.html('<tr><td colspan="11" class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div></td></tr>');
     
-    if (mockData.length === 0) {
-        tbody.html('<tr><td colspan="11" class="text-center py-4 text-muted">No records found</td></tr>');
-        return;
+    var params = getFilterParams();
+    params.page = currentPage + 1; // API uses 1-based page
+    params.perPage = 20;
+
+    try {
+        var response = await ConsignmentService.searchCSRV(params);
+        var data = response.data || [];
+        var meta = response.meta || { page: 1, perPage: 20, totalData: 0, totalPage: 1 };
+        totalRecords = meta.totalData || 0;
+
+        if (data.length === 0) {
+            tbody.html('<tr><td colspan="11" class="text-center py-4 text-muted"><i class="fas fa-inbox fa-2x mb-2 d-block"></i>No records found</td></tr>');
+            $('#totalInfo').text('Showing 0 of 0 records');
+            $('#paginationContainer').empty();
+            return;
+        }
+
+        tbody.empty(); // Clear spinner before rendering data
+
+        data.forEach(function(item) {
+            var statusBadge = item.status === 'RELEASED' 
+                ? '<span class="badge badge-success">Released</span>' 
+                : '<span class="badge badge-warning">Held</span>';
+            var editIcon = item.status === 'HELD' 
+                ? '<a href="/consignment/receiving/details?id=' + item.id + '" class="text-primary" title="Edit"><i class="fas fa-pencil-alt"></i></a>' 
+                : '<a href="/consignment/receiving/details?id=' + item.id + '" class="text-secondary" title="View"><i class="fas fa-eye"></i></a>';
+            
+            var createdDate = item.createdAt ? AppUtils.formatDateTime(item.createdAt) : '-';
+            
+            var row = '<tr>' +
+                '<td class="text-center"><input type="checkbox" class="row-checkbox" value="' + item.id + '" data-status="' + item.status + '"></td>' +
+                '<td class="text-center">' + editIcon + '</td>' +
+                '<td><a href="/consignment/receiving/details?id=' + item.id + '">' + (item.docNo || '-') + '</a></td>' +
+                '<td>' + (item.referenceNo || '-') + '</td>' +
+                '<td>' + (item.supplierCode || '-') + '</td>' +
+                '<td>' + (item.supplierContract || '-') + '</td>' +
+                '<td>' + (item.branch || '-') + '</td>' +
+                '<td>' + (item.supplierDoNo || '-') + '</td>' +
+                '<td>' + createdDate + '</td>' +
+                '<td>' + (item.createdBy || '-') + '</td>' +
+                '<td>' + statusBadge + '</td>' +
+                '</tr>';
+            tbody.append(row);
+        });
+
+        var from = (meta.page - 1) * meta.perPage + 1;
+        var to = Math.min(meta.page * meta.perPage, meta.totalData);
+        $('#totalInfo').text('Showing ' + from + '-' + to + ' of ' + meta.totalData + ' records');
+
+        AppUtils.buildPagination('paginationContainer', currentPage, meta.totalPage, loadData);
+    } catch (error) {
+        console.error('Error loading CSRV data:', error);
+        tbody.html('<tr><td colspan="11" class="text-center py-4 text-danger"><i class="fas fa-exclamation-triangle fa-2x mb-2 d-block"></i>Failed to load data. Please try again.</td></tr>');
     }
-
-    mockData.forEach(item => {
-        var statusBadge = item.status === 'RELEASED' ? '<span class="badge badge-success">Released</span>' : '<span class="badge badge-warning">Held</span>';
-        var editIcon = item.status === 'HELD' ? '<a href="/consignment/receiving/details?id=' + item.id + '" class="text-primary" title="Edit"><i class="fas fa-pencil-alt"></i></a>' : '<a href="/consignment/receiving/details?id=' + item.id + '" class="text-secondary" title="View"><i class="fas fa-eye"></i></a>';
-        
-        var row = `<tr>
-            <td class="text-center"><input type="checkbox" class="row-checkbox" value="\${item.id}" data-status="\${item.status}"></td>
-            <td class="text-center">\${editIcon}</td>
-            <td><a href="/consignment/receiving/details?id=\${item.id}">\${item.docNumber}</a></td>
-            <td>\${item.refNumber}</td>
-            <td>\${item.supplier}</td>
-            <td>\${item.contract}</td>
-            <td>\${item.branch}</td>
-            <td>\${item.supplierDO}</td>
-            <td>\${item.createdDate}</td>
-            <td>\${item.releasedBy}</td>
-            <td>\${statusBadge}</td>
-        </tr>`;
-        tbody.append(row);
-    });
-
-    AppUtils.buildPagination('paginationContainer', 0, 1, loadData); // Mock pagination
 }
 
 function getSelectedIds() {
@@ -263,22 +287,34 @@ async function batchRelease() {
     if (selected.length === 0) { AppUtils.showToast('Please select at least one document', 'warning'); return; }
     
     var valid = true;
+    var ids = [];
     selected.each(function() {
         if($(this).data('status') === 'RELEASED') valid = false;
+        ids.push($(this).val());
     });
 
     if (!valid) { AppUtils.showToast('Cannot release already released documents.', 'danger'); return; }
 
     if (confirm('Release selected document(s)? System will post stock to supplier inventory.')) {
-        selected.each(function() {
-            var id = parseInt($(this).val());
-            var item = mockData.find(i => i.id === id);
-            if(item) {
-                item.status = 'RELEASED';
-                item.releasedBy = 'CURRENT USER';
+        var successCount = 0;
+        var failCount = 0;
+        
+        for (var i = 0; i < ids.length; i++) {
+            try {
+                await ConsignmentService.releaseCSRV(ids[i]);
+                successCount++;
+            } catch (error) {
+                failCount++;
+                console.error('Failed to release CSRV ' + ids[i], error);
             }
-        });
-        AppUtils.showToast('Document(s) successfully released and inventory posted.', 'success');
+        }
+        
+        if (failCount === 0) {
+            AppUtils.showToast(successCount + ' document(s) successfully released and inventory posted.', 'success');
+        } else {
+            AppUtils.showToast(successCount + ' released, ' + failCount + ' failed.', 'warning');
+        }
+        
         $('#selectAll').prop('checked', false);
         loadData(currentPage);
     }
@@ -302,13 +338,8 @@ function batchDelete() {
     if (!valid) { AppUtils.showToast('Cannot delete released documents.', 'danger'); return; }
 
     if (confirm('Delete selected HELD document(s)?')) {
-        selected.each(function() {
-            var id = parseInt($(this).val());
-            mockData = mockData.filter(i => i.id !== id);
-        });
-        AppUtils.showToast('Document(s) successfully deleted.', 'success');
-        $('#selectAll').prop('checked', false);
-        loadData(currentPage);
+        // Delete is not available in the current API, show info message
+        AppUtils.showToast('Delete functionality is not yet available via API.', 'info');
     }
 }
 </script>

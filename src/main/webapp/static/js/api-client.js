@@ -172,13 +172,32 @@ var ApiClient = {
                 }
                 // CSRV - Consignment Stock Receive
                 else if (path.includes('/csrv')) {
-                    item.id = 'CSRV-' + (1000 + i);
-                    item.docNo = 'CSRV-2024-' + (1000 + i);
-                    item.company = 'COMP-01';
-                    item.receivingStore = 'STORE-' + i;
-                    item.supplierCode = 'SUP-' + (100 + i);
-                    item.status = ['DRAFT', 'RELEASED', 'COMPLETED'][i % 3];
-                    item.createdAt = '2024-03-31T10:00:00Z';
+                    item.id = 'csrv-' + (1000 + i) + '-mock-id';
+                    item.docNo = 'CSRV-' + String(1000 + i).padStart(8, '0');
+                    item.company = 'COMP01';
+                    item.receivingStore = 'STORE01';
+                    item.supplierCode = 'SUPP001';
+                    item.supplierContract = 'CONTRACT-2024-' + (1000 + i);
+                    item.branch = null;
+                    item.supplierDoNo = 'DO-2024-' + (100 + i);
+                    item.deliveryDate = '2024-01-15';
+                    item.remark = null;
+                    item.status = ['HELD', 'RELEASED'][i % 2];
+                    item.createdBy = 'user01';
+                    item.createdMethod = ['MANUAL', 'AUTO'][i % 2];
+                    item.referenceNo = i % 2 === 0 ? 'REF-' + (1000 + i) : null;
+                    item.releasedAt = i % 2 === 1 ? '2024-01-15T09:00:00Z' : null;
+                    item.createdAt = '2024-01-15T08:00:00Z';
+                    item.updatedAt = '2024-01-15T08:00:00Z';
+                    item.items = [
+                        {
+                            id: 'item-detail-' + i + '-mock-id',
+                            itemCode: 'ITEM001',
+                            availableQty: 0.0000,
+                            requestQty: 100.0000,
+                            receivingQty: 100.0000
+                        }
+                    ];
                 }
                 // CSDO - Consignment Stock Delivery Order
                 else if (path.includes('/csdo')) {
