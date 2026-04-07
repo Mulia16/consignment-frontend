@@ -67,6 +67,8 @@
                             Orders</a></li>
                     <li><a href="/consignment/stock-out" id="nav-consignment-stockout"><i class="fas fa-box"></i>
                             Consignment Stock Out</a></li>
+                    <li><a href="/consignment/stock-request" id="nav-consignment-stock-request"><i class="fas fa-clipboard-list"></i>
+                            Consignment Stock Request</a></li>
                     <li><a href="/consignment/delivery-order" id="nav-consignment-delivery-order"><i
                                 class="fas fa-truck-loading"></i> Consignment Delivery Order</a></li>
                 </ul>

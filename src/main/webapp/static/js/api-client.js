@@ -12,6 +12,7 @@ var ApiClient = {
         if (token) headers['Authorization'] = 'Bearer ' + token;
         if (options.headers) Object.assign(headers, options.headers);
         options.headers = headers;
+        options.cache = 'no-store'; // Prevent browser from caching GET requests
 
         try {
             var response = await fetch(url, options);

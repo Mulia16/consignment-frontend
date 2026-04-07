@@ -99,6 +99,16 @@ public class PageController {
     }
 
     // ─── Outbound ───────────────────────────────────────────
+    @GetMapping("/consignment/stock-request")
+    public String consignmentStockRequestList() {
+        return "consignment/stock-request/list";
+    }
+
+    @GetMapping("/consignment/stock-request/details")
+    public String consignmentStockRequestDetails() {
+        return "consignment/stock-request/details";
+    }
+
     @GetMapping("/consignment/stock-out")
     public String consignmentStockOutList() {
         return "consignment/stock-out/list";
