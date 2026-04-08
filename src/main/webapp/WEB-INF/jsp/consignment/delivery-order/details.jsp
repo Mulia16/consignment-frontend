@@ -48,28 +48,29 @@
                                 Document Details 
                             </div>
                             <div class="card-body">
-                                <div class="form-group mb-3 pb-2 border-bottom" id="csoIdGroup" style="display: none;">
+                                <div class="form-group mb-3 pb-2 border-bottom position-relative" id="csoIdGroup" style="display: none;">
                                     <label class="small text-muted mb-1 font-weight-bold text-primary">Transfer From CSO ID / Document No <span class="text-danger">*</span></label>
-                                    <input type="text" id="inputCsoId" class="form-control border-primary" placeholder="e.g. cso-001 or CSO-00001">
+                                    <input type="text" id="inputCsoId" class="form-control border-primary" placeholder="Type to search CSO (e.g. CSO-001)" onkeyup="handleCsoSearch(this)" autocomplete="off">
+                                    <div class="dropdown-menu w-100 shadow autocomplete-dropdown" id="csoDropdown" style="max-height: 250px; overflow-y: auto; position: absolute; top: 100%; left: 0; z-index: 1000;"></div>
                                 </div>
                                 <div class="row mb-2">
                                     <div class="col-6">
                                         <label class="small text-muted mb-1">Company</label>
-                                        <div class="font-weight-bold" id="lblCompany">COMP01</div>
+                                        <div class="font-weight-bold" id="lblCompany">-</div>
                                     </div>
                                     <div class="col-6">
                                         <label class="small text-muted mb-1">Store</label>
-                                        <div class="font-weight-bold" id="lblStore">STORE01</div>
+                                        <div class="font-weight-bold" id="lblStore">-</div>
                                     </div>
                                 </div>
                                 <div class="row mb-3">
                                     <div class="col-6">
                                         <label class="small text-muted mb-1">Date</label>
-                                        <div class="font-weight-bold" id="lblDate">2025-08-27</div>
+                                        <div class="font-weight-bold" id="lblDate">-</div>
                                     </div>
                                     <div class="col-6">
                                         <label class="small text-muted mb-1">Created By</label>
-                                        <div class="font-weight-bold" id="lblCreatedBy">OPR - OPR OPR</div>
+                                        <div class="font-weight-bold" id="lblCreatedBy">-</div>
                                     </div>
                                 </div>
                                 
@@ -102,15 +103,15 @@
                             <div class="card-body">
                                 <div class="form-group mb-3">
                                     <label class="small text-muted mb-1">Customer</label>
-                                    <input type="text" class="form-control" value="10001 - test - test" readonly>
+                                    <input type="text" id="lblCustomer" class="form-control" value="-" readonly>
                                 </div>
                                 <div class="form-group mb-3">
                                     <label class="small text-muted mb-1">Customer Branch</label>
-                                    <input type="text" class="form-control" value="0001 - TTTBRANCH" readonly>
+                                    <input type="text" id="lblCustomerBranch" class="form-control" value="-" readonly>
                                 </div>
                                 <div class="form-group mb-0">
                                     <label class="small text-muted mb-1">Email <span class="text-danger">*</span></label>
-                                    <input type="email" class="form-control" value="ss@gmail.com" required>
+                                    <input type="email" id="lblEmail" class="form-control" value="-" required>
                                 </div>
                             </div>
                         </div>
@@ -404,7 +405,7 @@ async function saveDocument(status) {
 
     // Create action for entirely new document transfer
     if (currentStatus === 'NEW') {
-        var csoId = $('#inputCsoId').val();
+        var csoId = $('#inputCsoId').data('id') || $('#inputCsoId').val(); // UUID preferred
         if (!csoId || !csoId.trim()) {
             AppUtils.showToast("Please enter CSO ID to transfer from.", "warning");
             $('#step2-items').hide();
@@ -443,6 +444,99 @@ async function saveDocument(status) {
 
 function printSlip() {
     AppUtils.showToast("Printing CSDO slip...", "info");
+}
+
+let csoSearchTimeout;
+
+function handleCsoSearch(el) {
+    clearTimeout(csoSearchTimeout);
+    let keyword = $(el).val();
+    let dropdown = $('#csoDropdown');
+    
+    $('.autocomplete-dropdown').not(dropdown).removeClass('show');
+
+    if(keyword.length < 2) {
+        dropdown.removeClass('show');
+        return;
+    }
+    
+    csoSearchTimeout = setTimeout(async () => {
+        dropdown.html('<div class="dropdown-item text-center"><i class="fas fa-spinner fa-spin"></i> Searching...</div>').addClass('show');
+        try {
+            let qs = `?page=1&perPage=20&docNo=\${encodeURIComponent(keyword)}&company=&store=`;
+            let res = await ApiClient.get('CONSIGNMENT', `/cso\${qs}`);
+            let data = res.data || res.items || res;
+            let arr = Array.isArray(data) ? data : (data.docNo ? [data] : []);
+            
+            if(arr.length === 0) {
+                dropdown.html('<div class="dropdown-item text-muted">No CSO found</div>');
+                return;
+            }
+            
+            let html = '';
+            arr.forEach(cso => {
+                let docNo = cso.docNo || cso.id || '-';
+                let id = cso.id || docNo;
+                let store = cso.store || '-';
+                let status = cso.status || 'UNKNOWN';
+                html += `<a class="dropdown-item border-bottom py-2" href="#" onclick="selectAutocompleteCso(event, '\${id}', '\${docNo}')">
+                            <div class="font-weight-bold text-primary">\${docNo} <span class="badge badge-secondary float-right">\${status}</span></div>
+                            <small class="text-muted">Store: \${store}</small>
+                         </a>`;
+            });
+            dropdown.html(html);
+        } catch(e) {
+            console.error(e);
+            dropdown.html('<div class="dropdown-item text-danger">Search error</div>');
+        }
+    }, 400);
+}
+
+function selectAutocompleteCso(event, csoId, docNo) {
+    event.preventDefault();
+    $('#inputCsoId').val(docNo);
+    $('#inputCsoId').data('id', csoId);
+    $('#csoDropdown').removeClass('show');
+    loadCsoDetails(csoId);
+}
+
+async function loadCsoDetails(csoId) {
+    if (!csoId) return;
+    AppUtils.showLoading();
+    try {
+        let res = await ApiClient.get('CONSIGNMENT', `/cso/\${csoId}`);
+        let data = res.data || res;
+        
+        // Auto-fill header fields
+        $('#lblCompany').text(data.company || '-');
+        $('#lblStore').text(data.store || '-');
+        
+        // Auto-fill customer details
+        if(data.customerCode) $('#lblCustomer').val(data.customerCode);
+        if(data.customerBranch) $('#lblCustomerBranch').val(data.customerBranch);
+        if(data.customerEmail) $('#lblEmail').val(data.customerEmail);
+        
+        // Populate items
+        itemsList = [];
+        if (data.items && data.items.length > 0) {
+            data.items.forEach(item => {
+                itemsList.push({
+                    itemCode: item.itemCode,
+                    itemName: item.itemName || '-',
+                    qty: item.qty || 1,
+                    uom: item.uom || 'UNIT'
+                });
+            });
+        }
+        
+        renderItems();
+        
+    } catch(e) {
+        console.error(e);
+        AppUtils.showToast("Failed to fetch CSO details", "danger");
+    } finally {
+        AppUtils.hideLoading();
+    }
 }
 
 let searchTimeout;
