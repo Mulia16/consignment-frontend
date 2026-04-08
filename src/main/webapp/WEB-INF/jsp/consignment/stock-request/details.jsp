@@ -148,43 +148,7 @@
     </div>
     </div>
 
-    <!-- Item Search Modal -->
-    <div class="modal fade" id="itemSearchModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Search Item</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="input-group mb-3">
-                        <input type="text" id="itemSearchKeyword" class="form-control" placeholder="Search by Item Code...">
-                        <div class="input-group-append">
-                            <button class="btn btn-primary" type="button" onclick="executeItemSearch()"><i class="fas fa-search"></i> Search</button>
-                        </div>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover">
-                            <thead class="bg-light">
-                                <tr>
-                                    <th>Item Code</th>
-                                    <th>Item Name</th>
-                                    <th>Variant</th>
-                                    <th>UOM</th>
-                                    <th width="80">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="itemSearchResults">
-                                <tr><td colspan="5" class="text-center text-muted">Please search for an item</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+
 </div>
 
 <jsp:include page="/WEB-INF/jsp/common/footer.jsp" />
@@ -195,6 +159,7 @@ let itemIdCounter = 1;
 let documentId = new URLSearchParams(window.location.search).get('id');
 let currentStatus = 'NEW';
 let itemsData = [];
+let availableItems = [];
 
 document.addEventListener('configLoaded', function() {
     $('#nav-consignment-stock-request').addClass('active');
@@ -227,7 +192,7 @@ function resetForm() {
     addItemRow();
 }
 
-function goToItems() {
+async function goToItems() {
     // Validate required header fields
     let isValid = true;
     const requiredFields = ['company', 'store', 'supplierCode', 'supplierContract', 'branch', 'internalSupplierStore'];
@@ -245,9 +210,55 @@ function goToItems() {
         return;
     }
 
+    // Fetch available items from master-data API using header values
+    await loadAvailableItems();
+
     $("#headerCollapse").collapse('hide');
     $(".header-actions").hide();
     $("#itemsCard").show();
+}
+
+async function loadAvailableItems() {
+    let company = $('#company').val();
+    let store = $('#store').val();
+    let supplierCode = $('#supplierCode').val();
+    let supplierContract = $('#supplierContract').val();
+
+    if(!company || !store || !supplierCode || !supplierContract) return;
+
+    try {
+        AppUtils.showLoading();
+        let url = '/master-data/items?company=' + encodeURIComponent(company) +
+                  '&store=' + encodeURIComponent(store) +
+                  '&supplierCode=' + encodeURIComponent(supplierCode) +
+                  '&supplierContract=' + encodeURIComponent(supplierContract);
+        let res = await ApiClient.get('CONSIGNMENT', url);
+        let data = res.data || res;
+        availableItems = Array.isArray(data) ? data : [];
+        console.log('Loaded available items:', availableItems);
+
+        // Refresh all existing item-code dropdowns with new options
+        refreshItemCodeDropdowns();
+    } catch(e) {
+        console.error('Failed to load available items:', e);
+        AppUtils.showToast('Failed to load items for this supplier/contract', 'warning');
+    } finally {
+        AppUtils.hideLoading();
+    }
+}
+
+function refreshItemCodeDropdowns() {
+    // Update all existing item-code <select> elements with availableItems
+    $('#itemsBody tr').each(function() {
+        let $select = $(this).find('.item-code');
+        let currentVal = $select.val();
+        let options = '<option value="">-- Select Item --</option>';
+        availableItems.forEach(function(item) {
+            let selected = (item === currentVal) ? 'selected' : '';
+            options += '<option value="' + item + '" ' + selected + '>' + item + '</option>';
+        });
+        $select.html(options);
+    });
 }
 
 function toggleHeader() {
@@ -274,16 +285,22 @@ function addItemRow(data = {}) {
     
     let actionBtn = isReadOnly ? '' : `<button type="button" class="btn btn-sm text-danger" onclick="$(this).closest('tr').remove()"><i class="fas fa-trash"></i></button>`;
 
+    // Build item code options from availableItems
+    let options = '<option value="">-- Select Item --</option>';
+    if(availableItems && availableItems.length > 0) {
+        availableItems.forEach(function(item) {
+            let selected = (item === itemCode) ? 'selected' : '';
+            options += `<option value="\${item}" \${selected}>\${item}</option>`;
+        });
+    } else if(itemCode) {
+        // Fallback for edit mode before items are loaded
+        options += `<option value="\${itemCode}" selected>\${itemCode}</option>`;
+    }
+
     let tr = `<tr data-id="\${rowId}">
         <td class="align-middle">\${rowId}</td>
         <td>
-            <div class="input-group position-relative">
-                <input type="text" class="form-control item-code" value="\${itemCode}" required \${attrRead} onkeyup="handleItemSearch(this, \${rowId})" autocomplete="off" placeholder="Type to search...">
-                <div class="dropdown-menu w-100 shadow autocomplete-dropdown" id="itemDropdown-\${rowId}" style="max-height: 250px; overflow-y: auto; position: absolute; top: 100%; left: 0; z-index: 1000;"></div>
-                <div class="input-group-append">
-                    <button class="btn btn-outline-secondary" type="button" \${attrDisabled} onclick="searchItemCode(\${rowId})" title="Advanced Search"><i class="fas fa-search"></i></button>
-                </div>
-            </div>
+            <select class="form-control item-code" required \${attrDisabled}>\${options}</select>
         </td>
         <td><input type="number" class="form-control item-qty" value="\${requestQty}" min="1" step="0.0001" required \${attrRead}></td>
         <td><input type="text" class="form-control item-uom" value="\${requestUom}" required \${attrRead}></td>
@@ -292,135 +309,6 @@ function addItemRow(data = {}) {
     $('#itemsBody').append(tr);
 }
 
-let currentSearchRowId = null;
-let searchTimeout;
-
-function handleItemSearch(el, rowId) {
-    clearTimeout(searchTimeout);
-    let keyword = $(el).val();
-    let dropdown = $(`#itemDropdown-\${rowId}`);
-    
-    // Hide all other dropdowns
-    $('.autocomplete-dropdown').not(dropdown).removeClass('show');
-
-    if(keyword.length < 2) {
-        dropdown.removeClass('show');
-        return;
-    }
-    
-    // Dynamic Dropup: check if there's enough space below
-    let rect = el.getBoundingClientRect();
-    let spaceBelow = window.innerHeight - rect.bottom;
-    if(spaceBelow < 280) { // If less than 280px below, flip it upwards
-        dropdown.css({ 'top': 'auto', 'bottom': '100%', 'margin-bottom': '2px' });
-    } else {
-        dropdown.css({ 'top': '100%', 'bottom': 'auto', 'margin-top': '2px' });
-    }
-    
-    searchTimeout = setTimeout(async () => {
-        dropdown.html('<div class="dropdown-item text-center"><i class="fas fa-spinner fa-spin"></i> Searching...</div>').addClass('show');
-        try {
-            let res = await ApiClient.get('CONSIGNMENT', `/consignment-setup/items?page=1&perPage=20&itemCode=\${encodeURIComponent(keyword)}`);
-            let data = res.data || res;
-            let arr = Array.isArray(data) ? data : (data.itemCode ? [data] : []);
-            
-            if(arr.length === 0) {
-                dropdown.html('<div class="dropdown-item text-muted">No items found</div>');
-                return;
-            }
-            
-            let html = '';
-            arr.forEach(item => {
-                let uom = item.uom || item.unitOfMeasure || 'PCS';
-                let name = item.itemName || '-';
-                let variant = item.variant || '-';
-                html += `<a class="dropdown-item border-bottom py-2" href="#" onclick="selectAutocompleteItem(event, \${rowId}, '\${item.itemCode}', '\${uom}')">
-                            <div class="font-weight-bold text-primary">\${item.itemCode}</div>
-                            <small class="text-muted">\${name} • Variant: \${variant} • UOM: \${uom}</small>
-                         </a>`;
-            });
-            dropdown.html(html);
-        } catch(e) {
-            dropdown.html('<div class="dropdown-item text-danger">Search error</div>');
-        }
-    }, 400);
-}
-
-function selectAutocompleteItem(event, rowId, code, uom) {
-    event.preventDefault();
-    let row = $(`tr[data-id="\${rowId}"]`);
-    row.find('.item-code').val(code);
-    row.find('.item-uom').val(uom);
-    $(`#itemDropdown-\${rowId}`).removeClass('show');
-}
-
-// Global click to hide autocomplete dropdowns
-$(document).on('click', function(e) {
-    if(!$(e.target).closest('.position-relative').length) {
-        $('.autocomplete-dropdown.show').removeClass('show');
-    }
-});
-
-function searchItemCode(rowId) {
-    currentSearchRowId = rowId;
-    let row = $(`tr[data-id="\${rowId}"]`);
-    let itemCode = row.find('.item-code').val();
-    
-    $('#itemSearchKeyword').val(itemCode);
-    $('#itemSearchResults').html('<tr><td colspan="5" class="text-center text-muted">Click Search...</td></tr>');
-    $('#itemSearchModal').modal('show');
-    
-    if(itemCode) {
-        executeItemSearch();
-    }
-}
-
-async function executeItemSearch() {
-    let keyword = $('#itemSearchKeyword').val() || '';
-    $('#itemSearchResults').html('<tr><td colspan="5" class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>');
-    
-    try {
-        let res = await ApiClient.get('CONSIGNMENT', `/consignment-setup/items?page=1&perPage=20&itemCode=\${encodeURIComponent(keyword)}`);
-        let data = res.data || res;
-        let arr = Array.isArray(data) ? data : (data.itemCode ? [data] : []);
-        
-        if(arr.length === 0) {
-            $('#itemSearchResults').html('<tr><td colspan="5" class="text-center text-muted">No items found</td></tr>');
-            return;
-        }
-        
-        let html = '';
-        arr.forEach(item => {
-            let uom = item.uom || item.unitOfMeasure || 'PCS';
-            html += `
-                <tr>
-                    <td>\${item.itemCode || '-'}</td>
-                    <td>\${item.itemName || '-'}</td>
-                    <td>\${item.variant || '-'}</td>
-                    <td>\${uom}</td>
-                    <td class="text-center">
-                        <button class="btn btn-sm btn-success" onclick="selectItemFromSearch('\${item.itemCode}', '\${uom}')">
-                            Select
-                        </button>
-                    </td>
-                </tr>
-            `;
-        });
-        $('#itemSearchResults').html(html);
-    } catch(e) {
-        console.error(e);
-        $('#itemSearchResults').html('<tr><td colspan="5" class="text-center text-danger">Error fetching data</td></tr>');
-    }
-}
-
-function selectItemFromSearch(itemCode, uom) {
-    if(currentSearchRowId !== null) {
-        let row = $(`tr[data-id="\${currentSearchRowId}"]`);
-        row.find('.item-code').val(itemCode);
-        row.find('.item-uom').val(uom);
-    }
-    $('#itemSearchModal').modal('hide');
-}
 
 async function loadDocumentDetails(id) {
     AppUtils.showLoading();
@@ -437,7 +325,7 @@ async function loadDocumentDetails(id) {
     }
 }
 
-function populateForm(data) {
+async function populateForm(data) {
     if(data.company) $('#company').html(`<option value="\${data.company}">\${data.company}</option>`);
     if(data.store) $('#store').html(`<option value="\${data.store}">\${data.store}</option>`);
     if(data.supplierCode) $('#supplierCode').html(`<option value="\${data.supplierCode}">\${data.supplierCode}</option>`);
@@ -461,6 +349,10 @@ function populateForm(data) {
 
     $('#itemsBody').empty();
     itemIdCounter = 1;
+
+    // Load available items first, then add rows
+    await loadAvailableItems();
+
     if (data.items && data.items.length > 0) {
         data.items.forEach(item => addItemRow(item));
     }
