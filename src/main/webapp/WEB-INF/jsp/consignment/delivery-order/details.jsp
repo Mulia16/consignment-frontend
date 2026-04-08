@@ -48,14 +48,18 @@
                                 Document Details 
                             </div>
                             <div class="card-body">
+                                <div class="form-group mb-3 pb-2 border-bottom" id="csoIdGroup" style="display: none;">
+                                    <label class="small text-muted mb-1 font-weight-bold text-primary">Transfer From CSO ID / Document No <span class="text-danger">*</span></label>
+                                    <input type="text" id="inputCsoId" class="form-control border-primary" placeholder="e.g. cso-001 or CSO-00001">
+                                </div>
                                 <div class="row mb-2">
                                     <div class="col-6">
                                         <label class="small text-muted mb-1">Company</label>
-                                        <div class="font-weight-bold" id="lblCompany">001 - ALPRO PHARMACY SDN BHD</div>
+                                        <div class="font-weight-bold" id="lblCompany">COMP01</div>
                                     </div>
                                     <div class="col-6">
                                         <label class="small text-muted mb-1">Store</label>
-                                        <div class="font-weight-bold" id="lblStore">NPDRM1</div>
+                                        <div class="font-weight-bold" id="lblStore">STORE01</div>
                                     </div>
                                 </div>
                                 <div class="row mb-3">
@@ -130,11 +134,11 @@
                                     </div>
                                     <div class="col-6 mb-2">
                                         <label class="small text-muted mb-1">Shipping Mode</label>
-                                        <select class="form-control form-control-sm"><option>Courier</option></select>
+                                        <select class="form-control form-control-sm" id="shipMode"><option value="COURIER">Courier</option><option value="PICKUP">Pickup</option></select>
                                     </div>
                                     <div class="col-6 mb-2">
                                         <label class="small text-muted mb-1">Transporter <span class="text-danger">*</span></label>
-                                        <select class="form-control form-control-sm" required><option>ABX Express</option></select>
+                                        <select class="form-control form-control-sm" id="transporter" required><option value="JNE">JNE</option><option value="ABX Express">ABX Express</option><option value="POST">Post</option></select>
                                     </div>
                                 </div>
                                 <div class="form-group mb-2">
@@ -218,9 +222,8 @@
             
             <div class="card-footer bg-light d-flex justify-content-end" id="actionFooter">
                 <button type="button" class="btn btn-outline-secondary mr-2" onclick="window.history.back()">Cancel</button>
-                <button type="button" class="btn btn-light mr-2" onclick="resetItems()">Reset</button>
-                <button type="button" class="btn btn-primary mr-2" onclick="saveDocument('HELD')">Create</button>
-                <button type="button" class="btn btn-success" onclick="saveDocument('RELEASED')">Create & Release</button>
+                <button id="btnCreate" type="button" class="btn btn-primary mr-2" onclick="saveDocument('HELD')">Create</button>
+                <button id="btnCreateRelease" type="button" class="btn btn-success" onclick="saveDocument('RELEASED')">Create & Release</button>
             </div>
         </div>
 
@@ -240,9 +243,12 @@ document.addEventListener('configLoaded', function() {
         // Edit/View Mode
         loadDocument(docId);
     } else {
-        // Mocking transferring from CSO
-        $('#docDetailsTitle').html('Document Details <small class="text-muted ml-2">(Ref: CSO-2508-000028)</small>');
-        itemsList = [{ itemCode: '0100012', itemName: 'ACITRAL SUSPENSI 120ML', qty: 2.0, uom: 'UNIT' }];
+        // Create Mode
+        currentStatus = 'NEW';
+        $('#docDetailsTitle').html('New Delivery Order Transfer');
+        $('#csoIdGroup').show();
+        $('#lblDate').text(new Date().toISOString().substring(0,10));
+        $('#lblCreatedBy').text('Current User');
     }
 });
 
@@ -289,7 +295,10 @@ function renderItems() {
     itemsList.forEach((item, index) => {
         var htmlItemCode = isReadOnly ? 
             "<strong>" + (item.itemCode || "-") + "</strong><br><small class='text-muted'>" + item.itemName + "</small>" : 
-            "<input type='text' class='form-control form-control-sm' placeholder='Search Item (e.g. 0100012)' value='" + item.itemCode + "' onchange=\"updateItem(" + index + ", 'itemCode', this.value)\">";
+            `<div class="position-relative">
+                <input type="text" class="form-control form-control-sm item-code" placeholder="Search Item Code..." value="\${item.itemCode || ''}" onkeyup="handleItemSearch(this, \${index})" autocomplete="off">
+                <div class="dropdown-menu w-100 shadow autocomplete-dropdown" id="itemDropdown-\${index}" style="max-height: 250px; overflow-y: auto; position: absolute; top: 100%; left: 0; z-index: 1000;"></div>
+            </div>`;
 
         var htmlUom = isReadOnly ? 
             item.uom : 
@@ -320,65 +329,188 @@ function resetItems() {
     renderItems();
 }
 
-function loadDocument(id) {
-    var parsedId = parseInt(id) || 1;
-    // mock Status
-    if(parsedId === 1) currentStatus = 'RELEASED';
-    else currentStatus = 'HELD';
-    
-    $('#breadcrumbDocNumber').text('Doc #CDO-2508-00000' + (5 - parsedId));
-    $('#docDetailsTitle').html(`Document Details CDO-2508-00000\${5 - parsedId} <small class="text-muted ml-2">(Ref: CSO-2508-000028)</small>`);
-    
-    var badgeClass = currentStatus === 'RELEASED' ? 'badge-success' : 'badge-warning';
-    
-    $('#headerStatusBadge').text(currentStatus).attr('class', 'badge ' + badgeClass);
-    $('#topActions').show();
-    
-    if(currentStatus === 'RELEASED') {
-        $('#headerForm :input').prop('disabled', true);
-        $('#actionFooter').hide();
-        $('#btnAddRow').hide();
-    }
-    
-    // Mock Data
-    itemsList = [{ itemCode: '0100012', itemName: 'ACITRAL SUSPENSI 120ML', qty: 2.0, uom: 'UNIT' }];
-    
-    $('#step1-header').hide();
-    $('#step2-items').show();
-    renderItems();
-}
-
-function saveDocument(status) {
-    if (currentStatus === 'RELEASED') return;
-    
-    if(itemsList.length === 0 || !itemsList[0].itemCode) {
-        AppUtils.showToast("Please add valid items.", "warning");
-        return;
-    }
-    
-    if(status === 'RELEASED') {
-        var generateCDO = $('#cdoYes').is(':checked');
-        if(generateCDO) {
-            AppUtils.showToast("Removing CSO from Consignment Reservation... Posting CSDO to Consignment Reservation...", "info");
+async function loadDocument(id) {
+    AppUtils.showLoading();
+    try {
+        var data = await ApiClient.get('CONSIGNMENT', `/csdo/${id}`);
+        // Map details
+        currentStatus = data.status ? data.status.toUpperCase() : 'HELD';
+        $('#breadcrumbDocNumber').text('Doc #' + data.docNo);
+        $('#docDetailsTitle').html(`Document Details ${data.docNo} <small class="text-muted ml-2">(Ref: ${data.csoDocNo || data.csoId})</small>`);
+        
+        $('#lblCompany').text(data.company || '-');
+        $('#lblStore').text(data.store || '-');
+        $('#lblDate').text(data.createdAt ? data.createdAt.substring(0,10) : '-');
+        $('#lblCreatedBy').text(data.createdBy || '-');
+        
+        if (data.requireGenerateCdo) { $('#cdoYes').prop('checked', true); } else { $('#cdoNo').prop('checked', true); }
+        $('#shipMode').val((data.shippingMode || 'COURIER').toUpperCase());
+        
+        if(data.transporter && !$('#transporter option[value="'+data.transporter+'"]').length) {
+            $('#transporter').append(new Option(data.transporter, data.transporter, true, true));
         } else {
-            AppUtils.showToast("Removing CSO from Consignment Reservation... Posting directly to Customer Consignment Inventory.", "info");
+            $('#transporter').val(data.transporter);
         }
-    }
-    
-    setTimeout(() => {
-        AppUtils.showToast("Document saved: " + status, "success");
-        currentStatus = status;
-        var bClass = status === 'RELEASED' ? 'badge-success' : 'badge-warning';
-        $('#headerStatusBadge').text(status).attr('class', 'badge ' + bClass);
+        
+        var badgeClass = currentStatus === 'RELEASED' ? 'badge-success' : 'badge-warning';
+        if (currentStatus === 'REVERSED') badgeClass = 'badge-secondary';
+        
+        $('#headerStatusBadge').text(currentStatus).attr('class', 'badge ' + badgeClass);
         $('#topActions').show();
         
-        setTimeout(() => { window.location.href = '/consignment/delivery-order'; }, 1800);
-    }, 800);
+        itemsList = data.items || [];
+        
+        // Hide/disable rules
+        if (currentStatus === 'RELEASED' || currentStatus === 'REVERSED') {
+            $('#headerForm :input').prop('disabled', true);
+            $('#actionFooter').hide();
+            $('#btnAddRow').hide();
+        } else if (currentStatus === 'HELD') {
+            $('#headerForm :input').prop('disabled', true);
+            $('#btnAddRow').hide();
+            $('#btnCreate').hide();
+            $('#btnCreateRelease').text('Release');
+            $('#btnCreateRelease').removeClass('btn-success').addClass('btn-primary');
+            $('#btnCreateRelease').attr('onclick', "saveDocument('RELEASED')");
+        }
+        
+    } catch(e) {
+        console.error(e);
+        AppUtils.showToast("Failed to load document", "danger");
+    } finally {
+        AppUtils.hideLoading();
+        $('#step1-header').hide();
+        $('#step2-items').show();
+        renderItems();
+    }
+}
+
+async function saveDocument(status) {
+    if (currentStatus === 'RELEASED' || currentStatus === 'REVERSED') return;
+    
+    // Release action for an existing HELD document
+    if (currentStatus === 'HELD' && status === 'RELEASED') {
+        AppUtils.showLoading();
+        try {
+            await ApiClient.put('CONSIGNMENT', `/csdo/${docId}/release`);
+            AppUtils.showToast("Document released successfully.", "success");
+            setTimeout(() => { window.location.href = '/consignment/delivery-order'; }, 1000);
+        } catch(e) {
+            console.error(e);
+            AppUtils.showToast("Error releasing document", "danger");
+        } finally { AppUtils.hideLoading(); }
+        return;
+    }
+
+    // Create action for entirely new document transfer
+    if (currentStatus === 'NEW') {
+        var csoId = $('#inputCsoId').val();
+        if (!csoId || !csoId.trim()) {
+            AppUtils.showToast("Please enter CSO ID to transfer from.", "warning");
+            $('#step2-items').hide();
+            $('#step1-header').show();
+            $('#inputCsoId').focus();
+            return;
+        }
+
+        var payload = {
+            requireGenerateCdo: $('#cdoYes').is(':checked'),
+            shippingMode: $('#shipMode').val() || 'COURIER',
+            transporter: $('#transporter').val() || 'JNE',
+            createdBy: 'user01' // Mock logged in user
+        };
+        
+        AppUtils.showLoading();
+        try {
+            var transRes = await ApiClient.post('CONSIGNMENT', `/csdo/transfer/${csoId.trim()}`, payload);
+            var newId = transRes.id || transRes.docNo || csoId;
+            
+            if (status === 'RELEASED') {
+                await ApiClient.put('CONSIGNMENT', `/csdo/${newId}/release`);
+                AppUtils.showToast("CSDO created & released successfully.", "success");
+            } else {
+                AppUtils.showToast("CSDO created successfully.", "success");
+            }
+            setTimeout(() => { window.location.href = '/consignment/delivery-order'; }, 1000);
+        } catch(e) {
+            console.error(e);
+            AppUtils.showToast("Error transferring CSDO: " + e.message, "danger");
+        } finally {
+            AppUtils.hideLoading();
+        }
+    }
 }
 
 function printSlip() {
     AppUtils.showToast("Printing CSDO slip...", "info");
 }
+
+let searchTimeout;
+
+function handleItemSearch(el, index) {
+    clearTimeout(searchTimeout);
+    let keyword = $(el).val();
+    let dropdown = $(`#itemDropdown-\${index}`);
+    
+    $('.autocomplete-dropdown').not(dropdown).removeClass('show');
+
+    if(keyword.length < 2) {
+        dropdown.removeClass('show');
+        return;
+    }
+    
+    searchTimeout = setTimeout(async () => {
+        dropdown.html('<div class="dropdown-item text-center"><i class="fas fa-spinner fa-spin"></i> Searching...</div>').addClass('show');
+        try {
+            let company = $('#lblCompany').text().split('-')[0].trim();
+            if(!company || company === '-') company = 'COMP01';
+            let store = $('#lblStore').text().trim();
+            if(!store || store === '-') store = 'STORE01';
+            
+            // Following user specification URL format
+            let qs = `?company=\${company}&store=\${store}&supplierCode=SUPP001&supplierContract=CONTRACT-2024-001&keyword=\${encodeURIComponent(keyword)}`;
+            
+            let res = await ApiClient.get('CONSIGNMENT', `/master-data/items\${qs}`);
+            let data = res.data || res;
+            let arr = Array.isArray(data) ? data : (data.itemCode ? [data] : []);
+            
+            if(arr.length === 0) {
+                dropdown.html('<div class="dropdown-item text-muted">No items found</div>');
+                return;
+            }
+            
+            let html = '';
+            arr.forEach(item => {
+                let uom = item.uom || item.unitOfMeasure || 'UNIT';
+                let name = item.itemName || '-';
+                // Note: single quotes around strings
+                let escapedName = name.replace(/'/g, "\\'");
+                html += `<a class="dropdown-item border-bottom py-2" href="#" onclick="selectAutocompleteItem(event, \${index}, '\${item.itemCode}', '\${escapedName}', '\${uom}')">
+                            <div class="font-weight-bold text-primary">\${item.itemCode}</div>
+                            <small class="text-muted">\${name} • UOM: \${uom}</small>
+                         </a>`;
+            });
+            dropdown.html(html);
+        } catch(e) {
+            console.error(e);
+            dropdown.html('<div class="dropdown-item text-danger">Search error</div>');
+        }
+    }, 400);
+}
+
+function selectAutocompleteItem(event, index, code, name, uom) {
+    event.preventDefault();
+    itemsList[index]['itemCode'] = code;
+    itemsList[index]['itemName'] = name;
+    itemsList[index]['uom'] = uom;
+    renderItems();
+}
+
+$(document).on('click', function(e) {
+    if(!$(e.target).closest('.position-relative').length) {
+        $('.autocomplete-dropdown.show').removeClass('show');
+    }
+});
 </script>
 
 <style>

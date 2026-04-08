@@ -168,6 +168,7 @@
                     <!-- Bulk Actions -->
                     <div>
                         <button class="btn btn-primary mr-2" onclick="batchRelease()">Release</button>
+                        <button class="btn btn-warning mr-2" onclick="batchReverse()">Reverse</button>
                         <button class="btn btn-outline-secondary mr-2" onclick="batchPrint()"><i class="fas fa-print"></i> Print</button>
                         <button class="btn btn-outline-danger" onclick="batchDelete()"><i class="fas fa-trash"></i> Delete</button>
                     </div>
@@ -182,24 +183,66 @@
 <script src="/static/js/consignment-master-data.js"></script>
 
 <script>
-var mockData = [
-    { id: 1, date: '2025-08-28', store: 'IPOH_MALL', csdoNo: 'CDO-2508-000004', transferFrom: 'CSO-2508-000065', customer: 'A1 - A1 Company', branch: '1122 - 1122', shipMode: 'Courier', transporter: 'DHL Express', createdBy: 'M.ASYRAF', status: 'Released' },
-    { id: 2, date: '2025-08-27', store: 'NPDRM1', csdoNo: 'CDO-2508-000003', transferFrom: 'CSO-2508-000028', customer: '10001 - test', branch: '0001 - TTTBRANCH', shipMode: 'Courier', transporter: 'ABX Express', createdBy: '0PR-0PR', status: 'Held' }
-];
+var currentData = [];
 
 document.addEventListener('configLoaded', function() {
     ConsignmentMasterData.init();
-    renderTable(mockData);
+    searchData();
     $('#nav-consignment-delivery-order').addClass('active');
     $('#menu-outbound').addClass('active');
 });
 
-function searchData() {
+async function searchData() {
     AppUtils.showLoading();
-    setTimeout(() => {
-        renderTable(mockData);
+    var form = document.getElementById('filterForm');
+    var formData = new FormData(form);
+    var params = new URLSearchParams();
+    
+    for (var pair of formData.entries()) {
+        var key = pair[0];
+        var value = pair[1];
+        if (value && value.trim() !== '') {
+            if (key === 'customer') key = 'customerCode';
+            params.append(key, value.trim());
+        }
+    }
+    
+    var qs = params.toString() ? '?' + params.toString() : '';
+    
+    try {
+        var res = await ApiClient.get('CONSIGNMENT', '/csdo' + qs);
+        var data = [];
+        if (res.data && Array.isArray(res.data)) {
+            data = res.data;
+        } else if (res.items && Array.isArray(res.items)) {
+            data = res.items;
+        } else if (Array.isArray(res)) {
+            data = res;
+        } else if (res.id || res.docNo) {
+            data = [res]; // In case API returns single object
+        }
+        
+        currentData = data.map(item => ({
+            id: item.id || item.docNo,
+            date: item.createdAt ? item.createdAt.substring(0, 10) : '-',
+            store: item.store || '-',
+            csdoNo: item.docNo || '-',
+            transferFrom: item.csoDocNo || item.csoId || '-',
+            customer: item.customerCode || '-',
+            branch: item.customerBranch || '-',
+            shipMode: item.shippingMode || '-',
+            transporter: item.transporter || '-',
+            createdBy: item.createdBy || '-',
+            status: item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1).toLowerCase() : 'Held'
+        }));
+        renderTable(currentData);
+    } catch (e) {
+        console.error(e);
+        AppUtils.showToast('Failed to load data', 'danger');
+        renderTable([]);
+    } finally {
         AppUtils.hideLoading();
-    }, 400);
+    }
 }
 
 function renderTable(data) {
@@ -212,7 +255,11 @@ function renderTable(data) {
     }
     
     data.forEach(function(row) {
-        var badgeClass = row.status === 'Held' ? 'badge-warning' : 'badge-success';
+        var badgeClass = '';
+        if (row.status === 'Held') badgeClass = 'badge-warning';
+        else if (row.status === 'Released') badgeClass = 'badge-success';
+        else if (row.status === 'Reversed') badgeClass = 'badge-secondary';
+        
         var showEdit = row.status === 'Held';
         
         var actionHtml = showEdit ? 
@@ -257,8 +304,10 @@ function batchRelease() {
     if (ids.length === 0) { AppUtils.showToast('Please select at least one document', 'warning'); return; }
     
     var isValid = true;
-    mockData.forEach(function(d) {
-        if(ids.includes(d.id.toString()) && d.status !== 'Held') isValid = false;
+    currentData.forEach(function(d) {
+        if(ids.includes(d.id.toString()) && d.status.toUpperCase() !== 'HELD') {
+            isValid = false;
+        }
     });
 
     if(!isValid) {
@@ -266,11 +315,52 @@ function batchRelease() {
         return;
     }
 
-    if (confirm('Release selected ' + ids.length + ' documents?')) {
-        AppUtils.showToast('Documents released to Customer Consignment Inventory.', 'success');
-        mockData.forEach(d => { if(ids.includes(d.id.toString())) d.status = 'Released'; });
-        renderTable(mockData);
-        $('#selectAll').prop('checked', false);
+    if (confirm('Release selected ' + ids.length + ' document(s)?')) {
+        AppUtils.showLoading();
+        
+        Promise.all(ids.map(id => ApiClient.put('CONSIGNMENT', `/csdo/\${id}/release`)))
+            .then(() => {
+                AppUtils.showToast('Documents successfully released.', 'success');
+                searchData();
+                $('#selectAll').prop('checked', false);
+            })
+            .catch(e => {
+                console.error(e);
+                AppUtils.showToast('Error releasing documents', 'danger');
+            })
+            .finally(() => AppUtils.hideLoading());
+    }
+}
+
+function batchReverse() {
+    var ids = getSelectedIds();
+    if (ids.length === 0) { AppUtils.showToast('Please select at least one document', 'warning'); return; }
+    
+    var isValid = true;
+    currentData.forEach(function(d) {
+        if(ids.includes(d.id.toString()) && d.status.toUpperCase() !== 'RELEASED') {
+            isValid = false;
+        }
+    });
+
+    if(!isValid) {
+        AppUtils.showToast('Only RELEASED documents can be reversed.', 'warning');
+        return;
+    }
+
+    if (confirm('Confirm reverse selected ' + ids.length + ' document(s)?')) {
+        AppUtils.showLoading();
+        Promise.all(ids.map(id => ApiClient.put('CONSIGNMENT', `/csdo/\${id}/reverse`)))
+            .then(() => {
+                AppUtils.showToast('Documents successfully reversed.', 'success');
+                searchData();
+                $('#selectAll').prop('checked', false);
+            })
+            .catch(e => {
+                console.error(e);
+                AppUtils.showToast('Error reversing documents', 'danger');
+            })
+            .finally(() => AppUtils.hideLoading());
     }
 }
 
@@ -279,8 +369,9 @@ function batchDelete() {
     if (ids.length === 0) { AppUtils.showToast('Please select at least one document', 'warning'); return; }
     
     var isValid = true;
-    mockData.forEach(function(d) {
-        if(ids.includes(d.id.toString()) && d.status === 'Released') isValid = false;
+    currentData.forEach(function(d) {
+        // usually delete allowed for HELD
+        if(ids.includes(d.id.toString()) && d.status.toUpperCase() === 'RELEASED') isValid = false;
     });
 
     if(!isValid) {
@@ -288,11 +379,19 @@ function batchDelete() {
         return;
     }
 
-    if (confirm('Confirm delete selected ' + ids.length + ' documents?')) {
-        mockData = mockData.filter(d => !ids.includes(d.id.toString()));
-        renderTable(mockData);
-        AppUtils.showToast('Documents removed.', 'success');
-        $('#selectAll').prop('checked', false);
+    if (confirm('Confirm delete selected ' + ids.length + ' document(s)?')) {
+        AppUtils.showLoading();
+        Promise.all(ids.map(id => ApiClient.delete('CONSIGNMENT', `/csdo/\${id}`)))
+            .then(() => {
+                AppUtils.showToast('Documents successfully removed.', 'success');
+                searchData();
+                $('#selectAll').prop('checked', false);
+            })
+            .catch(e => {
+                console.error(e);
+                AppUtils.showToast('Error deleting documents', 'danger');
+            })
+            .finally(() => AppUtils.hideLoading());
     }
 }
 
