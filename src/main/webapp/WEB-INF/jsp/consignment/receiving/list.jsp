@@ -225,7 +225,7 @@ async function loadData(page) {
     
     var params = getFilterParams();
     params.page = currentPage + 1; // API uses 1-based page
-    params.perPage = 20;
+    params.perPage = 10;
 
     try {
         var response = await ConsignmentService.searchCSRV(params);

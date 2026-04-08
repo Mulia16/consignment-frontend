@@ -172,6 +172,10 @@
                                 <button class="btn btn-outline-danger" onclick="batchDelete()"><i
                                         class="fas fa-trash"></i> Delete</button>
                             </div>
+                            <div>
+                                <small class="text-muted" id="totalInfo">Showing 0 of 0 records</small>
+                                <div id="paginationContainer"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -183,35 +187,43 @@
 
         <script>
             var tableData = [];
-
+            var currentPage = 0;
+            var perPage = 10;
+            
             document.addEventListener('configLoaded', function () {
                 ConsignmentMasterData.init();
                 $('#nav-consignment-stock-request').addClass('active');
                 $('#menu-outbound').addClass('active');
-                loadData();
+                loadData(0);
             });
-
-            async function loadData() {
+            
+            async function loadData(page) {
+                currentPage = page || 0;
                 AppUtils.showLoading();
                 try {
                     // Fallback to empty filter if none
                     let company = document.querySelector('[name="company"]').value || '';
                     let store = document.querySelector('[name="store"]').value || '';
                     let status = document.querySelector('[name="status"]').value || '';
-
+                    
                     let timestamp = new Date().getTime();
-                    let path = `/csrq?company=\${company}&store=\${store}&status=\${status}&_t=\${timestamp}`;
-
+                    let path = `/csrq?company=\${company}&store=\${store}&status=\${status}&page=\${currentPage + 1}&perPage=\${perPage}&_t=\${timestamp}`;
+                    
                     let result = await ApiClient.get('CONSIGNMENT', path);
-
+                    
+                    let data = [];
+                    let meta = result.meta || { page: 1, perPage: perPage, totalData: 0, totalPage: 1 };
+                    
                     if (result.data && Array.isArray(result.data)) {
-                        tableData = result.data;
+                        data = result.data;
                     } else if (Array.isArray(result)) {
-                        tableData = result;
+                        data = result;
                     } else {
-                        tableData = [result]; // if it returns single object inadvertently
+                        data = [result]; // if it returns single object inadvertently
                     }
-                    renderTable(tableData);
+                    
+                    tableData = data;
+                    renderTable(tableData, meta);
                 } catch (e) {
                     console.error('API Error, using mock data as fallback', e);
                     useMockData();
@@ -229,15 +241,17 @@
             }
 
             function searchData() {
-                loadData();
+                loadData(currentPage);
             }
 
-            function renderTable(data) {
+            function renderTable(data, meta) {
                 var tbody = $('#dataTableBody');
                 tbody.empty();
-
+                
                 if (!data || data.length === 0) {
                     tbody.append('<tr><td colspan="8" class="text-center py-4">No records found.</td></tr>');
+                    $('#totalInfo').text('Showing 0 of 0 records');
+                    $('#paginationContainer').empty();
                     return;
                 }
 
@@ -266,6 +280,18 @@
         </tr>`;
                     tbody.append(tr);
                 });
+                
+                // Update pagination info
+                var from = (meta.page - 1) * meta.perPage + 1;
+                var to = Math.min(meta.page * meta.perPage, meta.totalData);
+                $('#totalInfo').text('Showing ' + from + '-' + to + ' of ' + meta.totalData + ' records');
+                
+                // Build pagination
+                if (meta.totalPage > 1) {
+                    AppUtils.buildPagination('paginationContainer', currentPage, meta.totalPage, loadData);
+                } else {
+                    $('#paginationContainer').empty();
+                }
             }
 
             function toggleAll() {
@@ -313,7 +339,7 @@
                     AppUtils.hideLoading();
                     if (successCount > 0) {
                         AppUtils.showToast(successCount + ' Documents successfully released.', 'success');
-                        loadData();
+                        loadData(currentPage);
                     }
                     $('#selectAll').prop('checked', false);
                 }
@@ -351,7 +377,7 @@
                     AppUtils.hideLoading();
                     if (successCount > 0) {
                         AppUtils.showToast(successCount + ' Documents successfully deleted.', 'success');
-                        loadData();
+                        loadData(currentPage);
                     }
                     $('#selectAll').prop('checked', false);
                 }

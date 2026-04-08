@@ -161,6 +161,10 @@
                         <button class="btn btn-outline-secondary mr-2" onclick="batchPrint()"><i class="fas fa-print"></i> Print</button>
                         <button class="btn btn-outline-danger" onclick="batchDelete()"><i class="fas fa-trash"></i> Delete</button>
                     </div>
+                    <div>
+                        <small class="text-muted" id="totalInfo">Showing 0 of 0 records</small>
+                        <div id="paginationContainer"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -171,16 +175,19 @@
 <script src="/static/js/consignment-master-data.js"></script>
 
 <script>
-var currentData = [];
+var allData = [];
+var currentPage = 0;
+var perPage = 10;
 
 document.addEventListener('configLoaded', function() {
     ConsignmentMasterData.init();
-    searchData();
+    searchData(0);
     $('#nav-consignment-stockout').addClass('active');
     $('#menu-outbound').addClass('active');
 });
 
-async function searchData() {
+async function searchData(page) {
+    currentPage = page || 0;
     AppUtils.showLoading();
     var form = document.getElementById('filterForm');
     var formData = new FormData(form);
@@ -197,11 +204,16 @@ async function searchData() {
         }
     }
     
+    // Add pagination parameters
+    params.append('page', currentPage + 1);
+    params.append('perPage', perPage);
+    
     var qs = params.toString() ? '?' + params.toString() : '';
     
     try {
         var res = await ApiClient.get('CONSIGNMENT', '/cso' + qs);
         var data = [];
+        var meta = res.meta || { page: 1, perPage: perPage, totalData: 0, totalPage: 1 };
         // The mock ApiClient might return data inside .data or just directly an array or object
         // Based on Postman, the API returns {"items": [...]} or something, wait no, Search CSO doesn't have response example for list. 
         // Postman only shows Get CSO by ID. Let's assume response.data is the list or the response is a list.
@@ -214,7 +226,7 @@ async function searchData() {
         }
         
         // Map API response to table fields if necessary
-        currentData = data.map(item => ({
+        allData = data.map(item => ({
             id: item.id || item.docNo,
             date: item.createdAt ? item.createdAt.substring(0, 10) : '-',
             store: item.store || '-',
@@ -224,22 +236,24 @@ async function searchData() {
             createdBy: item.createdBy || '-',
             status: item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1).toLowerCase() : 'Held'
         }));
-        renderTable(currentData);
+        renderTable(allData, meta);
     } catch (e) {
         console.error(e);
         AppUtils.showToast('Failed to load data', 'danger');
-        renderTable([]);
+        renderTable([], { page: 1, perPage: perPage, totalData: 0, totalPage: 1 });
     } finally {
         AppUtils.hideLoading();
     }
 }
 
-function renderTable(data) {
+function renderTable(data, meta) {
     var tbody = $('#dataTableBody');
     tbody.empty();
     
     if (data.length === 0) {
         tbody.append('<tr><td colspan="8" class="text-center py-4">No records found.</td></tr>');
+        $('#totalInfo').text('Showing 0 of 0 records');
+        $('#paginationContainer').empty();
         return;
     }
     
@@ -270,6 +284,18 @@ function renderTable(data) {
         </tr>`;
         tbody.append(tr);
     });
+    
+    // Update pagination info
+    var from = (meta.page - 1) * meta.perPage + 1;
+    var to = Math.min(meta.page * meta.perPage, meta.totalData);
+    $('#totalInfo').text('Showing ' + from + '-' + to + ' of ' + meta.totalData + ' records');
+    
+    // Build pagination
+    if (meta.totalPage > 1) {
+        AppUtils.buildPagination('paginationContainer', currentPage, meta.totalPage, searchData);
+    } else {
+        $('#paginationContainer').empty();
+    }
 }
 
 function toggleAll() {
@@ -291,7 +317,7 @@ function batchRelease() {
     
     // Check if any selected is already Released or Error
     var isValid = true;
-    currentData.forEach(function(d) {
+    allData.forEach(function(d) {
         if(ids.includes(d.id.toString()) && d.status.toUpperCase() !== 'HELD') {
             isValid = false;
         }
@@ -308,7 +334,7 @@ function batchRelease() {
         Promise.all(ids.map(id => ApiClient.put('CONSIGNMENT', `/cso/${id}/release`)))
             .then(() => {
                 AppUtils.showToast('Documents successfully released.', 'success');
-                searchData(); // Refresh list
+                searchData(currentPage); // Refresh list
                 $('#selectAll').prop('checked', false);
             })
             .catch(e => {
@@ -325,7 +351,7 @@ function batchDelete() {
     
     // According to reqs: Only allow delete for "Held" or "Error" status document
     var isValid = true;
-    currentData.forEach(function(d) {
+    allData.forEach(function(d) {
         if(ids.includes(d.id.toString()) && d.status.toUpperCase() === 'RELEASED') {
             isValid = false;
         }
@@ -342,7 +368,7 @@ function batchDelete() {
         Promise.all(ids.map(id => ApiClient.delete('CONSIGNMENT', `/cso/${id}`)))
             .then(() => {
                 AppUtils.showToast('Documents successfully deleted.', 'success');
-                searchData();
+                searchData(currentPage);
                 $('#selectAll').prop('checked', false);
             })
             .catch(e => {

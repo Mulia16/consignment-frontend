@@ -72,7 +72,7 @@ document.addEventListener('configLoaded', function() {
 async function loadData(page) {
     currentPage = page || 0;
     try {
-        var data = await ApiClient.get('SETTLEMENT', '/settlements?page=' + currentPage + '&size=15');
+        var data = await ApiClient.get('SETTLEMENT', '/settlements?page=' + currentPage + '&perPage=10');
         if (data && data.data) {
             var items = data.data.content || [];
             AppUtils.buildTable('settlementTable', [

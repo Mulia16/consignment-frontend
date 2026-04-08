@@ -28,11 +28,19 @@
                 </tbody>
             </table>
         </div>
+        <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+            <small class="text-muted" id="totalInfo">Showing 0 of 0 records</small>
+            <div id="paginationContainer"></div>
+        </div>
     </div>
 </main>
 
 <jsp:include page="../common/footer.jsp"/>
 <script>
+var currentPage = 0;
+var perPage = 10;
+var allData = [];
+
 document.addEventListener('configLoaded', function() {
     if (!Auth.requireAuth()) return;
     loadData();
@@ -41,15 +49,36 @@ document.addEventListener('configLoaded', function() {
 async function loadData() {
     try {
         var response = await ApiClient.get('CONSIGNMENT', '/master-data/companies');
-        var data = response.data || response || [];
-        renderTable(data);
+        allData = response.data || response || [];
+        renderPage(0);
     } catch (e) {
         $('#companiesTable tbody').html('<tr><td colspan="3" class="text-center text-muted py-4">Failed to load data</td></tr>');
         console.error('Failed to load companies:', e);
     }
 }
 
-function renderTable(items) {
+function renderPage(page) {
+    currentPage = page;
+    var totalRecords = allData.length;
+    var totalPages = Math.ceil(totalRecords / perPage);
+    var startIdx = page * perPage;
+    var endIdx = Math.min(startIdx + perPage, totalRecords);
+    var pageData = allData.slice(startIdx, endIdx);
+    
+    renderTable(pageData, startIdx);
+    
+    var from = totalRecords > 0 ? startIdx + 1 : 0;
+    var to = endIdx;
+    $('#totalInfo').text('Showing ' + from + '-' + to + ' of ' + totalRecords + ' records');
+    
+    if (totalPages > 1) {
+        AppUtils.buildPagination('paginationContainer', currentPage, totalPages, renderPage);
+    } else {
+        $('#paginationContainer').empty();
+    }
+}
+
+function renderTable(items, startIdx) {
     if (!items || items.length === 0) {
         $('#companiesTable tbody').html('<tr><td colspan="3" class="text-center text-muted py-4">No data available</td></tr>');
         return;
@@ -58,7 +87,7 @@ function renderTable(items) {
     var html = '';
     items.forEach(function(item, index) {
         html += '<tr>' +
-            '<td>' + (index + 1) + '</td>' +
+            '<td>' + (startIdx + index + 1) + '</td>' +
             '<td><span class="font-weight-semibold">' + item + '</span></td>' +
             '<td class="text-center">' +
                 '<button class="btn btn-sm btn-outline-info btn-action" title="View Stores" onclick="viewStores(\'' + item + '\')">' +

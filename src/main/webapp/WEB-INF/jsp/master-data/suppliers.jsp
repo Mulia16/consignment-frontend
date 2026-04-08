@@ -45,14 +45,24 @@
                 </thead>
                 <tbody>
                     <tr><td colspan="5" class="text-center py-4 text-muted">Select filters to load suppliers</td></tr>
-                </table>
+                </tbody>
+            </table>
         </div>
-        <div class="card-footer bg-white"></div>
+        <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+            <small class="text-muted" id="totalInfo">Showing 0 of 0 records</small>
+            <div id="paginationContainer"></div>
+        </div>
     </div>
 </main>
 
 <jsp:include page="../common/footer.jsp"/>
 <script>
+var currentPage = 0;
+var perPage = 10;
+var allData = [];
+var currentCompany = '';
+var currentStore = '';
+
 document.addEventListener('configLoaded', function() {
     if (!Auth.requireAuth()) return;
     initFilters();
@@ -76,9 +86,13 @@ async function initFilters() {
         var storeParam = urlParams.get('store');
         if (companyParam) {
             $('#filterCompany').val(companyParam);
+            onCompanyChange();
         }
         
-        loadData();
+        if (storeParam) {
+            $('#filterStore').val(storeParam);
+            loadData();
+        }
     } catch (e) {
         console.error('Failed to load companies:', e);
         loadData();
@@ -106,53 +120,80 @@ async function onCompanyChange() {
 }
 
 async function loadData() {
-    var company = $('#filterCompany').val();
-    var store = $('#filterStore').val();
+    currentCompany = $('#filterCompany').val();
+    currentStore = $('#filterStore').val();
     
-    if (!company || !store) {
+    if (!currentCompany || !currentStore) {
         $('#suppliersTable tbody').html('<tr><td colspan="5" class="text-center py-4 text-muted">Please select Company and Store</td></tr>');
+        $('#totalInfo').text('Showing 0 of 0 records');
+        $('#paginationContainer').empty();
         return;
     }
     
     try {
-        var url = '/master-data/suppliers?company=' + encodeURIComponent(company) + '&store=' + encodeURIComponent(store);
+        var url = '/master-data/suppliers?company=' + encodeURIComponent(currentCompany) + '&store=' + encodeURIComponent(currentStore);
         var response = await ApiClient.get('CONSIGNMENT', url);
-        var data = response.data || response || [];
-        renderTable(data, company, store);
+        allData = response.data || response || [];
+        renderPage(0);
     } catch (e) {
         $('#suppliersTable tbody').html('<tr><td colspan="5" class="text-center text-muted py-4">Failed to load data</td></tr>');
         console.error('Failed to load suppliers:', e);
     }
 }
 
+function renderPage(page) {
+    currentPage = page;
+    var totalRecords = allData.length;
+    var totalPages = Math.ceil(totalRecords / perPage);
+    var startIdx = page * perPage;
+    var endIdx = Math.min(startIdx + perPage, totalRecords);
+    var pageData = allData.slice(startIdx, endIdx);
+    
+    renderTable(pageData, currentCompany, currentStore, startIdx);
+    
+    var from = totalRecords > 0 ? startIdx + 1 : 0;
+    var to = endIdx;
+    $('#totalInfo').text('Showing ' + from + '-' + to + ' of ' + totalRecords + ' records');
+    
+    if (totalPages > 1) {
+        AppUtils.buildPagination('paginationContainer', currentPage, totalPages, renderPage);
+    } else {
+        $('#paginationContainer').empty();
+    }
 }
 
- function renderTable(items, company, store) {
+function renderTable(items, company, store, startIdx) {
     if (!items || items.length === 0) {
         $('#suppliersTable tbody').html('<tr><td colspan="5" class="text-center text-muted py-4">No data available</td></tr>');
         return;
     }
     
     var html = '';
-            items.forEach(function(item, index) {
-                html += '<tr>' +
-                    '<td>' + (index + 1) + '</td>' +
-                    '<td><span class="font-weight-semibold">' + item + '</span></td>' +
-                    '<td>' + company+ '</td>' +
-                    '<td>' + store+ '</td>' +
-                    '<td class="text-center">' +
-                        '<button class="btn btn-sm btn-outline-info btn-action" title="View Contracts" onclick="viewContracts(\'' + company + '\', \'' + store + '\')">' +
-                            window.location.href = '/master-data/contracts?company=' + encodeURIComponent(company) + '&store=' + encodeURIComponent(store);
-                                + '&supplierCode=' + encodeURIComponent(supplierCode);
-                            });
-                        });
-                    }
-                </script>
-            });
-        }
-    }
-</main>
+    items.forEach(function(item, index) {
+        html += '<tr>' +
+            '<td>' + (startIdx + index + 1) + '</td>' +
+            '<td><span class="font-weight-semibold">' + item + '</span></td>' +
+            '<td>' + company + '</td>' +
+            '<td>' + store + '</td>' +
+            '<td class="text-center">' +
+                '<button class="btn btn-sm btn-outline-info btn-action" title="View Contracts" onclick="viewContracts(\'' + company + '\', \'' + store + '\', \'' + item + '\')">' +
+                    '<i class="fas fa-file-contract"></i>' +
+                '</button>' +
+            '</td>' +
+        '</tr>';
+    });
+    $('#suppliersTable tbody').html(html);
+}
 
-<jsp:include page="../common/footer.jsp"/>
-</body>
-</html>
+function viewContracts(company, store, supplierCode) {
+    window.location.href = '/master-data/contracts?company=' + encodeURIComponent(company) + '&store=' + encodeURIComponent(store) + '&supplierCode=' + encodeURIComponent(supplierCode);
+}
+
+function resetFilters() {
+    $('#filterCompany').val('');
+    $('#filterStore').val('').prop('disabled', true);
+    $('#suppliersTable tbody').html('<tr><td colspan="5" class="text-center py-4 text-muted">Select filters to load suppliers</td></tr>');
+    $('#totalInfo').text('Showing 0 of 0 records');
+    $('#paginationContainer').empty();
+}
+</script>

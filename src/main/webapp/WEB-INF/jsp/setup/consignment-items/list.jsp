@@ -83,7 +83,7 @@ async function loadItems(page) {
         var keyword = $('#searchInput').val();
         var params = {
             page: currentPage + 1,  // API uses 1-based pagination
-            perPage: 12
+            perPage: 10
         };
         
         // Add search filter if keyword exists

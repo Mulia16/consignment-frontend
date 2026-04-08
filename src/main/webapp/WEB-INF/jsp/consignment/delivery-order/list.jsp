@@ -172,6 +172,10 @@
                         <button class="btn btn-outline-secondary mr-2" onclick="batchPrint()"><i class="fas fa-print"></i> Print</button>
                         <button class="btn btn-outline-danger" onclick="batchDelete()"><i class="fas fa-trash"></i> Delete</button>
                     </div>
+                    <div>
+                        <small class="text-muted" id="totalInfo">Showing 0 of 0 records</small>
+                        <div id="paginationContainer"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -184,15 +188,18 @@
 
 <script>
 var currentData = [];
+var currentPage = 0;
+var perPage = 10;
 
 document.addEventListener('configLoaded', function() {
     ConsignmentMasterData.init();
-    searchData();
+    searchData(0);
     $('#nav-consignment-delivery-order').addClass('active');
     $('#menu-outbound').addClass('active');
 });
 
-async function searchData() {
+async function searchData(page) {
+    currentPage = page || 0;
     AppUtils.showLoading();
     var form = document.getElementById('filterForm');
     var formData = new FormData(form);
@@ -207,11 +214,17 @@ async function searchData() {
         }
     }
     
+    // Add pagination parameters
+    params.append('page', currentPage + 1);
+    params.append('perPage', perPage);
+    
     var qs = params.toString() ? '?' + params.toString() : '';
     
     try {
         var res = await ApiClient.get('CONSIGNMENT', '/csdo' + qs);
         var data = [];
+        var meta = res.meta || { page: 1, perPage: perPage, totalData: 0, totalPage: 1 };
+        
         if (res.data && Array.isArray(res.data)) {
             data = res.data;
         } else if (res.items && Array.isArray(res.items)) {
@@ -235,22 +248,24 @@ async function searchData() {
             createdBy: item.createdBy || '-',
             status: item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1).toLowerCase() : 'Held'
         }));
-        renderTable(currentData);
+        renderTable(currentData, meta);
     } catch (e) {
         console.error(e);
         AppUtils.showToast('Failed to load data', 'danger');
-        renderTable([]);
+        renderTable([], { page: 1, perPage: perPage, totalData: 0, totalPage: 1 });
     } finally {
         AppUtils.hideLoading();
     }
 }
 
-function renderTable(data) {
+function renderTable(data, meta) {
     var tbody = $('#dataTableBody');
     tbody.empty();
     
     if (data.length === 0) {
         tbody.append('<tr><td colspan="11" class="text-center py-4">No records found.</td></tr>');
+        $('#totalInfo').text('Showing 0 of 0 records');
+        $('#paginationContainer').empty();
         return;
     }
     
@@ -284,6 +299,18 @@ function renderTable(data) {
         </tr>`;
         tbody.append(tr);
     });
+    
+    // Update pagination info
+    var from = (meta.page - 1) * meta.perPage + 1;
+    var to = Math.min(meta.page * meta.perPage, meta.totalData);
+    $('#totalInfo').text('Showing ' + from + '-' + to + ' of ' + meta.totalData + ' records');
+    
+    // Build pagination
+    if (meta.totalPage > 1) {
+        AppUtils.buildPagination('paginationContainer', currentPage, meta.totalPage, searchData);
+    } else {
+        $('#paginationContainer').empty();
+    }
 }
 
 function toggleAll() {

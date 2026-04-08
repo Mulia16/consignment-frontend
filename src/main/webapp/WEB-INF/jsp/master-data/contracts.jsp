@@ -55,11 +55,22 @@
                 </tbody>
             </table>
         </div>
+        <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+            <small class="text-muted" id="totalInfo">Showing 0 of 0 records</small>
+            <div id="paginationContainer"></div>
+        </div>
     </div>
 </main>
 
 <jsp:include page="../common/footer.jsp"/>
 <script>
+var currentPage = 0;
+var perPage = 10;
+var allData = [];
+var currentCompany = '';
+var currentStore = '';
+var currentSupplier = '';
+
 document.addEventListener('configLoaded', function() {
     if (!Auth.requireAuth()) return;
     initFilters();
@@ -105,6 +116,8 @@ async function onCompanyChange() {
     $('#filterStore').html('<option value="">Select Store</option>').prop('disabled', !company);
     $('#filterSupplier').html('<option value="">Select Supplier</option>').prop('disabled', true);
     $('#contractsTable tbody').html('<tr><td colspan="6" class="text-center py-4 text-muted">Select Store</td></tr>');
+    $('#totalInfo').text('Showing 0 of 0 records');
+    $('#paginationContainer').empty();
     
     if (company) {
         try {
@@ -127,6 +140,8 @@ async function onStoreChange() {
     var store = $('#filterStore').val();
     $('#filterSupplier').html('<option value="">Select Supplier</option>').prop('disabled', !store);
     $('#contractsTable tbody').html('<tr><td colspan="6" class="text-center py-4 text-muted">Select Supplier</td></tr>');
+    $('#totalInfo').text('Showing 0 of 0 records');
+    $('#paginationContainer').empty();
     
     if (company && store) {
         try {
@@ -145,29 +160,52 @@ async function onStoreChange() {
 }
 
 async function loadData() {
-    var company = $('#filterCompany').val();
-    var store = $('#filterStore').val();
-    var supplier = $('#filterSupplier').val();
+    currentCompany = $('#filterCompany').val();
+    currentStore = $('#filterStore').val();
+    currentSupplier = $('#filterSupplier').val();
     
-    if (!company || !store || !supplier) {
+    if (!currentCompany || !currentStore || !currentSupplier) {
         $('#contractsTable tbody').html('<tr><td colspan="6" class="text-center py-4 text-muted">Please select all filters</td></tr>');
+        $('#totalInfo').text('Showing 0 of 0 records');
+        $('#paginationContainer').empty();
         return;
     }
     
     try {
-        var url = '/master-data/contracts?company=' + encodeURIComponent(company) + 
-                  '&store=' + encodeURIComponent(store) + 
-                  '&supplierCode=' + encodeURIComponent(supplier);
+        var url = '/master-data/contracts?company=' + encodeURIComponent(currentCompany) + 
+                  '&store=' + encodeURIComponent(currentStore) + 
+                  '&supplierCode=' + encodeURIComponent(currentSupplier);
         var response = await ApiClient.get('CONSIGNMENT', url);
-        var data = response.data || response || [];
-        renderTable(data, company, store, supplier);
+        allData = response.data || response || [];
+        renderPage(0);
     } catch (e) {
         $('#contractsTable tbody').html('<tr><td colspan="6" class="text-center text-muted py-4">Failed to load data</td></tr>');
         console.error('Failed to load contracts:', e);
     }
 }
 
-function renderTable(items, company, store, supplier) {
+function renderPage(page) {
+    currentPage = page;
+    var totalRecords = allData.length;
+    var totalPages = Math.ceil(totalRecords / perPage);
+    var startIdx = page * perPage;
+    var endIdx = Math.min(startIdx + perPage, totalRecords);
+    var pageData = allData.slice(startIdx, endIdx);
+    
+    renderTable(pageData, currentCompany, currentStore, currentSupplier, startIdx);
+    
+    var from = totalRecords > 0 ? startIdx + 1 : 0;
+    var to = endIdx;
+    $('#totalInfo').text('Showing ' + from + '-' + to + ' of ' + totalRecords + ' records');
+    
+    if (totalPages > 1) {
+        AppUtils.buildPagination('paginationContainer', currentPage, totalPages, renderPage);
+    } else {
+        $('#paginationContainer').empty();
+    }
+}
+
+function renderTable(items, company, store, supplier, startIdx) {
     if (!items || items.length === 0) {
         $('#contractsTable tbody').html('<tr><td colspan="6" class="text-center text-muted py-4">No data available</td></tr>');
         return;
@@ -176,7 +214,7 @@ function renderTable(items, company, store, supplier) {
     var html = '';
     items.forEach(function(item, index) {
         html += '<tr>' +
-            '<td>' + (index + 1) + '</td>' +
+            '<td>' + (startIdx + index + 1) + '</td>' +
             '<td><span class="font-weight-semibold text-primary">' + item + '</span></td>' +
             '<td>' + company + '</td>' +
             '<td>' + store + '</td>' +
@@ -203,5 +241,7 @@ function resetFilters() {
     $('#filterStore').html('<option value="">Select Store</option>').prop('disabled', true);
     $('#filterSupplier').html('<option value="">Select Supplier</option>').prop('disabled', true);
     $('#contractsTable tbody').html('<tr><td colspan="6" class="text-center py-4 text-muted">Select filters to load contracts</td></tr>');
+    $('#totalInfo').text('Showing 0 of 0 records');
+    $('#paginationContainer').empty();
 }
 </script>

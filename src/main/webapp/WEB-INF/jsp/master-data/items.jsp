@@ -61,11 +61,23 @@
                 </tbody>
             </table>
         </div>
+        <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+            <small class="text-muted" id="totalInfo">Showing 0 of 0 records</small>
+            <div id="paginationContainer"></div>
+        </div>
     </div>
 </main>
 
 <jsp:include page="../common/footer.jsp"/>
 <script>
+var currentPage = 0;
+var perPage = 10;
+var allData = [];
+var currentCompany = '';
+var currentStore = '';
+var currentSupplier = '';
+var currentContract = '';
+
 document.addEventListener('configLoaded', function() {
     if (!Auth.requireAuth()) return;
     initFilters();
@@ -117,6 +129,8 @@ async function onCompanyChange() {
     $('#filterSupplier').html('<option value="">Select Supplier</option>').prop('disabled', true);
     $('#filterContract').html('<option value="">Select Contract</option>').prop('disabled', true);
     $('#itemsTable tbody').html('<tr><td colspan="6" class="text-center py-4 text-muted">Select Store</td></tr>');
+    $('#totalInfo').text('Showing 0 of 0 records');
+    $('#paginationContainer').empty();
     
     if (company) {
         try {
@@ -140,6 +154,8 @@ async function onStoreChange() {
     $('#filterSupplier').html('<option value="">Select Supplier</option>').prop('disabled', !store);
     $('#filterContract').html('<option value="">Select Contract</option>').prop('disabled', true);
     $('#itemsTable tbody').html('<tr><td colspan="6" class="text-center py-4 text-muted">Select Supplier</td></tr>');
+    $('#totalInfo').text('Showing 0 of 0 records');
+    $('#paginationContainer').empty();
     
     if (company && store) {
         try {
@@ -163,6 +179,8 @@ async function onSupplierChange() {
     var supplier = $('#filterSupplier').val();
     $('#filterContract').html('<option value="">Select Contract</option>').prop('disabled', !supplier);
     $('#itemsTable tbody').html('<tr><td colspan="6" class="text-center py-4 text-muted">Select Contract</td></tr>');
+    $('#totalInfo').text('Showing 0 of 0 records');
+    $('#paginationContainer').empty();
     
     if (company && store && supplier) {
         try {
@@ -181,31 +199,54 @@ async function onSupplierChange() {
 }
 
 async function loadData() {
-    var company = $('#filterCompany').val();
-    var store = $('#filterStore').val();
-    var supplier = $('#filterSupplier').val();
-    var contract = $('#filterContract').val();
+    currentCompany = $('#filterCompany').val();
+    currentStore = $('#filterStore').val();
+    currentSupplier = $('#filterSupplier').val();
+    currentContract = $('#filterContract').val();
     
-    if (!company || !store || !supplier || !contract) {
+    if (!currentCompany || !currentStore || !currentSupplier || !currentContract) {
         $('#itemsTable tbody').html('<tr><td colspan="6" class="text-center py-4 text-muted">Please select all filters</td></tr>');
+        $('#totalInfo').text('Showing 0 of 0 records');
+        $('#paginationContainer').empty();
         return;
     }
     
     try {
-        var url = '/master-data/items?company=' + encodeURIComponent(company) + 
-                  '&store=' + encodeURIComponent(store) + 
-                  '&supplierCode=' + encodeURIComponent(supplier) +
-                  '&supplierContract=' + encodeURIComponent(contract);
+        var url = '/master-data/items?company=' + encodeURIComponent(currentCompany) + 
+                  '&store=' + encodeURIComponent(currentStore) + 
+                  '&supplierCode=' + encodeURIComponent(currentSupplier) +
+                  '&supplierContract=' + encodeURIComponent(currentContract);
         var response = await ApiClient.get('CONSIGNMENT', url);
-        var data = response.data || response || [];
-        renderTable(data, company, store, supplier, contract);
+        allData = response.data || response || [];
+        renderPage(0);
     } catch (e) {
         $('#itemsTable tbody').html('<tr><td colspan="6" class="text-center text-muted py-4">Failed to load data</td></tr>');
         console.error('Failed to load items:', e);
     }
 }
 
-function renderTable(items, company, store, supplier, contract) {
+function renderPage(page) {
+    currentPage = page;
+    var totalRecords = allData.length;
+    var totalPages = Math.ceil(totalRecords / perPage);
+    var startIdx = page * perPage;
+    var endIdx = Math.min(startIdx + perPage, totalRecords);
+    var pageData = allData.slice(startIdx, endIdx);
+    
+    renderTable(pageData, currentCompany, currentStore, currentSupplier, currentContract, startIdx);
+    
+    var from = totalRecords > 0 ? startIdx + 1 : 0;
+    var to = endIdx;
+    $('#totalInfo').text('Showing ' + from + '-' + to + ' of ' + totalRecords + ' records');
+    
+    if (totalPages > 1) {
+        AppUtils.buildPagination('paginationContainer', currentPage, totalPages, renderPage);
+    } else {
+        $('#paginationContainer').empty();
+    }
+}
+
+function renderTable(items, company, store, supplier, contract, startIdx) {
     if (!items || items.length === 0) {
         $('#itemsTable tbody').html('<tr><td colspan="6" class="text-center text-muted py-4">No data available</td></tr>');
         return;
@@ -214,7 +255,7 @@ function renderTable(items, company, store, supplier, contract) {
     var html = '';
     items.forEach(function(item, index) {
         html += '<tr>' +
-            '<td>' + (index + 1) + '</td>' +
+            '<td>' + (startIdx + index + 1) + '</td>' +
             '<td><span class="font-weight-semibold text-primary">' + item + '</span></td>' +
             '<td>' + company + '</td>' +
             '<td>' + store + '</td>' +
@@ -231,5 +272,7 @@ function resetFilters() {
     $('#filterSupplier').html('<option value="">Select Supplier</option>').prop('disabled', true);
     $('#filterContract').html('<option value="">Select Contract</option>').prop('disabled', true);
     $('#itemsTable tbody').html('<tr><td colspan="6" class="text-center py-4 text-muted">Select filters to load items</td></tr>');
+    $('#totalInfo').text('Showing 0 of 0 records');
+    $('#paginationContainer').empty();
 }
 </script>

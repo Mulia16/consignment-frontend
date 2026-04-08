@@ -7,109 +7,88 @@
         </div>
 
         <ul class="sidebar-menu">
-            <!-- Dashboard -->
+            <!-- Consignment -->
+            <li class="menu-header">Consignment</li>
             <li>
-                <a href="/dashboard" id="nav-dashboard">
-                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                <a href="/consignment/receiving" id="nav-consignment-receiving">
+                    <i class="fas fa-box-open"></i> Receiving
+                </a>
+            </li>
+            <li>
+                <a href="/consignment/stock-out" id="nav-consignment-stockout">
+                    <i class="fas fa-box"></i> Stock Out
+                </a>
+            </li>
+            <li>
+                <a href="/consignment/stock-request" id="nav-consignment-stock-request">
+                    <i class="fas fa-clipboard-list"></i> Stock Request
+                </a>
+            </li>
+            <li>
+                <a href="/consignment/delivery-order" id="nav-consignment-delivery-order">
+                    <i class="fas fa-truck-loading"></i> Delivery Order
                 </a>
             </li>
 
-            <!-- Master Data & Setup -->
-            <li class="menu-header">Master & Setup</li>
-            <li class="has-submenu" id="menu-master">
-                <a href="#"><i class="fas fa-database"></i> Master Data</a>
-                <ul class="submenu">
-                    <li><a href="/master-data/companies" id="nav-companies"><i class="fas fa-building"></i> Companies</a></li>
-                    <li><a href="/master-data/stores" id="nav-stores"><i class="fas fa-store"></i> Stores</a></li>
-                    <li><a href="/master-data/suppliers" id="nav-suppliers"><i class="fas fa-truck"></i> Suppliers</a></li>
-                    <li><a href="/master-data/contracts" id="nav-contracts"><i class="fas fa-file-contract"></i> Contracts</a></li>
-                    <li><a href="/master-data/items" id="nav-items"><i class="fas fa-boxes"></i> Items</a></li>
-                </ul>
-            </li>
-            <li class="has-submenu" id="menu-setup">
-                <a href="#"><i class="fas fa-cogs"></i> Setup</a>
-                <ul class="submenu">
-                    <li><a href="/setup/system-config" id="nav-system-config"><i class="fas fa-sliders-h"></i> System
-                            Config</a></li>
-                    <li><a href="/setup/reference-data" id="nav-reference-data"><i class="fas fa-tags"></i> Reference
-                            Data</a></li>
-                    <li><a href="/setup/consignment-items" id="nav-consignment-items"><i class="fas fa-boxes"></i> Items
-                            Supplier Setup</a></li>
-                </ul>
-            </li>
-
-            <!-- Transaction -->
-            <li class="menu-header">Transaction</li>
-            <li class="has-submenu" id="menu-inventory">
-                <a href="#"><i class="fas fa-cubes"></i> Inventory</a>
-                <ul class="submenu">
-                    <li><a href="/inventory/stock" id="nav-stock"><i class="fas fa-layer-group"></i> Stock Balance</a>
-                    </li>
-                    <li><a href="/inventory/movement" id="nav-movement"><i class="fas fa-exchange-alt"></i> Stock
-                            Movement</a></li>
-                </ul>
-            </li>
-            <li class="has-submenu" id="menu-inbound">
-                <a href="#"><i class="fas fa-sign-in-alt"></i> Inboundss</a>
-                <ul class="submenu">
-                    <li><a href="/inbound/purchase-orders" id="nav-po"><i class="fas fa-file-invoice"></i> Purchase
-                            Orders</a></li>
-                    <li><a href="/inbound/goods-receipt" id="nav-gr"><i class="fas fa-clipboard-check"></i> Goods
-                            Receipt</a></li>
-                    <li><a href="/consignment/receiving" id="nav-consignment-receiving"><i class="fas fa-box-open"></i>
-                            Consignment Receiving</a></li>
-                </ul>
-            </li>
-            <li class="has-submenu" id="menu-outbound">
-                <a href="#"><i class="fas fa-sign-out-alt"></i> Outbound</a>
-                <ul class="submenu">
-                    <li><a href="/outbound/sales-orders" id="nav-so"><i class="fas fa-file-invoice-dollar"></i> Sales
-                            Orders</a></li>
-                    <li><a href="/consignment/stock-out" id="nav-consignment-stockout"><i class="fas fa-box"></i>
-                            Consignment Stock Out</a></li>
-                    <li><a href="/consignment/stock-request" id="nav-consignment-stock-request"><i class="fas fa-clipboard-list"></i>
-                            Consignment Stock Request</a></li>
-                    <li><a href="/consignment/delivery-order" id="nav-consignment-delivery-order"><i
-                                class="fas fa-truck-loading"></i> Consignment Delivery Order</a></li>
-                </ul>
-            </li>
-            <li class="has-submenu" id="menu-returns">
-                <a href="#"><i class="fas fa-undo-alt"></i> Returns & Adj</a>
-                <ul class="submenu">
-                    <li><a href="/returns/return-orders" id="nav-returns"><i class="fas fa-reply"></i> Return Orders</a>
-                    </li>
-                    <li><a href="/returns/adjustments" id="nav-adj"><i class="fas fa-balance-scale"></i> Adjustments</a>
-                    </li>
-                </ul>
+            <!-- Master Data -->
+            <li class="menu-header">Master Data</li>
+            <li>
+                <a href="/master-data/companies" id="nav-companies">
+                    <i class="fas fa-building"></i> Companies
+                </a>
             </li>
             <li>
-                <a href="/pos/transactions" id="nav-pos">
-                    <i class="fas fa-cash-register"></i> POS Sales
+                <a href="/master-data/stores" id="nav-stores">
+                    <i class="fas fa-store"></i> Stores
+                </a>
+            </li>
+            <li>
+                <a href="/master-data/suppliers" id="nav-suppliers">
+                    <i class="fas fa-truck"></i> Suppliers
+                </a>
+            </li>
+            <li>
+                <a href="/master-data/contracts" id="nav-contracts">
+                    <i class="fas fa-file-contract"></i> Contracts
+                </a>
+            </li>
+            <li>
+                <a href="/master-data/items" id="nav-items">
+                    <i class="fas fa-boxes"></i> Items
                 </a>
             </li>
 
-            <!-- Settlement & Report -->
-            <li class="menu-header">Settlement & Report</li>
-            <li class="has-submenu" id="menu-settlement">
-                <a href="#"><i class="fas fa-handshake"></i> Settlement</a>
-                <ul class="submenu">
-                    <li><a href="/settlement/list" id="nav-settlement"><i class="fas fa-file-contract"></i> Settlement
-                            List</a></li>
-                    <li><a href="/settlement/payments" id="nav-payments"><i class="fas fa-money-check-alt"></i>
-                            Payments</a></li>
-                </ul>
+            <!-- Setup -->
+            <li class="menu-header">Setup</li>
+            <li>
+                <a href="/setup/system-config" id="nav-system-config">
+                    <i class="fas fa-sliders-h"></i> System Config
+                </a>
             </li>
+            <li>
+                <a href="/setup/reference-data" id="nav-reference-data">
+                    <i class="fas fa-tags"></i> Reference Data
+                </a>
+            </li>
+            <li>
+                <a href="/setup/consignment-items" id="nav-consignment-items">
+                    <i class="fas fa-boxes"></i> Items Supplier Setup
+                </a>
+            </li>
+
+            <!-- Report -->
+            <li class="menu-header">Report</li>
             <li>
                 <a href="/reports" id="nav-reports">
                     <i class="fas fa-chart-bar"></i> Reports
                 </a>
             </li>
 
-            <!-- System -->
+            <!-- Audit -->
             <li class="menu-header">System</li>
             <li>
                 <a href="/audit/logs" id="nav-audit">
-                    <i class="fas fa-history"></i> Audit & Trace Log
+                    <i class="fas fa-history"></i> Audit Log
                 </a>
             </li>
         </ul>
