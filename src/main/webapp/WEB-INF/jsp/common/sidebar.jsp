@@ -19,11 +19,11 @@
             <li class="has-submenu" id="menu-master">
                 <a href="#"><i class="fas fa-database"></i> Master Data</a>
                 <ul class="submenu">
-                    <li><a href="/master-data/products" id="nav-products"><i class="fas fa-boxes"></i> Products</a></li>
-                    <li><a href="/master-data/suppliers" id="nav-suppliers"><i class="fas fa-truck"></i> Suppliers</a>
-                    </li>
-                    <li><a href="/master-data/warehouses" id="nav-warehouses"><i class="fas fa-warehouse"></i>
-                            Warehouses</a></li>
+                    <li><a href="/master-data/companies" id="nav-companies"><i class="fas fa-building"></i> Companies</a></li>
+                    <li><a href="/master-data/stores" id="nav-stores"><i class="fas fa-store"></i> Stores</a></li>
+                    <li><a href="/master-data/suppliers" id="nav-suppliers"><i class="fas fa-truck"></i> Suppliers</a></li>
+                    <li><a href="/master-data/contracts" id="nav-contracts"><i class="fas fa-file-contract"></i> Contracts</a></li>
+                    <li><a href="/master-data/items" id="nav-items"><i class="fas fa-boxes"></i> Items</a></li>
                 </ul>
             </li>
             <li class="has-submenu" id="menu-setup">

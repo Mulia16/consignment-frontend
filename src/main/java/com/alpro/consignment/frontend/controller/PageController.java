@@ -23,10 +23,15 @@ public class PageController {
         return "dashboard";
     }
 
-    // ─── Master Data ────────────────────────────────────────
-    @GetMapping("/master-data/products")
-    public String products() {
-        return "master-data/products";
+    // ─── Master Data (based on API collection - 00 Master Data) ────────────────────────────────────────
+    @GetMapping("/master-data/companies")
+    public String companies() {
+        return "master-data/companies";
+    }
+
+    @GetMapping("/master-data/stores")
+    public String stores() {
+        return "master-data/stores";
     }
 
     @GetMapping("/master-data/suppliers")
@@ -34,9 +39,14 @@ public class PageController {
         return "master-data/suppliers";
     }
 
-    @GetMapping("/master-data/warehouses")
-    public String warehouses() {
-        return "master-data/warehouses";
+    @GetMapping("/master-data/contracts")
+    public String contracts() {
+        return "master-data/contracts";
+    }
+
+    @GetMapping("/master-data/items")
+    public String items() {
+        return "master-data/items";
     }
 
     // ─── Setup ──────────────────────────────────────────────

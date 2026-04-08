@@ -8,123 +8,151 @@
             <h5><i class="fas fa-truck mr-2 text-primary"></i>Suppliers</h5>
             <small class="text-muted">Master Data / Suppliers</small>
         </div>
-        <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#supplierModal" onclick="resetForm()">
-            <i class="fas fa-plus mr-1"></i> Add Supplier
-        </button>
     </div>
 
     <div class="card">
+        <div class="card-header bg-white">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <label class="mb-0 small">Company</label>
+                    <select class="form-control form-control-sm" id="filterCompany" onchange="onCompanyChange()">
+                        <option value="">Select Company</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="mb-0 small">Store</label>
+                    <select class="form-control form-control-sm" id="filterStore" onchange="loadData()" disabled>
+                        <option value="">Select Store</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="resetFilters()">
+                        <i class="fas fa-redo mr-1"></i>Reset
+                    </button>
+                </div>
+            </div>
+        </div>
         <div class="card-body p-0">
             <table class="table table-hover mb-0" id="suppliersTable">
                 <thead>
                     <tr>
-                        <th>#</th><th>Supplier Code</th><th>Supplier Name</th><th>Contact</th><th>Phone</th><th>City</th><th>Status</th><th class="text-center">Actions</th>
+                        <th>#</th>
+                        <th>Supplier Code</th>
+                        <th>Company</th>
+                        <th>Store</th>
+                        <th class="text-center">Actions</th>
                     </tr>
                 </thead>
-                <tbody><tr><td colspan="8" class="text-center py-4 text-muted">Loading...</td></tr></tbody>
-            </table>
+                <tbody>
+                    <tr><td colspan="5" class="text-center py-4 text-muted">Select filters to load suppliers</td></tr>
+                </table>
         </div>
-        <div class="card-footer bg-white" id="suppliersPagination"></div>
+        <div class="card-footer bg-white"></div>
     </div>
 </main>
 
-<!-- Supplier Modal -->
-<div class="modal fade" id="supplierModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h6 class="modal-title" id="supplierModalTitle">Add Supplier</h6>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-            </div>
-            <form id="supplierForm">
-                <div class="modal-body">
-                    <input type="hidden" id="supplierId">
-                    <div class="row">
-                        <div class="col-md-6"><div class="form-group"><label>Supplier Code *</label><input type="text" class="form-control form-control-sm" id="supplierCode" required></div></div>
-                        <div class="col-md-6"><div class="form-group"><label>Supplier Name *</label><input type="text" class="form-control form-control-sm" id="supplierName" required></div></div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6"><div class="form-group"><label>Contact Person</label><input type="text" class="form-control form-control-sm" id="contactPerson"></div></div>
-                        <div class="col-md-6"><div class="form-group"><label>Phone</label><input type="text" class="form-control form-control-sm" id="supplierPhone"></div></div>
-                    </div>
-                    <div class="form-group"><label>Email</label><input type="email" class="form-control form-control-sm" id="supplierEmail"></div>
-                    <div class="row">
-                        <div class="col-md-6"><div class="form-group"><label>City</label><input type="text" class="form-control form-control-sm" id="supplierCity"></div></div>
-                        <div class="col-md-6"><div class="form-group"><label>NPWP</label><input type="text" class="form-control form-control-sm" id="supplierNpwp"></div></div>
-                    </div>
-                    <div class="form-group"><label>Address</label><textarea class="form-control form-control-sm" id="supplierAddress" rows="2"></textarea></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-save mr-1"></i>Save</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 <jsp:include page="../common/footer.jsp"/>
 <script>
-var currentPage = 0;
 document.addEventListener('configLoaded', function() {
     if (!Auth.requireAuth()) return;
-    loadData();
-    $('#supplierForm').on('submit', function(e) { e.preventDefault(); saveData(); });
+    initFilters();
 });
 
-async function loadData(page) {
-    currentPage = page || 0;
+async function initFilters() {
     try {
-        var data = await ApiClient.get('MASTER_SETUP', '/suppliers?page=' + currentPage + '&size=15');
-        if (data && data.data) { renderTable(data.data); }
-    } catch (e) { $('#suppliersTable tbody').html('<tr><td colspan="8" class="text-center text-muted py-4">Failed to load data</td></tr>'); }
-}
-
-function renderTable(pagedData) {
-    var items = pagedData.content || [];
-    var columns = [
-        { field: '_index', formatter: function(v, row) { return (currentPage * 15) + items.indexOf(row) + 1; } },
-        { field: 'supplierCode' }, { field: 'supplierName' }, { field: 'contactPerson' },
-        { field: 'phone' }, { field: 'city' },
-        { field: 'active', formatter: function(v) { return v !== false ? '<span class="badge badge-success badge-status">Active</span>' : '<span class="badge badge-secondary badge-status">Inactive</span>'; } }
-    ];
-    AppUtils.buildTable('suppliersTable', columns, items, function(row) {
-        return '<button class="btn btn-sm btn-outline-info btn-action" onclick="editData(' + row.id + ')"><i class="fas fa-edit"></i></button>' +
-               '<button class="btn btn-sm btn-outline-danger btn-action" onclick="deleteData(' + row.id + ')"><i class="fas fa-trash"></i></button>';
-    });
-    AppUtils.buildPagination('suppliersPagination', currentPage, pagedData.totalPages || 1, loadData);
-}
-
-function resetForm() { $('#supplierModalTitle').text('Add Supplier'); $('#supplierForm')[0].reset(); $('#supplierId').val(''); }
-
-async function editData(id) {
-    try {
-        var data = await ApiClient.get('MASTER_SETUP', '/suppliers/' + id);
-        if (data && data.data) {
-            var s = data.data;
-            $('#supplierModalTitle').text('Edit Supplier');
-            $('#supplierId').val(s.id); $('#supplierCode').val(s.supplierCode); $('#supplierName').val(s.supplierName);
-            $('#contactPerson').val(s.contactPerson); $('#supplierPhone').val(s.phone); $('#supplierEmail').val(s.email);
-            $('#supplierCity').val(s.city); $('#supplierNpwp').val(s.npwp); $('#supplierAddress').val(s.address);
-            $('#supplierModal').modal('show');
+        // Load companies for filter dropdown
+        var response = await ApiClient.get('CONSIGNMENT', '/master-data/companies');
+        var companies = response.data || response || [];
+        
+        var options = '<option value="">Select Company</option>';
+        companies.forEach(function(company) {
+            options += '<option value="' + company + '">' + company + '</option>';
+        });
+        $('#filterCompany').html(options);
+        
+        // Check URL params for pre-selected values
+        var urlParams = new URLSearchParams(window.location.search);
+        var companyParam = urlParams.get('company');
+        var storeParam = urlParams.get('store');
+        if (companyParam) {
+            $('#filterCompany').val(companyParam);
         }
-    } catch (e) { console.error(e); }
+        
+        loadData();
+    } catch (e) {
+        console.error('Failed to load companies:', e);
+        loadData();
+    }
 }
 
-async function saveData() {
-    var id = $('#supplierId').val();
-    var body = { supplierCode: $('#supplierCode').val(), supplierName: $('#supplierName').val(), contactPerson: $('#contactPerson').val(),
-        phone: $('#supplierPhone').val(), email: $('#supplierEmail').val(), city: $('#supplierCity').val(), npwp: $('#supplierNpwp').val(), address: $('#supplierAddress').val() };
+async function onCompanyChange() {
+    var company = $('#filterCompany').val();
+    $('#filterStore').html('<option value="">Select Store</option>').prop('disabled', !company);
+    $('#suppliersTable tbody').html('<tr><td colspan="5" class="text-center py-4 text-muted">Select Store</td></tr>');
+    if (company) {
+        try {
+            var response = await ApiClient.get('CONSIGNMENT', '/master-data/stores?company=' + encodeURIComponent(company));
+            var stores = response.data || response || [];
+            
+            var options = '<option value="">Select Store</option>';
+            stores.forEach(function(store) {
+                options += '<option value="' + store + '">' + store + '</option>';
+            });
+            $('#filterStore').html(options);
+        } catch (e) {
+            console.error('Failed to load stores:', e);
+        }
+    }
+}
+
+async function loadData() {
+    var company = $('#filterCompany').val();
+    var store = $('#filterStore').val();
+    
+    if (!company || !store) {
+        $('#suppliersTable tbody').html('<tr><td colspan="5" class="text-center py-4 text-muted">Please select Company and Store</td></tr>');
+        return;
+    }
+    
     try {
-        if (id) { await ApiClient.put('MASTER_SETUP', '/suppliers/' + id, body); AppUtils.showToast('Supplier updated', 'success'); }
-        else { await ApiClient.post('MASTER_SETUP', '/suppliers', body); AppUtils.showToast('Supplier created', 'success'); }
-        $('#supplierModal').modal('hide'); loadData(currentPage);
-    } catch (e) { console.error(e); }
+        var url = '/master-data/suppliers?company=' + encodeURIComponent(company) + '&store=' + encodeURIComponent(store);
+        var response = await ApiClient.get('CONSIGNMENT', url);
+        var data = response.data || response || [];
+        renderTable(data, company, store);
+    } catch (e) {
+        $('#suppliersTable tbody').html('<tr><td colspan="5" class="text-center text-muted py-4">Failed to load data</td></tr>');
+        console.error('Failed to load suppliers:', e);
+    }
 }
 
-function deleteData(id) {
-    AppUtils.confirm('Delete this supplier?', async function() {
-        try { await ApiClient.delete('MASTER_SETUP', '/suppliers/' + id); AppUtils.showToast('Supplier deleted', 'success'); loadData(currentPage); } catch (e) {}
-    });
 }
-</script>
+
+ function renderTable(items, company, store) {
+    if (!items || items.length === 0) {
+        $('#suppliersTable tbody').html('<tr><td colspan="5" class="text-center text-muted py-4">No data available</td></tr>');
+        return;
+    }
+    
+    var html = '';
+            items.forEach(function(item, index) {
+                html += '<tr>' +
+                    '<td>' + (index + 1) + '</td>' +
+                    '<td><span class="font-weight-semibold">' + item + '</span></td>' +
+                    '<td>' + company+ '</td>' +
+                    '<td>' + store+ '</td>' +
+                    '<td class="text-center">' +
+                        '<button class="btn btn-sm btn-outline-info btn-action" title="View Contracts" onclick="viewContracts(\'' + company + '\', \'' + store + '\')">' +
+                            window.location.href = '/master-data/contracts?company=' + encodeURIComponent(company) + '&store=' + encodeURIComponent(store);
+                                + '&supplierCode=' + encodeURIComponent(supplierCode);
+                            });
+                        });
+                    }
+                </script>
+            });
+        }
+    }
+</main>
+
+<jsp:include page="../common/footer.jsp"/>
+</body>
+</html>
