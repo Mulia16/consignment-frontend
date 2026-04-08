@@ -70,7 +70,8 @@
 <script>
     if (typeof API_CONFIG !== 'undefined') {
         API_CONFIG.loadConfig().then(function() {
-            var scripts = ['/static/js/api-client.js', '/static/js/common.js', '/static/js/auth.js'];
+            var ver = new Date().getTime();
+            var scripts = ['/static/js/api-client.js?v=' + ver, '/static/js/common.js?v=' + ver, '/static/js/auth.js?v=' + ver];
             var loadedCount = 0;
             scripts.forEach(function(src) {
                 var script = document.createElement('script');

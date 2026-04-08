@@ -43,13 +43,15 @@
                         <div class="row">
                             <div class="col-md-3 mb-3">
                                 <label class="small text-muted mb-1">Company</label>
-                                <select class="form-control" name="company">
-                                    <option value="">ALPRO PHARMACY SDN BHD</option>
+                                <select class="form-control" name="company" id="company">
+                                    <option value="">All Companies</option>
                                 </select>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="small text-muted mb-1">Store</label>
-                                <input type="text" class="form-control" name="store">
+                                <select class="form-control" name="store" id="store">
+                                    <option value="">All Stores</option>
+                                </select>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="small text-muted mb-1">Customer</label>
@@ -177,6 +179,8 @@
 
 <jsp:include page="/WEB-INF/jsp/common/footer.jsp" />
 
+<script src="/static/js/consignment-master-data.js"></script>
+
 <script>
 var mockData = [
     { id: 1, date: '2025-08-28', store: 'IPOH_MALL', csdoNo: 'CDO-2508-000004', transferFrom: 'CSO-2508-000065', customer: 'A1 - A1 Company', branch: '1122 - 1122', shipMode: 'Courier', transporter: 'DHL Express', createdBy: 'M.ASYRAF', status: 'Released' },
@@ -184,6 +188,7 @@ var mockData = [
 ];
 
 document.addEventListener('configLoaded', function() {
+    ConsignmentMasterData.init();
     renderTable(mockData);
     $('#nav-consignment-delivery-order').addClass('active');
     $('#menu-outbound').addClass('active');

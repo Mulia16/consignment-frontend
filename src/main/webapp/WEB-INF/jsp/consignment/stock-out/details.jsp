@@ -50,17 +50,19 @@
                             <div class="card-body">
                                 <div class="form-group mb-3">
                                     <label class="small text-muted mb-1">Company <span class="text-danger">*</span></label>
-                                    <select class="form-control" name="company" required>
-                                        <option value="ALPRO PHARMACY SDN BHD">ALPRO PHARMACY SDN BHD</option>
-                                    </select>
+                                    <select class="form-control" name="company" id="company" required></select>
                                 </div>
                                 <div class="form-group mb-3">
                                     <label class="small text-muted mb-1">Store <span class="text-danger">*</span></label>
-                                    <select class="form-control" name="store" id="hStore" required>
-                                        <option value="">Select Store</option>
-                                        <option value="IPOH_MALL">IPOH MALL STORE</option>
-                                        <option value="NPDRM1">NPDRM1</option>
-                                    </select>
+                                    <select class="form-control" name="store" id="store" required></select>
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label class="small text-muted mb-1">Supplier <span class="text-danger">*</span></label>
+                                    <select class="form-control" name="supplierCode" id="supplierCode" required></select>
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label class="small text-muted mb-1">Supplier Contract <span class="text-danger">*</span></label>
+                                    <select class="form-control" name="supplierContract" id="supplierContract" required></select>
                                 </div>
                                 <div class="form-group mb-3">
                                     <label class="small text-muted mb-1">Date</label>
@@ -236,6 +238,7 @@
 </div>
 
 <jsp:include page="/WEB-INF/jsp/common/footer.jsp" />
+<script src="/static/js/consignment-master-data.js"></script>
 
 <script>
 var docId = new URLSearchParams(window.location.search).get('id');
@@ -247,6 +250,8 @@ document.addEventListener('configLoaded', function() {
     var now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     document.getElementById('hDate').value = now.toISOString().slice(0,16);
+
+    ConsignmentMasterData.init();
 
     if (docId) {
         // Edit/View Mode
@@ -331,39 +336,72 @@ function resetItems() {
     renderItems();
 }
 
-function loadDocument(id) {
-    // Mock getting document details
-    var parsedId = parseInt(id) || 1;
-    // mock Status based on List logic:
-    // id 1,2 = Released. id 3 = Held. id 4 = Error.
-    if(parsedId === 1 || parsedId === 2) currentStatus = 'RELEASED';
-    else if (parsedId === 3) currentStatus = 'HELD';
-    else currentStatus = 'ERROR';
-    
-    $('#breadcrumbDocNumber').text('Doc #' + 'SO-2508-00005' + (4 - parsedId));
-    
-    var badgeClass = 'badge-warning';
-    if(currentStatus === 'RELEASED') badgeClass = 'badge-success';
-    if(currentStatus === 'ERROR') badgeClass = 'badge-danger';
-    
-    $('#headerStatusBadge').text(currentStatus).attr('class', 'badge ' + badgeClass);
-    $('#topActions').show();
-    
-    if(currentStatus === 'RELEASED') {
-        $('#headerForm :input').prop('disabled', true);
-        $('#actionFooter').hide();
-        $('#btnAddRow').hide();
+async function loadDocument(id) {
+    AppUtils.showLoading();
+    try {
+        var res = await ApiClient.get('CONSIGNMENT', `/cso/${id}`);
+        var data = res.data || res;
+        
+        currentStatus = (data.status || 'ERROR').toUpperCase();
+        
+        $('#breadcrumbDocNumber').text('Doc #' + (data.docNo || id));
+        
+        var badgeClass = 'badge-warning';
+        if(currentStatus === 'RELEASED') badgeClass = 'badge-success';
+        if(currentStatus === 'ERROR') badgeClass = 'badge-danger';
+        
+        $('#headerStatusBadge').text(currentStatus).attr('class', 'badge ' + badgeClass);
+        $('#topActions').show();
+        
+        // Populate header fields
+        if(data.company) $('#company').html(`<option value="\${data.company}">\${data.company}</option>`);
+        if(data.store) $('#store').html(`<option value="\${data.store}">\${data.store}</option>`);
+        if(data.supplierCode) $('#supplierCode').html(`<option value="\${data.supplierCode}">\${data.supplierCode}</option>`);
+        if(data.supplierContract) $('#supplierContract').html(`<option value="\${data.supplierContract}">\${data.supplierContract}</option>`);
+        setTimeout(() => { ConsignmentMasterData.triggerCascade(); }, 100);
+
+        if(data.customerCode) $('#headerForm input:eq(0)').val(data.customerCode);
+        if(data.customerBranch) $('#headerForm input:eq(1)').val(data.customerBranch);
+        if(data.customerEmail) $('#headerForm input[type="email"]').val(data.customerEmail);
+        
+        if(data.autoGenerateCsdo) {
+            $('#csdoAuto').prop('checked', true);
+        } else {
+            $('#csdoManual').prop('checked', true);
+        }
+        
+        if(data.note) $('#headerForm textarea:eq(0)').val(data.note);
+        
+        if(currentStatus === 'RELEASED') {
+            $('#headerForm :input').prop('disabled', true);
+            $('#actionFooter').hide();
+            $('#btnAddRow').hide();
+        }
+        
+        itemsList = [];
+        if (data.items && data.items.length > 0) {
+            data.items.forEach(item => {
+                itemsList.push({
+                    itemCode: item.itemCode,
+                    itemName: item.itemName || 'Item Description',
+                    qty: item.qty || 0,
+                    uom: item.uom || 'UNIT'
+                });
+            });
+        }
+        
+        $('#step1-header').hide();
+        $('#step2-items').show();
+        renderItems();
+    } catch (e) {
+        console.error(e);
+        AppUtils.showToast('Failed to load document details', 'danger');
+    } finally {
+        AppUtils.hideLoading();
     }
-    
-    // Mock Data
-    itemsList = [{ itemCode: '0100012', itemName: 'ACITRAL SUSPENSI 120ML', qty: 2.0, uom: 'UNIT' }];
-    
-    $('#step1-header').hide();
-    $('#step2-items').show();
-    renderItems();
 }
 
-function saveDocument(status) { // 'HELD' or 'RELEASED'
+async function saveDocument(status) { // 'HELD' or 'RELEASED'
     if (currentStatus === 'RELEASED') return;
     
     // Validation
@@ -372,20 +410,57 @@ function saveDocument(status) { // 'HELD' or 'RELEASED'
         return;
     }
     
-    if(status === 'RELEASED') {
-        // Business Rule #7 & #8 Validation Mocking
-        AppUtils.showToast("Validating against Consignment reservation inventory...", "info");
-    }
+    AppUtils.showLoading();
     
-    setTimeout(() => {
-        AppUtils.showToast("Document saved with status: " + status, "success");
-        currentStatus = status;
-        var bClass = status === 'RELEASED' ? 'badge-success' : 'badge-warning';
-        $('#headerStatusBadge').text(status).attr('class', 'badge ' + bClass);
-        $('#topActions').show();
+    try {
+        var isAutoCsdo = $('#csdoAuto').is(':checked');
+        var payload = {
+            company: $('#company').val() || "COMP01",
+            store: $('#store').val() || "STORE01",
+            customerCode: $('#headerForm input:eq(0)').val() || "CUST001",
+            customerBranch: $('#headerForm input:eq(1)').val() || "BRANCH01",
+            customerEmail: $('#headerForm input[type="email"]').val() || "cust@example.com",
+            supplierCode: $('#supplierCode').val() || "SUPP001",
+            supplierContract: $('#supplierContract').val() || "CONTRACT-2024-001",
+            autoGenerateCsdo: isAutoCsdo,
+            note: $('#headerForm textarea:eq(0)').val() || "Note",
+            createdBy: "user01",
+            createdMethod: isAutoCsdo ? "AUTO" : "MANUAL",
+            items: itemsList.map(i => ({
+                itemCode: i.itemCode,
+                qty: parseFloat(i.qty),
+                uom: i.uom
+            }))
+        };
+
+        var targetUrl = '/cso';
+        if (payload.createdMethod === 'AUTO') {
+             // as per postman, when AUTO we optionally use a different endpoint
+             // we'll stick to targetUrl unless we specifically decide. The API collection says: auto-create endpoint /api/acmm/cso/auto-create
+             // let's use standard CSO for now since it handles both in most microservices, or direct if requested. 
+             // user prompt: API has POST /consignment/api/cso with autoGenerateCsdo: false. 
+             // And POST /consignment/api/acmm/cso/auto-create with autoGenerateCsdo: true.
+             if (isAutoCsdo) {
+                 targetUrl = '/acmm/cso/auto-create';
+             }
+        }
+
+        var res = await ApiClient.post('CONSIGNMENT', targetUrl, payload);
+        var createdCsoId = (res.data && res.data.id) ? res.data.id : (res.id ? res.id : 'cso-created');
         
+        if (status === 'RELEASED') {
+            await ApiClient.put('CONSIGNMENT', `/cso/${createdCsoId}/release`);
+        }
+        
+        AppUtils.showToast("Document saved with status: " + status, "success");
         setTimeout(() => { window.location.href = '/consignment/stock-out'; }, 1500);
-    }, 600);
+
+    } catch (e) {
+        console.error(e);
+        AppUtils.showToast("Failed to save document", "danger");
+    } finally {
+        AppUtils.hideLoading();
+    }
 }
 
 function printSlip() {

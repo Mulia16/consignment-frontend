@@ -43,14 +43,15 @@
                         <div class="row">
                             <div class="col-md-3 mb-3">
                                 <label class="small text-muted mb-1">Company</label>
-                                <select class="form-control" name="company">
-                                    <option value="">ALPRO PHARMACY SDN BHD</option>
-                                    <option value="1">AUSTAR MARKETING</option>
+                                <select class="form-control" name="company" id="company">
+                                    <option value="">All Companies</option>
                                 </select>
                             </div>
                             <div class="col-md-3 mb-3">
-                                <label class="small text-muted mb-1">Issue Store</label>
-                                <input type="text" class="form-control" name="issueStore">
+                                <label class="small text-muted mb-1">Store</label>
+                                <select class="form-control" name="store" id="store">
+                                    <option value="">All Stores</option>
+                                </select>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="small text-muted mb-1">Customer</label>
@@ -167,27 +168,70 @@
 </div>
 
 <jsp:include page="/WEB-INF/jsp/common/footer.jsp" />
+<script src="/static/js/consignment-master-data.js"></script>
 
 <script>
-var mockData = [
-    { id: 1, date: '2025-08-28', store: 'NPDRM1', csoNo: 'SO-2508-000053', customer: '10036 - AB PHARMA SDN BHD', branch: '00001 - AB PHARMA IPOH PARADE', createdBy: 'OPR', status: 'Released' },
-    { id: 2, date: '2025-08-28', store: 'NPDRM1', csoNo: 'SO-2508-000052', customer: '10036 - AB PHARMA SDN BHD', branch: '00001 - AB PHARMA IPOH PARADE', createdBy: 'YEE THONG CHAN', status: 'Released' },
-    { id: 3, date: '2025-08-27', store: 'NPDRM1', csoNo: 'SO-2508-000051', customer: '005 - Q Academy Sdn. Bhd', branch: '5001 - Q ACADEMY', createdBy: 'OPR', status: 'Held' },
-    { id: 4, date: '2025-08-27', store: 'NPDRM1', csoNo: 'SO-2508-000050', customer: '10036 - AB PHARMA SDN BHD', branch: '00002 - AB PHARMA SERAI', createdBy: 'OPR', status: 'Error' }
-];
+var currentData = [];
 
 document.addEventListener('configLoaded', function() {
-    renderTable(mockData);
+    ConsignmentMasterData.init();
+    searchData();
     $('#nav-consignment-stockout').addClass('active');
     $('#menu-outbound').addClass('active');
 });
 
-function searchData() {
+async function searchData() {
     AppUtils.showLoading();
-    setTimeout(() => {
-        renderTable(mockData);
+    var form = document.getElementById('filterForm');
+    var formData = new FormData(form);
+    var params = new URLSearchParams();
+    
+    for (var pair of formData.entries()) {
+        var key = pair[0];
+        var value = pair[1];
+        if (value && value.trim() !== '') {
+            // Map specific UI fields to Postman backend fields if needed
+            if (key === 'customer') key = 'customerCode';
+            
+            params.append(key, value.trim());
+        }
+    }
+    
+    var qs = params.toString() ? '?' + params.toString() : '';
+    
+    try {
+        var res = await ApiClient.get('CONSIGNMENT', '/cso' + qs);
+        var data = [];
+        // The mock ApiClient might return data inside .data or just directly an array or object
+        // Based on Postman, the API returns {"items": [...]} or something, wait no, Search CSO doesn't have response example for list. 
+        // Postman only shows Get CSO by ID. Let's assume response.data is the list or the response is a list.
+        if (res.data && Array.isArray(res.data)) {
+            data = res.data;
+        } else if (res.items && Array.isArray(res.items)) {
+            data = res.items;
+        } else if (Array.isArray(res)) {
+            data = res;
+        }
+        
+        // Map API response to table fields if necessary
+        currentData = data.map(item => ({
+            id: item.id || item.docNo,
+            date: item.createdAt ? item.createdAt.substring(0, 10) : '-',
+            store: item.store || '-',
+            csoNo: item.docNo || '-',
+            customer: item.customerCode || '-',
+            branch: item.customerBranch || '-',
+            createdBy: item.createdBy || '-',
+            status: item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1).toLowerCase() : 'Held'
+        }));
+        renderTable(currentData);
+    } catch (e) {
+        console.error(e);
+        AppUtils.showToast('Failed to load data', 'danger');
+        renderTable([]);
+    } finally {
         AppUtils.hideLoading();
-    }, 400);
+    }
 }
 
 function renderTable(data) {
@@ -247,8 +291,8 @@ function batchRelease() {
     
     // Check if any selected is already Released or Error
     var isValid = true;
-    mockData.forEach(function(d) {
-        if(ids.includes(d.id.toString()) && d.status !== 'Held') {
+    currentData.forEach(function(d) {
+        if(ids.includes(d.id.toString()) && d.status.toUpperCase() !== 'HELD') {
             isValid = false;
         }
     });
@@ -259,13 +303,19 @@ function batchRelease() {
     }
 
     if (confirm('Are you sure you want to release the selected ' + ids.length + ' document(s)?')) {
-        AppUtils.showToast('Documents successfully released.', 'success');
-        // Update mock state
-        mockData.forEach(d => {
-            if(ids.includes(d.id.toString())) d.status = 'Released';
-        });
-        renderTable(mockData);
-        $('#selectAll').prop('checked', false);
+        AppUtils.showLoading();
+        
+        Promise.all(ids.map(id => ApiClient.put('CONSIGNMENT', `/cso/${id}/release`)))
+            .then(() => {
+                AppUtils.showToast('Documents successfully released.', 'success');
+                searchData(); // Refresh list
+                $('#selectAll').prop('checked', false);
+            })
+            .catch(e => {
+                console.error(e);
+                AppUtils.showToast('Error releasing documents', 'danger');
+            })
+            .finally(() => AppUtils.hideLoading());
     }
 }
 
@@ -275,8 +325,8 @@ function batchDelete() {
     
     // According to reqs: Only allow delete for "Held" or "Error" status document
     var isValid = true;
-    mockData.forEach(function(d) {
-        if(ids.includes(d.id.toString()) && d.status === 'Released') {
+    currentData.forEach(function(d) {
+        if(ids.includes(d.id.toString()) && d.status.toUpperCase() === 'RELEASED') {
             isValid = false;
         }
     });
@@ -287,10 +337,19 @@ function batchDelete() {
     }
 
     if (confirm('Confirm delete selected ' + ids.length + ' document(s)?')) {
-        mockData = mockData.filter(d => !ids.includes(d.id.toString()));
-        renderTable(mockData);
-        AppUtils.showToast('Documents successfully deleted.', 'success');
-        $('#selectAll').prop('checked', false);
+        AppUtils.showLoading();
+        
+        Promise.all(ids.map(id => ApiClient.delete('CONSIGNMENT', `/cso/${id}`)))
+            .then(() => {
+                AppUtils.showToast('Documents successfully deleted.', 'success');
+                searchData();
+                $('#selectAll').prop('checked', false);
+            })
+            .catch(e => {
+                console.error(e);
+                AppUtils.showToast('Error deleting documents', 'danger');
+            })
+            .finally(() => AppUtils.hideLoading());
     }
 }
 

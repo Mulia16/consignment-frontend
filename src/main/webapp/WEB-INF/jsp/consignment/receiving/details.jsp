@@ -47,16 +47,11 @@
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label class="small text-muted mb-1">Company <span class="text-danger">*</span></label>
-                            <select class="form-control" name="company" required id="hCompany">
-                                <option value="COMP01">COMP01 - ALPRO PHARMACY SDN BHD</option>
-                            </select>
+                            <select class="form-control" name="company" required id="hCompany"></select>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="small text-muted mb-1">Receiving Store <span class="text-danger">*</span></label>
-                            <select class="form-control" name="receivingStore" required id="hStore">
-                                <option value="STORE01">STORE01 - IPOH MALL STORE</option>
-                                <option value="STORE02">STORE02 - SERAI STORE</option>
-                            </select>
+                            <select class="form-control" name="receivingStore" required id="hStore"></select>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="small text-muted mb-1">Document Number</label>
@@ -74,13 +69,13 @@
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="small text-muted mb-1">Supplier Code <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="supplierCode" id="hSupplierCode" required placeholder="Enter supplier code">
+                            <select class="form-control" name="supplierCode" id="hSupplierCode" required></select>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label class="small text-muted mb-1">Supplier Contract <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="supplierContract" id="hSupplierContract" required placeholder="Enter supplier contract">
+                            <select class="form-control" name="supplierContract" id="hSupplierContract" required></select>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="small text-muted mb-1">Supplier DO Number <span class="text-danger">*</span></label>
@@ -238,6 +233,7 @@
 
 <jsp:include page="/WEB-INF/jsp/common/footer.jsp" />
 
+<script src="/static/js/consignment-master-data.js"></script>
 <script src="/static/js/services/consignment-service.js"></script>
 
 <script>
@@ -253,6 +249,8 @@ document.addEventListener('configLoaded', function() {
     var now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     document.getElementById('hCreatedDate').value = now.toISOString().slice(0,16);
+
+    ConsignmentMasterData.init();
 
     if (docId) {
         loadDocument(docId);
@@ -458,11 +456,13 @@ async function loadDocument(id) {
         currentStatus = data.status || 'HELD';
 
         // Populate header form
-        $('#hCompany').val(data.company || '');
-        $('#hStore').val(data.receivingStore || '');
+        if(data.company) $('#hCompany').html(`<option value="\${data.company}">\${data.company}</option>`);
+        if(data.receivingStore) $('#hStore').html(`<option value="\${data.receivingStore}">\${data.receivingStore}</option>`);
+        if(data.supplierCode) $('#hSupplierCode').html(`<option value="\${data.supplierCode}">\${data.supplierCode}</option>`);
+        if(data.supplierContract) $('#hSupplierContract').html(`<option value="\${data.supplierContract}">\${data.supplierContract}</option>`);
+        setTimeout(() => { ConsignmentMasterData.triggerCascade(); }, 100);
+
         $('#hDocNo').val(data.docNo || '');
-        $('#hSupplierCode').val(data.supplierCode || '');
-        $('#hSupplierContract').val(data.supplierContract || '');
         $('#hSupplierDO').val(data.supplierDoNo || '');
         $('#hDeliveryDate').val(data.deliveryDate || '');
         $('#hRemark').val(data.remark || '');

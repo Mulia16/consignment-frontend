@@ -18,13 +18,15 @@ var Auth = {
             });
 
             if (response.ok) {
-                var data = await response.json();
-                if (data.token) {
+                var responseData = await response.json();
+                var result = responseData.data || responseData; 
+
+                if (result && result.token) {
                     var user = {
-                        username: data.username,
-                        roles: data.roles
+                        username: result.username,
+                        roles: result.roles
                     };
-                    this.setSession(data.token, null, user);
+                    this.setSession(result.token, null, user);
                     return true;
                 }
             }

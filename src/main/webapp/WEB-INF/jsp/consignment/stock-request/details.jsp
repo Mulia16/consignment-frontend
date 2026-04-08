@@ -52,18 +52,13 @@
                                 <div class="form-group row">
                                     <label class="col-sm-4 col-form-label required">Company</label>
                                     <div class="col-sm-8">
-                                        <input type="text" class="form-control" name="company" id="company" required placeholder="Mandatory">
+                                        <select class="form-control" name="company" id="company" required></select>
                                     </div>
                                 </div>
                                 <div class="form-group row">
                                     <label class="col-sm-4 col-form-label required">Supplier</label>
                                     <div class="col-sm-8">
-                                        <div class="input-group">
-                                            <input type="text" class="form-control" name="supplierCode" id="supplierCode" required placeholder="Mandatory">
-                                            <div class="input-group-append">
-                                                <button class="btn btn-outline-secondary btn-search" type="button"><i class="fas fa-search"></i></button>
-                                            </div>
-                                        </div>
+                                        <select class="form-control" name="supplierCode" id="supplierCode" required></select>
                                     </div>
                                 </div>
                                 <div class="form-group row">
@@ -79,13 +74,13 @@
                                 <div class="form-group row">
                                     <label class="col-sm-4 col-form-label required">Store</label>
                                     <div class="col-sm-8">
-                                        <input type="text" class="form-control" name="store" id="store" required placeholder="Mandatory">
+                                        <select class="form-control" name="store" id="store" required></select>
                                     </div>
                                 </div>
                                 <div class="form-group row">
                                     <label class="col-sm-4 col-form-label required">Supplier Contract</label>
                                     <div class="col-sm-8">
-                                        <input type="text" class="form-control" name="supplierContract" id="supplierContract" required placeholder="Mandatory">
+                                        <select class="form-control" name="supplierContract" id="supplierContract" required></select>
                                     </div>
                                 </div>
                                 <div class="form-group row">
@@ -193,6 +188,7 @@
 </div>
 
 <jsp:include page="/WEB-INF/jsp/common/footer.jsp" />
+<script src="/static/js/consignment-master-data.js"></script>
 
 <script>
 let itemIdCounter = 1;
@@ -204,6 +200,9 @@ document.addEventListener('configLoaded', function() {
     $('#nav-consignment-stock-request').addClass('active');
     $('#menu-outbound').addClass('active');
     
+    // Init master data cascading dropdowns
+    ConsignmentMasterData.init();
+
     if (documentId) {
         loadDocumentDetails(documentId);
     } else {
@@ -439,10 +438,13 @@ async function loadDocumentDetails(id) {
 }
 
 function populateForm(data) {
-    $('#company').val(data.company || '');
-    $('#store').val(data.store || '');
-    $('#supplierCode').val(data.supplierCode || '');
-    $('#supplierContract').val(data.supplierContract || '');
+    if(data.company) $('#company').html(`<option value="\${data.company}">\${data.company}</option>`);
+    if(data.store) $('#store').html(`<option value="\${data.store}">\${data.store}</option>`);
+    if(data.supplierCode) $('#supplierCode').html(`<option value="\${data.supplierCode}">\${data.supplierCode}</option>`);
+    if(data.supplierContract) $('#supplierContract').html(`<option value="\${data.supplierContract}">\${data.supplierContract}</option>`);
+    // Once values are set, trigger cascade to load remaining sibling options correctly
+    setTimeout(() => { ConsignmentMasterData.triggerCascade(); }, 100);
+
     $('#branch').val(data.branch || '');
     $('#internalSupplierStore').val(data.internalSupplierStore || '');
     $('#notes').val(data.notes || '');

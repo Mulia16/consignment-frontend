@@ -48,28 +48,27 @@
                                 <div class="row">
                                     <div class="col-md-3 mb-3">
                                         <label class="small text-muted mb-1">Company</label>
-                                        <select class="form-control" name="company">
-                                            <option value="">ALPRO PHARMACY SDN BHD</option>
-                                            <option value="COMP01">COMP01</option>
+                                        <select class="form-control" name="company" id="company">
+                                            <option value="">All Companies</option>
                                         </select>
                                     </div>
                                     <div class="col-md-3 mb-3">
                                         <label class="small text-muted mb-1">Store</label>
-                                        <input type="text" class="form-control" name="store">
+                                        <select class="form-control" name="store" id="store">
+                                            <option value="">All Stores</option>
+                                        </select>
                                     </div>
                                     <div class="col-md-3 mb-3">
                                         <label class="small text-muted mb-1">Supplier</label>
-                                        <div class="input-group">
-                                            <input type="text" class="form-control" name="supplierCode">
-                                            <div class="input-group-append">
-                                                <button class="btn btn-outline-secondary" type="button"><i
-                                                        class="fas fa-search-plus"></i></button>
-                                            </div>
-                                        </div>
+                                        <select class="form-control" name="supplierCode" id="supplierCode">
+                                            <option value="">All Suppliers</option>
+                                        </select>
                                     </div>
                                     <div class="col-md-3 mb-3">
                                         <label class="small text-muted mb-1">Supplier Contract</label>
-                                        <input type="text" class="form-control" name="supplierContract">
+                                        <select class="form-control" name="supplierContract" id="supplierContract">
+                                            <option value="">All Contracts</option>
+                                        </select>
                                     </div>
                                 </div>
 
@@ -180,11 +179,13 @@
         </div>
 
         <jsp:include page="/WEB-INF/jsp/common/footer.jsp" />
+        <script src="/static/js/consignment-master-data.js"></script>
 
         <script>
             var tableData = [];
 
             document.addEventListener('configLoaded', function () {
+                ConsignmentMasterData.init();
                 $('#nav-consignment-stock-request').addClass('active');
                 $('#menu-outbound').addClass('active');
                 loadData();

@@ -44,13 +44,15 @@
                     <div class="row">
                         <div class="col-md-3 mb-3">
                             <label class="small text-muted mb-1">Company</label>
-                            <select class="form-control form-control-sm" name="company">
-                                <option value="">Select Company</option>
+                            <select class="form-control form-control-sm" name="company" id="company">
+                                <option value="">All Companies</option>
                             </select>
                         </div>
                         <div class="col-md-3 mb-3">
                             <label class="small text-muted mb-1">Receiving Store</label>
-                            <input type="text" class="form-control form-control-sm" name="receivingStore">
+                            <select class="form-control form-control-sm" name="receivingStore" id="store">
+                                <option value="">All Stores</option>
+                            </select>
                         </div>
                         <div class="col-md-3 mb-3">
                             <label class="small text-muted mb-1">Consignment Stock Receiving Number</label>
@@ -107,16 +109,15 @@
                         </div>
                         <div class="col-md-3 mb-3">
                             <label class="small text-muted mb-1">Supplier</label>
-                            <div class="input-group input-group-sm">
-                                <input type="text" class="form-control" name="supplierCode">
-                                <div class="input-group-append">
-                                    <span class="input-group-text"><i class="fas fa-truck"></i></span>
-                                </div>
-                            </div>
+                            <select class="form-control form-control-sm" name="supplierCode" id="supplierCode">
+                                <option value="">All Suppliers</option>
+                            </select>
                         </div>
                         <div class="col-md-3 mb-3">
                             <label class="small text-muted mb-1">Supplier Contract</label>
-                            <input type="text" class="form-control form-control-sm" name="supplierContract">
+                            <select class="form-control form-control-sm" name="supplierContract" id="supplierContract">
+                                <option value="">All Contracts</option>
+                            </select>
                         </div>
                     </div>
 
@@ -187,6 +188,7 @@
 
 <jsp:include page="/WEB-INF/jsp/common/footer.jsp" />
 
+<script src="/static/js/consignment-master-data.js"></script>
 <script src="/static/js/services/consignment-service.js"></script>
 
 <script>
@@ -194,6 +196,7 @@ var currentPage = 0;
 var totalRecords = 0;
 
 document.addEventListener('configLoaded', function() {
+    ConsignmentMasterData.init();
     loadData(0);
 
     $('#selectAll').on('change', function() {

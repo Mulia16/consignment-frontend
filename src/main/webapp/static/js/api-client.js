@@ -79,7 +79,16 @@ var ApiClient = {
                 // Default response structure matching actual API
                 let mockData = { message: 'success', status: 200, data: [], meta: { page: 1, perPage: 20, totalData: 0, totalPage: 1 } };
                 
-                if (method === 'GET' && path.includes('?')) {
+                if (path.includes('/master-data/')) {
+                    if (path.includes('/companies')) mockData.data = ["COMP01", "COMP02", "COMP03"];
+                    else if (path.includes('/stores')) mockData.data = ["STORE01", "STORE02", "STORE03"];
+                    else if (path.includes('/suppliers')) mockData.data = ["SUPP001", "SUPP002", "SUPP003"];
+                    else if (path.includes('/contracts')) mockData.data = ["CONTRACT-2024-001", "CONTRACT-2024-002"];
+                    else if (path.includes('/items')) mockData.data = ["ITEM001", "ITEM002", "ITEM003", "ITEM004"];
+                    
+                    mockData.meta.totalData = mockData.data.length;
+                    mockData.meta.totalPage = 1;
+                } else if (method === 'GET' && path.includes('?')) {
                     mockData.data = this.generateMockItems(serviceName, path, 15);
                     mockData.meta.totalData = 45;
                     mockData.meta.totalPage = 3;
