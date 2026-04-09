@@ -48,10 +48,11 @@
                                 Document Details 
                             </div>
                             <div class="card-body">
-                                <div class="form-group mb-3 pb-2 border-bottom position-relative" id="csoIdGroup" style="display: none;">
+                                <div class="form-group mb-3 pb-2 border-bottom" id="csoIdGroup" style="display: none;">
                                     <label class="small text-muted mb-1 font-weight-bold text-primary">Transfer From CSO ID / Document No <span class="text-danger">*</span></label>
-                                    <input type="text" id="inputCsoId" class="form-control border-primary" placeholder="Type to search CSO (e.g. CSO-001)" onkeyup="handleCsoSearch(this)" autocomplete="off">
-                                    <div class="dropdown-menu w-100 shadow autocomplete-dropdown" id="csoDropdown" style="max-height: 250px; overflow-y: auto; position: absolute; top: 100%; left: 0; z-index: 1000;"></div>
+                                    <select id="inputCsoId" class="form-control border-primary" required>
+                                        <option value="">-- Loading CSO list... --</option>
+                                    </select>
                                 </div>
                                 <div class="row mb-2">
                                     <div class="col-6">
@@ -238,6 +239,7 @@ var docId = new URLSearchParams(window.location.search).get('id');
 var currentStatus = '';
 
 var itemsList = [];
+var availableItems = [];
 
 document.addEventListener('configLoaded', function() {
     if (docId) {
@@ -250,6 +252,17 @@ document.addEventListener('configLoaded', function() {
         $('#csoIdGroup').show();
         $('#lblDate').text(new Date().toISOString().substring(0,10));
         $('#lblCreatedBy').text('Current User');
+        
+        // Load RELEASED CSO list into dropdown
+        loadReleasedCsoList();
+        
+        // When CSO is selected, auto-fill header & items
+        $('#inputCsoId').on('change', function() {
+            var csoId = $(this).val();
+            if(csoId) {
+                loadCsoDetails(csoId);
+            }
+        });
     }
 });
 
@@ -294,12 +307,22 @@ function renderItems() {
     }
     
     itemsList.forEach((item, index) => {
-        var htmlItemCode = isReadOnly ? 
-            "<strong>" + (item.itemCode || "-") + "</strong><br><small class='text-muted'>" + item.itemName + "</small>" : 
-            `<div class="position-relative">
-                <input type="text" class="form-control form-control-sm item-code" placeholder="Search Item Code..." value="\${item.itemCode || ''}" onkeyup="handleItemSearch(this, \${index})" autocomplete="off">
-                <div class="dropdown-menu w-100 shadow autocomplete-dropdown" id="itemDropdown-\${index}" style="max-height: 250px; overflow-y: auto; position: absolute; top: 100%; left: 0; z-index: 1000;"></div>
-            </div>`;
+        var htmlItemCode = '';
+        if(isReadOnly) {
+            htmlItemCode = "<strong>" + (item.itemCode || "-") + "</strong><br><small class='text-muted'>" + item.itemName + "</small>";
+        } else {
+            // Build select dropdown from availableItems
+            var opts = "<option value=''>-- Select Item --</option>";
+            if(availableItems && availableItems.length > 0) {
+                availableItems.forEach(function(ai) {
+                    var sel = (ai === item.itemCode) ? 'selected' : '';
+                    opts += "<option value='" + ai + "' " + sel + ">" + ai + "</option>";
+                });
+            } else if(item.itemCode) {
+                opts += "<option value='" + item.itemCode + "' selected>" + item.itemCode + "</option>";
+            }
+            htmlItemCode = "<select class='form-control form-control-sm' onchange=\"updateItem(" + index + ", 'itemCode', this.value)\">" + opts + "</select>";
+        }
 
         var htmlUom = isReadOnly ? 
             item.uom : 
@@ -333,11 +356,11 @@ function resetItems() {
 async function loadDocument(id) {
     AppUtils.showLoading();
     try {
-        var data = await ApiClient.get('CONSIGNMENT', `/csdo/${id}`);
+        var data = await ApiClient.get('CONSIGNMENT', `/csdo/\${id}`);
         // Map details
         currentStatus = data.status ? data.status.toUpperCase() : 'HELD';
         $('#breadcrumbDocNumber').text('Doc #' + data.docNo);
-        $('#docDetailsTitle').html(`Document Details ${data.docNo} <small class="text-muted ml-2">(Ref: ${data.csoDocNo || data.csoId})</small>`);
+        $('#docDetailsTitle').html(`Document Details \${data.docNo} <small class="text-muted ml-2">(Ref: \${data.csoDocNo || data.csoId})</small>`);
         
         $('#lblCompany').text(data.company || '-');
         $('#lblStore').text(data.store || '-');
@@ -393,7 +416,7 @@ async function saveDocument(status) {
     if (currentStatus === 'HELD' && status === 'RELEASED') {
         AppUtils.showLoading();
         try {
-            await ApiClient.put('CONSIGNMENT', `/csdo/${docId}/release`);
+            await ApiClient.put('CONSIGNMENT', `/csdo/\${docId}/release`);
             AppUtils.showToast("Document released successfully.", "success");
             setTimeout(() => { window.location.href = '/consignment/delivery-order'; }, 1000);
         } catch(e) {
@@ -405,7 +428,7 @@ async function saveDocument(status) {
 
     // Create action for entirely new document transfer
     if (currentStatus === 'NEW') {
-        var csoId = $('#inputCsoId').data('id') || $('#inputCsoId').val(); // UUID preferred
+        var csoId = $('#inputCsoId').val(); // Selected CSO ID from dropdown
         if (!csoId || !csoId.trim()) {
             AppUtils.showToast("Please enter CSO ID to transfer from.", "warning");
             $('#step2-items').hide();
@@ -423,11 +446,11 @@ async function saveDocument(status) {
         
         AppUtils.showLoading();
         try {
-            var transRes = await ApiClient.post('CONSIGNMENT', `/csdo/transfer/${csoId.trim()}`, payload);
+            var transRes = await ApiClient.post('CONSIGNMENT', `/csdo/transfer/\${csoId.trim()}`, payload);
             var newId = transRes.id || transRes.docNo || csoId;
             
             if (status === 'RELEASED') {
-                await ApiClient.put('CONSIGNMENT', `/csdo/${newId}/release`);
+                await ApiClient.put('CONSIGNMENT', `/csdo/\${newId}/release`);
                 AppUtils.showToast("CSDO created & released successfully.", "success");
             } else {
                 AppUtils.showToast("CSDO created successfully.", "success");
@@ -446,58 +469,36 @@ function printSlip() {
     AppUtils.showToast("Printing CSDO slip...", "info");
 }
 
-let csoSearchTimeout;
-
-function handleCsoSearch(el) {
-    clearTimeout(csoSearchTimeout);
-    let keyword = $(el).val();
-    let dropdown = $('#csoDropdown');
-    
-    $('.autocomplete-dropdown').not(dropdown).removeClass('show');
-
-    if(keyword.length < 2) {
-        dropdown.removeClass('show');
-        return;
-    }
-    
-    csoSearchTimeout = setTimeout(async () => {
-        dropdown.html('<div class="dropdown-item text-center"><i class="fas fa-spinner fa-spin"></i> Searching...</div>').addClass('show');
-        try {
-            let qs = `?page=1&perPage=20&docNo=\${encodeURIComponent(keyword)}&company=&store=`;
-            let res = await ApiClient.get('CONSIGNMENT', `/cso\${qs}`);
-            let data = res.data || res.items || res;
-            let arr = Array.isArray(data) ? data : (data.docNo ? [data] : []);
-            
-            if(arr.length === 0) {
-                dropdown.html('<div class="dropdown-item text-muted">No CSO found</div>');
-                return;
-            }
-            
-            let html = '';
-            arr.forEach(cso => {
-                let docNo = cso.docNo || cso.id || '-';
-                let id = cso.id || docNo;
-                let store = cso.store || '-';
-                let status = cso.status || 'UNKNOWN';
-                html += `<a class="dropdown-item border-bottom py-2" href="#" onclick="selectAutocompleteCso(event, '\${id}', '\${docNo}')">
-                            <div class="font-weight-bold text-primary">\${docNo} <span class="badge badge-secondary float-right">\${status}</span></div>
-                            <small class="text-muted">Store: \${store}</small>
-                         </a>`;
-            });
-            dropdown.html(html);
-        } catch(e) {
-            console.error(e);
-            dropdown.html('<div class="dropdown-item text-danger">Search error</div>');
+async function loadReleasedCsoList() {
+    try {
+        var res = await ApiClient.get('CONSIGNMENT', '/cso?status=RELEASED');
+        var data = res.data || res.items || res;
+        var arr = Array.isArray(data) ? data : [];
+        
+        // Filter only RELEASED status
+        arr = arr.filter(function(cso) {
+            return (cso.status || '').toUpperCase() === 'RELEASED';
+        });
+        
+        var $select = $('#inputCsoId');
+        $select.empty().append('<option value="">-- Select CSO Document --</option>');
+        
+        if(arr.length === 0) {
+            $select.append('<option value="" disabled>No released CSO available</option>');
+            return;
         }
-    }, 400);
-}
-
-function selectAutocompleteCso(event, csoId, docNo) {
-    event.preventDefault();
-    $('#inputCsoId').val(docNo);
-    $('#inputCsoId').data('id', csoId);
-    $('#csoDropdown').removeClass('show');
-    loadCsoDetails(csoId);
+        
+        arr.forEach(function(cso) {
+            var id = cso.id || cso.docNo || '-';
+            var docNo = cso.docNo || cso.id || '-';
+            var store = cso.store || '-';
+            var company = cso.company || '-';
+            $select.append('<option value="' + id + '">' + docNo + ' (' + company + ' / ' + store + ')</option>');
+        });
+    } catch(e) {
+        console.error('Failed to load CSO list:', e);
+        $('#inputCsoId').empty().append('<option value="">-- Error loading CSO list --</option>');
+    }
 }
 
 async function loadCsoDetails(csoId) {
@@ -516,6 +517,27 @@ async function loadCsoDetails(csoId) {
         if(data.customerBranch) $('#lblCustomerBranch').val(data.customerBranch);
         if(data.customerEmail) $('#lblEmail').val(data.customerEmail);
         
+        // Load available items from master-data API
+        var company = data.company || '';
+        var store = data.store || '';
+        var supplierCode = data.supplierCode || '';
+        var supplierContract = data.supplierContract || '';
+        
+        if(company && store && supplierCode && supplierContract) {
+            try {
+                var itemUrl = '/master-data/items?company=' + encodeURIComponent(company) +
+                              '&store=' + encodeURIComponent(store) +
+                              '&supplierCode=' + encodeURIComponent(supplierCode) +
+                              '&supplierContract=' + encodeURIComponent(supplierContract);
+                var itemRes = await ApiClient.get('CONSIGNMENT', itemUrl);
+                var itemData = itemRes.data || itemRes;
+                availableItems = Array.isArray(itemData) ? itemData : [];
+            } catch(itemErr) {
+                console.error('Failed to load available items:', itemErr);
+                availableItems = [];
+            }
+        }
+
         // Populate items
         itemsList = [];
         if (data.items && data.items.length > 0) {
@@ -539,72 +561,7 @@ async function loadCsoDetails(csoId) {
     }
 }
 
-let searchTimeout;
 
-function handleItemSearch(el, index) {
-    clearTimeout(searchTimeout);
-    let keyword = $(el).val();
-    let dropdown = $(`#itemDropdown-\${index}`);
-    
-    $('.autocomplete-dropdown').not(dropdown).removeClass('show');
-
-    if(keyword.length < 2) {
-        dropdown.removeClass('show');
-        return;
-    }
-    
-    searchTimeout = setTimeout(async () => {
-        dropdown.html('<div class="dropdown-item text-center"><i class="fas fa-spinner fa-spin"></i> Searching...</div>').addClass('show');
-        try {
-            let company = $('#lblCompany').text().split('-')[0].trim();
-            if(!company || company === '-') company = 'COMP01';
-            let store = $('#lblStore').text().trim();
-            if(!store || store === '-') store = 'STORE01';
-            
-            // Following user specification URL format
-            let qs = `?company=\${company}&store=\${store}&supplierCode=SUPP001&supplierContract=CONTRACT-2024-001&keyword=\${encodeURIComponent(keyword)}`;
-            
-            let res = await ApiClient.get('CONSIGNMENT', `/master-data/items\${qs}`);
-            let data = res.data || res;
-            let arr = Array.isArray(data) ? data : (data.itemCode ? [data] : []);
-            
-            if(arr.length === 0) {
-                dropdown.html('<div class="dropdown-item text-muted">No items found</div>');
-                return;
-            }
-            
-            let html = '';
-            arr.forEach(item => {
-                let uom = item.uom || item.unitOfMeasure || 'UNIT';
-                let name = item.itemName || '-';
-                // Note: single quotes around strings
-                let escapedName = name.replace(/'/g, "\\'");
-                html += `<a class="dropdown-item border-bottom py-2" href="#" onclick="selectAutocompleteItem(event, \${index}, '\${item.itemCode}', '\${escapedName}', '\${uom}')">
-                            <div class="font-weight-bold text-primary">\${item.itemCode}</div>
-                            <small class="text-muted">\${name} • UOM: \${uom}</small>
-                         </a>`;
-            });
-            dropdown.html(html);
-        } catch(e) {
-            console.error(e);
-            dropdown.html('<div class="dropdown-item text-danger">Search error</div>');
-        }
-    }, 400);
-}
-
-function selectAutocompleteItem(event, index, code, name, uom) {
-    event.preventDefault();
-    itemsList[index]['itemCode'] = code;
-    itemsList[index]['itemName'] = name;
-    itemsList[index]['uom'] = uom;
-    renderItems();
-}
-
-$(document).on('click', function(e) {
-    if(!$(e.target).closest('.position-relative').length) {
-        $('.autocomplete-dropdown.show').removeClass('show');
-    }
-});
 </script>
 
 <style>
