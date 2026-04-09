@@ -245,6 +245,7 @@ var docId = new URLSearchParams(window.location.search).get('id');
 var currentStatus = '';
 
 var itemsList = [];
+var availableItems = [];
 
 document.addEventListener('configLoaded', function() {
     var now = new Date();
@@ -261,16 +262,45 @@ document.addEventListener('configLoaded', function() {
     }
 });
 
-function proceedToDetails() {
+async function proceedToDetails() {
     if (!$('#headerForm')[0].checkValidity()) {
         $('#headerForm')[0].reportValidity();
         return;
     }
     
+    // Fetch available items from master-data API using header values
+    await loadAvailableItems();
+
     $('#step1-header').hide();
     $('#step2-items').show();
     
     renderItems();
+}
+
+async function loadAvailableItems() {
+    var company = $('#company').val();
+    var store = $('#store').val();
+    var supplierCode = $('#supplierCode').val();
+    var supplierContract = $('#supplierContract').val();
+
+    if(!company || !store || !supplierCode || !supplierContract) return;
+
+    try {
+        AppUtils.showLoading();
+        var url = '/master-data/items?company=' + encodeURIComponent(company) +
+                  '&store=' + encodeURIComponent(store) +
+                  '&supplierCode=' + encodeURIComponent(supplierCode) +
+                  '&supplierContract=' + encodeURIComponent(supplierContract);
+        var res = await ApiClient.get('CONSIGNMENT', url);
+        var data = res.data || res;
+        availableItems = Array.isArray(data) ? data : [];
+        console.log('Loaded available items:', availableItems);
+    } catch(e) {
+        console.error('Failed to load available items:', e);
+        AppUtils.showToast('Failed to load items for this supplier/contract', 'warning');
+    } finally {
+        AppUtils.hideLoading();
+    }
 }
 
 function addItemRow() {
@@ -303,9 +333,22 @@ function renderItems() {
     }
     
     itemsList.forEach((item, index) => {
-        var htmlItemCode = isReadOnly ? 
-            "<strong>" + (item.itemCode || "-") + "</strong><br><small class='text-muted'>" + item.itemName + "</small>" : 
-            "<input type='text' class='form-control form-control-sm' placeholder='Search Item (e.g. 0100012)' value='" + item.itemCode + "' onchange=\"updateItem(" + index + ", 'itemCode', this.value)\">";
+        var htmlItemCode = '';
+        if(isReadOnly) {
+            htmlItemCode = "<strong>" + (item.itemCode || "-") + "</strong><br><small class='text-muted'>" + item.itemName + "</small>";
+        } else {
+            // Build select dropdown from availableItems
+            var opts = "<option value=''>-- Select Item --</option>";
+            if(availableItems && availableItems.length > 0) {
+                availableItems.forEach(function(ai) {
+                    var sel = (ai === item.itemCode) ? 'selected' : '';
+                    opts += "<option value='" + ai + "' " + sel + ">" + ai + "</option>";
+                });
+            } else if(item.itemCode) {
+                opts += "<option value='" + item.itemCode + "' selected>" + item.itemCode + "</option>";
+            }
+            htmlItemCode = "<select class='form-control form-control-sm' onchange=\"updateItem(" + index + ", 'itemCode', this.value)\">" + opts + "</select>";
+        }
 
         var htmlUom = isReadOnly ? 
             item.uom : 
@@ -390,6 +433,9 @@ async function loadDocument(id) {
             });
         }
         
+        // Fetch available items before rendering
+        await loadAvailableItems();
+
         $('#step1-header').hide();
         $('#step2-items').show();
         renderItems();
