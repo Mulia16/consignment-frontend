@@ -29,6 +29,16 @@
                     <i class="fas fa-truck-loading"></i> Delivery Order
                 </a>
             </li>
+            <li>
+                <a href="/consignment/stock-return" id="nav-consignment-stockreturn">
+                    <i class="fas fa-undo-alt"></i> Stock Return
+                </a>
+            </li>
+            <li>
+                <a href="/consignment/stock-return-collect" id="nav-consignment-stockreturn-collect">
+                    <i class="fas fa-people-carry"></i> Stock Return Collect
+                </a>
+            </li>
 
             <!-- Master Data -->
             <li class="menu-header">Master Data</li>

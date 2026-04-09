@@ -139,6 +139,26 @@ public class PageController {
         return "consignment/delivery-order/details";
     }
 
+    @GetMapping("/consignment/stock-return")
+    public String consignmentStockReturnList() {
+        return "consignment/stock-return/list";
+    }
+
+    @GetMapping("/consignment/stock-return/details")
+    public String consignmentStockReturnDetails() {
+        return "consignment/stock-return/details";
+    }
+
+    @GetMapping("/consignment/stock-return-collect")
+    public String consignmentStockReturnCollectList() {
+        return "consignment/stock-return-collect/list";
+    }
+
+    @GetMapping("/consignment/stock-return-collect/details")
+    public String consignmentStockReturnCollectDetails() {
+        return "consignment/stock-return-collect/details";
+    }
+
     @GetMapping("/outbound/sales-orders")
     public String salesOrders() {
         return "outbound/sales-orders";

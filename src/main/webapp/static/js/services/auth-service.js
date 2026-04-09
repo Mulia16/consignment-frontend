@@ -45,5 +45,4 @@ var AuthService = {
     }
 };
 
-// Make available globally
 window.AuthService = AuthService;
