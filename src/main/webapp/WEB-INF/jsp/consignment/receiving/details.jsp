@@ -163,10 +163,9 @@
                 <div class="row align-items-end">
                     <div class="col-md-3 mb-2">
                         <label class="small text-muted mb-1">Item Code <span class="text-danger">*</span></label>
-                        <div class="position-relative">
-                            <input type="text" class="form-control form-control-sm" id="newItemCode" placeholder="Type to search item code..." autocomplete="off">
-                            <div id="itemSearchResults" class="dropdown-menu w-100" style="max-height: 300px; overflow-y: auto; display: none;"></div>
-                        </div>
+                        <select class="form-control form-control-sm" id="newItemCode">
+                            <option value="">-- Select Item --</option>
+                        </select>
                     </div>
                     <div class="col-md-2 mb-2">
                         <label class="small text-muted mb-1">Request Qty</label>
@@ -242,6 +241,7 @@ var currentStatus = '';
 var documentData = null;
 
 var currentItems = [];
+var availableItems = [];
 var currentReceivedBatchInfo = [];
 var activeItemRowIndex = -1;
 
@@ -264,7 +264,7 @@ function resetHeaderForm() {
     document.getElementById('hCreatedDate').value = now.toISOString().slice(0,16);
 }
 
-function proceedToDetails() {
+async function proceedToDetails() {
     if (!$('#headerForm')[0].checkValidity()) {
         $('#headerForm')[0].reportValidity();
         return;
@@ -281,10 +281,50 @@ function proceedToDetails() {
     $('#dispSupplier').text($('#hSupplierCode').val() || '-');
     $('#dispContract').text($('#hSupplierContract').val() || '-');
     
+    // Fetch available items from master-data API
+    await loadAvailableItems();
+
     $('#step1-header').hide();
     $('#step2-items').show();
     
     renderItems();
+}
+
+async function loadAvailableItems() {
+    var company = $('#hCompany').val();
+    var store = $('#hStore').val();
+    var supplierCode = $('#hSupplierCode').val();
+    var supplierContract = $('#hSupplierContract').val();
+
+    if(!company || !store || !supplierCode || !supplierContract) return;
+
+    try {
+        AppUtils.showLoading();
+        var url = '/master-data/items?company=' + encodeURIComponent(company) +
+                  '&store=' + encodeURIComponent(store) +
+                  '&supplierCode=' + encodeURIComponent(supplierCode) +
+                  '&supplierContract=' + encodeURIComponent(supplierContract);
+        var res = await ApiClient.get('CONSIGNMENT', url);
+        var data = res.data || res;
+        availableItems = Array.isArray(data) ? data : [];
+        console.log('Loaded available items:', availableItems);
+
+        // Populate the item code dropdown
+        refreshItemCodeDropdown();
+    } catch(e) {
+        console.error('Failed to load available items:', e);
+        AppUtils.showToast('Failed to load items for this supplier/contract', 'warning');
+    } finally {
+        AppUtils.hideLoading();
+    }
+}
+
+function refreshItemCodeDropdown() {
+    var $select = $('#newItemCode');
+    $select.empty().append('<option value="">-- Select Item --</option>');
+    availableItems.forEach(function(item) {
+        $select.append('<option value="' + item + '">' + item + '</option>');
+    });
 }
 
 function goBackToHeader() {
@@ -514,6 +554,9 @@ async function loadDocument(id) {
             $('#addItemSection').show();
         }
 
+        // Load available items for dropdown
+        await loadAvailableItems();
+
         // Jump to step 2
         $('#step1-header').hide();
         $('#step2-items').show();
@@ -634,141 +677,7 @@ function printSlip() {
     window.open('/consignment/receiving/print?id=' + id, '_blank');
 }
 
-// ══════════════════════════════════════════════════════════
-// ITEM CODE SEARCH FUNCTIONALITY
-// ══════════════════════════════════════════════════════════
 
-var itemSearchTimeout = null;
-var selectedItemData = null;
-
-// Initialize item search on page load
-$(document).ready(function() {
-    // Item code search input handler with debounce
-    $('#newItemCode').on('input', function() {
-        var query = $(this).val().trim();
-        selectedItemData = null; // Reset selected item when input changes
-        
-        clearTimeout(itemSearchTimeout);
-        
-        if (query.length < 1) {
-            $('#itemSearchResults').hide();
-            return;
-        }
-        
-        itemSearchTimeout = setTimeout(function() {
-            searchItems(query);
-        }, 300); // 300ms debounce
-    });
-    
-    // Handle focus to show results if available
-    $('#newItemCode').on('focus', function() {
-        var query = $(this).val().trim();
-        if (query.length >= 1 && $('#itemSearchResults').children().length > 0) {
-            $('#itemSearchResults').show();
-        }
-    });
-    
-    // Hide dropdown when clicking outside
-    $(document).on('click', function(e) {
-        if (!$(e.target).closest('#newItemCode, #itemSearchResults').length) {
-            $('#itemSearchResults').hide();
-        }
-    });
-});
-
-async function searchItems(query) {
-    try {
-        var response = await ConsignmentService.listSetupItems({
-            page: 1,
-            perPage: 20,
-            itemCode: query
-        });
-        
-        var items = response.data || [];
-        renderItemSearchResults(items);
-    } catch (error) {
-        console.error('Error searching items:', error);
-        $('#itemSearchResults').html('<div class="dropdown-item text-muted">Error searching items</div>').show();
-    }
-}
-
-function renderItemSearchResults(items) {
-    var container = $('#itemSearchResults');
-    container.empty();
-    
-    if (items.length === 0) {
-        container.html('<div class="dropdown-item text-muted">No items found</div>').show();
-        return;
-    }
-    
-    items.forEach(function(item) {
-        var displayText = item.itemCode;
-        if (item.itemName) {
-            displayText += ' - ' + item.itemName;
-        }
-        
-        // Build supplier info
-        var supplierInfo = '';
-        if (item.externalSuppliers && item.externalSuppliers.length > 0) {
-            var supplierCodes = item.externalSuppliers.map(function(s) { return s.supplierCode; }).join(', ');
-            supplierInfo = '<small class="text-muted d-block">External: ' + supplierCodes + '</small>';
-        }
-        if (item.internalSuppliers && item.internalSuppliers.length > 0) {
-            var internalCodes = item.internalSuppliers.map(function(s) { return s.supplierCode; }).join(', ');
-            supplierInfo += '<small class="text-muted d-block">Internal: ' + internalCodes + '</small>';
-        }
-        
-        var itemHtml = '<a class="dropdown-item" href="javascript:void(0)" onclick="selectItem(\'' +
-            escapeHtml(item.itemCode) + '\', this)" ' +
-            'data-item=\'' + JSON.stringify(item).replace(/'/g, "'") + '\'>' +
-            '<div class="font-weight-bold">' + escapeHtml(displayText) + '</div>' +
-            supplierInfo +
-            '</a>';
-        
-        container.append(itemHtml);
-    });
-    
-    container.show();
-}
-
-function selectItem(itemCode, element) {
-    $('#newItemCode').val(itemCode);
-    
-    // Store the full item data
-    try {
-        selectedItemData = JSON.parse($(element).attr('data-item'));
-    } catch (e) {
-        selectedItemData = null;
-    }
-    
-    $('#itemSearchResults').hide();
-    
-    // Auto-fill supplier info if available and fields are empty
-    if (selectedItemData) {
-        autoFillSupplierInfo(selectedItemData);
-    }
-}
-
-function autoFillSupplierInfo(item) {
-    // Auto-fill supplier code if empty and item has external suppliers
-    var supplierCodeField = $('#hSupplierCode');
-    if (!supplierCodeField.val() && item.externalSuppliers && item.externalSuppliers.length > 0) {
-        supplierCodeField.val(item.externalSuppliers[0].supplierCode);
-    }
-    
-    // Auto-fill contract if empty and item has external suppliers
-    var contractField = $('#hSupplierContract');
-    if (!contractField.val() && item.externalSuppliers && item.externalSuppliers.length > 0) {
-        contractField.val(item.externalSuppliers[0].contractNumber);
-    }
-}
-
-function escapeHtml(text) {
-    if (!text) return '';
-    var div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
 </script>
 
 <style>
@@ -777,41 +686,6 @@ function escapeHtml(text) {
 .w-20 { width: 20%; }
 .received-qty { font-weight: bold; }
 
-/* Item search dropdown styles */
-#itemSearchResults {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    z-index: 1000;
-    margin-top: 2px;
-    background-color: #fff;
-    border: 1px solid #ced4da;
-    border-radius: 0.25rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-}
-
-#itemSearchResults .dropdown-item {
-    padding: 8px 12px;
-    border-bottom: 1px solid #eee;
-    cursor: pointer;
-}
-
-#itemSearchResults .dropdown-item:last-child {
-    border-bottom: none;
-}
-
-#itemSearchResults .dropdown-item:hover {
-    background-color: #f8f9fa;
-}
-
-#itemSearchResults .dropdown-item.active {
-    background-color: #007bff;
-    color: #fff;
-}
-
-#itemSearchResults .dropdown-item.active .text-muted {
-    color: rgba(255,255,255,0.8) !important;
-}
 </style>
 
 </body>
