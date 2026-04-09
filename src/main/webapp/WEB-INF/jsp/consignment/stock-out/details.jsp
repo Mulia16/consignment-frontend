@@ -68,6 +68,10 @@
                                     <label class="small text-muted mb-1">Date</label>
                                     <input type="datetime-local" class="form-control" id="hDate" required>
                                 </div>
+                                <div class="form-group mb-3">
+                                    <label class="small text-muted mb-1">Reference No</label>
+                                    <input type="text" class="form-control" id="referenceNo">
+                                </div>
                                 
                                 <div class="form-group mb-3">
                                     <label class="small text-muted mb-1 d-block">Auto Generate CSDO <span class="text-danger">*</span></label>
@@ -126,29 +130,46 @@
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-6 mb-2">
-                                        <label class="small text-muted mb-1">Shipping Term (Cargo)</label>
-                                        <select class="form-control form-control-sm"><option>C</option></select>
+                                        <label class="small text-muted mb-1">Shipping Term</label>
+                                        <select class="form-control form-control-sm" id="shippingTerm">
+                                            <option value="">-- Select --</option>
+                                            <option value="FOB">FOB</option>
+                                            <option value="CIF">CIF</option>
+                                            <option value="EXW">EXW</option>
+                                            <option value="DDP">DDP</option>
+                                        </select>
                                     </div>
                                     <div class="col-6 mb-2">
                                         <label class="small text-muted mb-1">Delivery Date</label>
-                                        <input type="date" class="form-control form-control-sm">
+                                        <input type="date" class="form-control form-control-sm" id="deliveryDate">
                                     </div>
                                     <div class="col-6 mb-2">
                                         <label class="small text-muted mb-1">Shipping Mode</label>
-                                        <select class="form-control form-control-sm"><option>Chilled</option></select>
+                                        <select class="form-control form-control-sm" id="shippingMode">
+                                            <option value="">-- Select --</option>
+                                            <option value="AIR">AIR</option>
+                                            <option value="SEA">SEA</option>
+                                            <option value="LAND">LAND</option>
+                                        </select>
                                     </div>
                                     <div class="col-6 mb-2">
                                         <label class="small text-muted mb-1">Transporter <span class="text-danger">*</span></label>
-                                        <select class="form-control form-control-sm" required><option>Line Clear</option></select>
+                                        <select class="form-control form-control-sm" id="transporter" required>
+                                            <option value="">-- Select --</option>
+                                            <option value="DHL">DHL</option>
+                                            <option value="FedEx">FedEx</option>
+                                            <option value="UPS">UPS</option>
+                                            <option value="JNE">JNE</option>
+                                        </select>
                                     </div>
                                 </div>
                                 <div class="form-group mb-2">
-                                    <label class="small text-muted mb-1">Shipping ID <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control form-control-sm" required>
+                                    <label class="small text-muted mb-1">Shipping To <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control form-control-sm" id="shippingTo" required>
                                 </div>
                                 <div class="form-group mb-2">
                                     <label class="small text-muted mb-1">Shipping Address <span class="text-danger">*</span></label>
-                                    <textarea class="form-control form-control-sm" rows="2" required></textarea>
+                                    <textarea class="form-control form-control-sm" rows="2" id="shippingAddress" required></textarea>
                                 </div>
                                 <div class="row">
                                     <div class="col-6 mb-2">
@@ -170,15 +191,15 @@
                                 </div>
                                 <div class="form-group mb-2">
                                     <label class="small text-muted mb-1">Contact Number</label>
-                                    <input type="text" class="form-control form-control-sm">
+                                    <input type="text" class="form-control form-control-sm" id="contactNumber">
                                 </div>
                                 <div class="form-group mb-2">
                                     <label class="small text-muted mb-1">Customer Reference</label>
-                                    <input type="text" class="form-control form-control-sm">
+                                    <input type="text" class="form-control form-control-sm" id="customerReference">
                                 </div>
                                 <div class="form-group mb-0">
-                                    <label class="small text-muted mb-1">Transport</label>
-                                    <input type="text" class="form-control form-control-sm" placeholder="Shipping Information">
+                                    <label class="small text-muted mb-1">Transport Information</label>
+                                    <input type="text" class="form-control form-control-sm" id="transportInformation" placeholder="Shipping Information">
                                 </div>
                             </div>
                         </div>
@@ -415,6 +436,16 @@ async function loadDocument(id) {
         
         if(data.note) $('#headerForm textarea:eq(0)').val(data.note);
         
+        if(data.referenceNo) $('#referenceNo').val(data.referenceNo);
+        if(data.shippingTerm) $('#shippingTerm').val(data.shippingTerm);
+        if(data.deliveryDate) $('#deliveryDate').val(data.deliveryDate);
+        if(data.shippingMode) $('#shippingMode').val(data.shippingMode);
+        if(data.transporter) $('#transporter').val(data.transporter);
+        if(data.shippingTo) $('#shippingTo').val(data.shippingTo);
+        if(data.shippingAddress) $('#shippingAddress').val(data.shippingAddress);
+        if(data.customerReference) $('#customerReference').val(data.customerReference);
+        if(data.transportInformation) $('#transportInformation').val(data.transportInformation);
+        
         if(currentStatus === 'RELEASED') {
             $('#headerForm :input').prop('disabled', true);
             $('#actionFooter').hide();
@@ -461,17 +492,26 @@ async function saveDocument(status) { // 'HELD' or 'RELEASED'
     try {
         var isAutoCsdo = $('#csdoAuto').is(':checked');
         var payload = {
-            company: $('#company').val() || "COMP01",
-            store: $('#store').val() || "STORE01",
-            customerCode: $('#headerForm input:eq(0)').val() || "CUST001",
-            customerBranch: $('#headerForm input:eq(1)').val() || "BRANCH01",
-            customerEmail: $('#headerForm input[type="email"]').val() || "cust@example.com",
-            supplierCode: $('#supplierCode').val() || "SUPP001",
-            supplierContract: $('#supplierContract').val() || "CONTRACT-2024-001",
+            company: $('#company').val(),
+            store: $('#store').val(),
+            customerCode: $('#headerForm input:eq(0)').val(),
+            customerBranch: $('#headerForm input:eq(1)').val(),
+            customerEmail: $('#headerForm input[type="email"]').val(),
+            supplierCode: $('#supplierCode').val(),
+            supplierContract: $('#supplierContract').val(),
             autoGenerateCsdo: isAutoCsdo,
-            note: $('#headerForm textarea:eq(0)').val() || "Note",
-            createdBy: "user01",
-            createdMethod: isAutoCsdo ? "AUTO" : "MANUAL",
+            note: $('#headerForm textarea:eq(0)').val(),
+            createdBy: "admin",
+            createdMethod: "MANUAL",
+            referenceNo: $('#referenceNo').val(),
+            shippingTerm: $('#shippingTerm').val(),
+            deliveryDate: $('#deliveryDate').val(),
+            shippingMode: $('#shippingMode').val(),
+            transporter: $('#transporter').val(),
+            shippingTo: $('#shippingTo').val(),
+            shippingAddress: $('#shippingAddress').val(),
+            customerReference: $('#customerReference').val(),
+            transportInformation: $('#transportInformation').val(),
             items: itemsList.map(i => ({
                 itemCode: i.itemCode,
                 qty: parseFloat(i.qty),
@@ -480,16 +520,6 @@ async function saveDocument(status) { // 'HELD' or 'RELEASED'
         };
 
         var targetUrl = '/cso';
-        if (payload.createdMethod === 'AUTO') {
-             // as per postman, when AUTO we optionally use a different endpoint
-             // we'll stick to targetUrl unless we specifically decide. The API collection says: auto-create endpoint /api/acmm/cso/auto-create
-             // let's use standard CSO for now since it handles both in most microservices, or direct if requested. 
-             // user prompt: API has POST /consignment/api/cso with autoGenerateCsdo: false. 
-             // And POST /consignment/api/acmm/cso/auto-create with autoGenerateCsdo: true.
-             if (isAutoCsdo) {
-                 targetUrl = '/acmm/cso/auto-create';
-             }
-        }
 
         var res = await ApiClient.post('CONSIGNMENT', targetUrl, payload);
         var createdCsoId = (res.data && res.data.id) ? res.data.id : (res.id ? res.id : 'cso-created');
