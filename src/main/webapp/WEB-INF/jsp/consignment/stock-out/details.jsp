@@ -87,7 +87,7 @@
                                 
                                 <div class="form-group mb-0">
                                     <label class="small text-muted mb-1">Note (Maximum 500 characters)</label>
-                                    <textarea class="form-control" rows="4" maxlength="500"></textarea>
+                                    <textarea class="form-control" rows="4" maxlength="500" id="note"></textarea>
                                 </div>
                             </div>
                         </div>
@@ -103,7 +103,7 @@
                                 <div class="form-group mb-3">
                                     <label class="small text-muted mb-1">Customer <span class="text-danger">*</span></label>
                                     <div class="input-group">
-                                        <input type="text" class="form-control" required>
+                                        <input type="text" class="form-control" id="customerCode" required>
                                         <div class="input-group-append">
                                             <button class="btn btn-outline-secondary" type="button"><i class="fas fa-search"></i></button>
                                         </div>
@@ -111,11 +111,11 @@
                                 </div>
                                 <div class="form-group mb-3">
                                     <label class="small text-muted mb-1">Customer Branch <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" required>
+                                    <input type="text" class="form-control" id="customerBranch" required>
                                 </div>
                                 <div class="form-group mb-0">
                                     <label class="small text-muted mb-1">Email <span class="text-danger">*</span></label>
-                                    <input type="email" class="form-control" required>
+                                    <input type="email" class="form-control" id="customerEmail" required>
                                 </div>
                             </div>
                         </div>
@@ -174,19 +174,19 @@
                                 <div class="row">
                                     <div class="col-6 mb-2">
                                         <label class="small text-muted mb-1">Country <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control form-control-sm" required>
+                                        <input type="text" class="form-control form-control-sm" id="shippingCountry" required>
                                     </div>
                                     <div class="col-6 mb-2">
                                         <label class="small text-muted mb-1">State <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control form-control-sm" required>
+                                        <input type="text" class="form-control form-control-sm" id="shippingState" required>
                                     </div>
                                     <div class="col-6 mb-2">
                                         <label class="small text-muted mb-1">City <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control form-control-sm" required>
+                                        <input type="text" class="form-control form-control-sm" id="shippingCity" required>
                                     </div>
                                     <div class="col-6 mb-2">
                                         <label class="small text-muted mb-1">Postcode <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control form-control-sm" required>
+                                        <input type="text" class="form-control form-control-sm" id="shippingPostcode" required>
                                     </div>
                                 </div>
                                 <div class="form-group mb-2">
@@ -215,6 +215,53 @@
                     </div>
                 </div>
             </form>
+        </div>
+
+        <!-- AUDIT INFORMATION -->
+        <div class="card shadow-sm mt-2" id="auditInfo" style="display: none;">
+            <div class="card-header bg-white font-weight-bold">
+                Audit Information
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="small text-muted">Created By</label>
+                                <div class="font-weight-bold" id="displayCreatedBy">-</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="small text-muted">Created Method</label>
+                                <div class="font-weight-bold" id="displayCreatedMethod">-</div>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-12">
+                                <label class="small text-muted">Created At</label>
+                                <div class="font-weight-bold" id="displayCreatedAt">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="small text-muted">Released By</label>
+                                <div class="font-weight-bold" id="displayReleasedBy">-</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="small text-muted">Released At</label>
+                                <div class="font-weight-bold" id="displayReleasedAt">-</div>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-12">
+                                <label class="small text-muted">Last Updated</label>
+                                <div class="font-weight-bold" id="displayUpdatedAt">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- STAGE 2: ITEM DETAILS -->
@@ -424,9 +471,9 @@ async function loadDocument(id) {
         if(data.supplierContract) $('#supplierContract').html(`<option value="\${data.supplierContract}">\${data.supplierContract}</option>`);
         setTimeout(() => { ConsignmentMasterData.triggerCascade(); }, 100);
 
-        if(data.customerCode) $('#headerForm input:eq(0)').val(data.customerCode);
-        if(data.customerBranch) $('#headerForm input:eq(1)').val(data.customerBranch);
-        if(data.customerEmail) $('#headerForm input[type="email"]').val(data.customerEmail);
+        if(data.customerCode) $('#customerCode').val(data.customerCode);
+        if(data.customerBranch) $('#customerBranch').val(data.customerBranch);
+        if(data.customerEmail) $('#customerEmail').val(data.customerEmail);
         
         if(data.autoGenerateCsdo) {
             $('#csdoAuto').prop('checked', true);
@@ -434,7 +481,7 @@ async function loadDocument(id) {
             $('#csdoManual').prop('checked', true);
         }
         
-        if(data.note) $('#headerForm textarea:eq(0)').val(data.note);
+        if(data.note) $('#note').val(data.note);
         
         if(data.referenceNo) $('#referenceNo').val(data.referenceNo);
         if(data.shippingTerm) $('#shippingTerm').val(data.shippingTerm);
@@ -445,6 +492,14 @@ async function loadDocument(id) {
         if(data.shippingAddress) $('#shippingAddress').val(data.shippingAddress);
         if(data.customerReference) $('#customerReference').val(data.customerReference);
         if(data.transportInformation) $('#transportInformation').val(data.transportInformation);
+        
+        $('#displayCreatedBy').text(data.createdBy || '-');
+        $('#displayCreatedMethod').text(data.createdMethod || '-');
+        $('#displayReleasedBy').text(data.releasedBy || '-');
+        $('#displayReleasedAt').text(data.releasedAt || '-');
+        $('#displayCreatedAt').text(data.createdAt || '-');
+        $('#displayUpdatedAt').text(data.updatedAt || '-');
+        $('#auditInfo').show();
         
         if(currentStatus === 'RELEASED') {
             $('#headerForm :input').prop('disabled', true);
