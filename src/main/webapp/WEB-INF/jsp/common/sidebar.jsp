@@ -39,6 +39,11 @@
                     <i class="fas fa-people-carry"></i> Stock Return Collect
                 </a>
             </li>
+            <li>
+                <a href="/consignment/stock-adjustment" id="nav-consignment-stockadjustment">
+                    <i class="fas fa-sliders-h"></i> Stock Adjustment
+                </a>
+            </li>
 
             <!-- Master Data -->
             <li class="menu-header">Master Data</li>

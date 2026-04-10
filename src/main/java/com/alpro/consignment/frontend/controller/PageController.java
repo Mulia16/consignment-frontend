@@ -159,6 +159,16 @@ public class PageController {
         return "consignment/stock-return-collect/details";
     }
 
+    @GetMapping("/consignment/stock-adjustment")
+    public String consignmentStockAdjustmentList() {
+        return "consignment/stock-adjustment/list";
+    }
+
+    @GetMapping("/consignment/stock-adjustment/details")
+    public String consignmentStockAdjustmentDetails() {
+        return "consignment/stock-adjustment/details";
+    }
+
     @GetMapping("/outbound/sales-orders")
     public String salesOrders() {
         return "outbound/sales-orders";
