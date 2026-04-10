@@ -207,7 +207,7 @@
 
                 </div>
                 
-                <div class="card shadow-sm mt-2">
+                <div class="card shadow-sm mt-2" id="headerFormFooter">
                     <div class="card-footer bg-light d-flex justify-content-end">
                         <button type="button" class="btn btn-outline-secondary mr-2" onclick="window.history.back()">Cancel</button>
                         <button type="button" class="btn btn-light mr-2" onclick="$('#headerForm')[0].reset()">Reset</button>
@@ -323,7 +323,6 @@ document.addEventListener('configLoaded', function() {
     ConsignmentMasterData.init();
 
     if (docId) {
-        // Edit/View Mode
         loadDocument(docId);
     } else {
         addItemRow(); // empty row
@@ -336,7 +335,6 @@ async function proceedToDetails() {
         return;
     }
     
-    // Fetch available items from master-data API using header values
     await loadAvailableItems();
 
     $('#step1-header').hide();
@@ -362,7 +360,6 @@ async function loadAvailableItems() {
         var res = await ApiClient.get('CONSIGNMENT', url);
         var data = res.data || res;
         availableItems = Array.isArray(data) ? data : [];
-        console.log('Loaded available items:', availableItems);
     } catch(e) {
         console.error('Failed to load available items:', e);
         AppUtils.showToast('Failed to load items for this supplier/contract', 'warning');
@@ -372,13 +369,13 @@ async function loadAvailableItems() {
 }
 
 function addItemRow() {
-    if(currentStatus === 'RELEASED') return;
+    if(currentStatus !== 'HELD' && currentStatus !== '') return;
     itemsList.push({ itemCode: '', itemName: '', qty: 0.0, uom: 'UNIT' });
     renderItems();
 }
 
 function removeItem(index) {
-    if(currentStatus === 'RELEASED') return;
+    if(currentStatus !== 'HELD' && currentStatus !== '') return;
     itemsList.splice(index, 1);
     renderItems();
 }
@@ -391,8 +388,7 @@ function renderItems() {
     var tbody = $('#itemTableBody');
     tbody.empty();
     
-    var isReadOnly = currentStatus === 'RELEASED';
-    var isError = currentStatus === 'ERROR';
+    var isReadOnly = currentStatus !== 'HELD';
     var disableInputs = isReadOnly ? 'disabled' : '';
     
     if (itemsList.length === 0) {
@@ -403,9 +399,8 @@ function renderItems() {
     itemsList.forEach((item, index) => {
         var htmlItemCode = '';
         if(isReadOnly) {
-            htmlItemCode = "<strong>" + (item.itemCode || "-") + "</strong><br><small class='text-muted'>" + item.itemName + "</small>";
+            htmlItemCode = "<strong>" + (item.itemCode || "-") + "</strong><br><small class='text-muted'>" + (item.itemName || '') + "</small>";
         } else {
-            // Build select dropdown from availableItems
             var opts = "<option value=''>-- Select Item --</option>";
             if(availableItems && availableItems.length > 0) {
                 availableItems.forEach(function(ai) {
@@ -418,19 +413,19 @@ function renderItems() {
             htmlItemCode = "<select class='form-control form-control-sm' onchange=\"updateItem(" + index + ", 'itemCode', this.value)\">" + opts + "</select>";
         }
 
-        var htmlUom = isReadOnly ? 
-            item.uom : 
+        var htmlUom = isReadOnly ?
+            item.uom :
             "<input type='text' class='form-control form-control-sm text-center' value='" + item.uom + "' onchange=\"updateItem(" + index + ", 'uom', this.value)\">";
 
-        var htmlAction = !isReadOnly ? 
-            "<button class='btn btn-sm text-danger border-0 bg-transparent' onclick=\"removeItem(" + index + ")\"><i class='fas fa-trash'></i></button>" : 
+        var htmlAction = !isReadOnly ?
+            "<button class='btn btn-sm text-danger border-0 bg-transparent' onclick=\"removeItem(" + index + ")\"><i class='fas fa-trash'></i></button>" :
             "<i class='fas fa-lock text-muted'></i>";
 
         var row = `<tr>
             <td class="text-center align-middle">\${index + 1}</td>
             <td class="align-middle">\${htmlItemCode}</td>
             <td class="text-right align-middle">
-                <input type="number" step="0.01" class="form-control form-control-sm text-right mx-auto" 
+                <input type="number" step="0.01" class="form-control form-control-sm text-right mx-auto"
                     value="\${item.qty.toFixed(6)}" \${disableInputs}
                     onchange="updateItem(\${index}, 'qty', parseFloat(this.value)||0)">
             </td>
@@ -442,15 +437,19 @@ function renderItems() {
 }
 
 function resetItems() {
-    if(currentStatus === 'RELEASED') return;
+    if(currentStatus !== 'HELD') return;
     itemsList = [{ itemCode: '', itemName: '', qty: 0.0, uom: 'UNIT' }];
     renderItems();
 }
 
 async function loadDocument(id) {
+    if(!id) {
+        AppUtils.showToast('Document ID is required', 'danger');
+        return;
+    }
     AppUtils.showLoading();
     try {
-        var res = await ApiClient.get('CONSIGNMENT', `/cso/${id}`);
+        var res = await ApiClient.get('CONSIGNMENT', '/cso/' + id);
         var data = res.data || res;
         
         currentStatus = (data.status || 'ERROR').toUpperCase();
@@ -464,21 +463,22 @@ async function loadDocument(id) {
         $('#headerStatusBadge').text(currentStatus).attr('class', 'badge ' + badgeClass);
         $('#topActions').show();
         
-        // Populate header fields
-        if(data.company) $('#company').html(`<option value="\${data.company}">\${data.company}</option>`);
-        if(data.store) $('#store').html(`<option value="\${data.store}">\${data.store}</option>`);
-        if(data.supplierCode) $('#supplierCode').html(`<option value="\${data.supplierCode}">\${data.supplierCode}</option>`);
-        if(data.supplierContract) $('#supplierContract').html(`<option value="\${data.supplierContract}">\${data.supplierContract}</option>`);
+        if(data.company) $('#company').html('<option value="' + data.company + '">' + data.company + '</option>');
+        if(data.store) $('#store').html('<option value="' + data.store + '">' + data.store + '</option>');
+        if(data.supplierCode) $('#supplierCode').html('<option value="' + data.supplierCode + '">' + data.supplierCode + '</option>');
+        if(data.supplierContract) $('#supplierContract').html('<option value="' + data.supplierContract + '">' + data.supplierContract + '</option>');
         setTimeout(() => { ConsignmentMasterData.triggerCascade(); }, 100);
 
         if(data.customerCode) $('#customerCode').val(data.customerCode);
         if(data.customerBranch) $('#customerBranch').val(data.customerBranch);
         if(data.customerEmail) $('#customerEmail').val(data.customerEmail);
         
-        if(data.autoGenerateCsdo) {
-            $('#csdoAuto').prop('checked', true);
-        } else {
-            $('#csdoManual').prop('checked', true);
+        if(data.autoGenerateCsdo !== undefined) {
+            if(data.autoGenerateCsdo) {
+                $('#csdoAuto').prop('checked', true);
+            } else {
+                $('#csdoManual').prop('checked', true);
+            }
         }
         
         if(data.note) $('#note').val(data.note);
@@ -501,7 +501,7 @@ async function loadDocument(id) {
         $('#displayUpdatedAt').text(data.updatedAt || '-');
         $('#auditInfo').show();
         
-        if(currentStatus === 'RELEASED') {
+        if(currentStatus !== 'HELD') {
             $('#headerForm :input').prop('disabled', true);
             $('#actionFooter').hide();
             $('#btnAddRow').hide();
@@ -512,18 +512,18 @@ async function loadDocument(id) {
             data.items.forEach(item => {
                 itemsList.push({
                     itemCode: item.itemCode,
-                    itemName: item.itemName || 'Item Description',
+                    itemName: item.itemName || '',
                     qty: item.qty || 0,
                     uom: item.uom || 'UNIT'
                 });
             });
         }
         
-        // Fetch available items before rendering
         await loadAvailableItems();
 
-        $('#step1-header').hide();
+        $('#step1-header').show();
         $('#step2-items').show();
+        $('#headerFormFooter').hide();
         renderItems();
     } catch (e) {
         console.error(e);
@@ -534,9 +534,8 @@ async function loadDocument(id) {
 }
 
 async function saveDocument(status) { // 'HELD' or 'RELEASED'
-    if (currentStatus === 'RELEASED') return;
+    if (currentStatus !== 'HELD' && currentStatus !== '') return;
     
-    // Validation
     if(itemsList.length === 0 || !itemsList[0].itemCode) {
         AppUtils.showToast("Please add valid items first.", "warning");
         return;
@@ -549,13 +548,13 @@ async function saveDocument(status) { // 'HELD' or 'RELEASED'
         var payload = {
             company: $('#company').val(),
             store: $('#store').val(),
-            customerCode: $('#headerForm input:eq(0)').val(),
-            customerBranch: $('#headerForm input:eq(1)').val(),
-            customerEmail: $('#headerForm input[type="email"]').val(),
+            customerCode: $('#customerCode').val(),
+            customerBranch: $('#customerBranch').val(),
+            customerEmail: $('#customerEmail').val(),
             supplierCode: $('#supplierCode').val(),
             supplierContract: $('#supplierContract').val(),
             autoGenerateCsdo: isAutoCsdo,
-            note: $('#headerForm textarea:eq(0)').val(),
+            note: $('#note').val(),
             createdBy: "admin",
             createdMethod: "MANUAL",
             referenceNo: $('#referenceNo').val(),
@@ -580,7 +579,7 @@ async function saveDocument(status) { // 'HELD' or 'RELEASED'
         var createdCsoId = (res.data && res.data.id) ? res.data.id : (res.id ? res.id : 'cso-created');
         
         if (status === 'RELEASED') {
-            await ApiClient.put('CONSIGNMENT', `/cso/${createdCsoId}/release`);
+            await ApiClient.put('CONSIGNMENT', '/cso/' + createdCsoId + '/release');
         }
         
         AppUtils.showToast("Document saved with status: " + status, "success");
