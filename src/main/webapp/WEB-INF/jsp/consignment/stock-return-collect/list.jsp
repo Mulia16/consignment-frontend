@@ -167,7 +167,7 @@
 </div>
 
 <jsp:include page="/WEB-INF/jsp/common/footer.jsp" />
-<script src="/static/js/services/consignment-service.js"></script>
+<script src="/static/js/services/consignment-service.js?v=2"></script>
 <script src="/static/js/consignment-master-data.js"></script>
 <script>
 var allData = [];
@@ -181,42 +181,60 @@ document.addEventListener('configLoaded', function() {
     $('#menu-returns').addClass('active');
 });
 
-// Mock data generation for initial display
-function generateMockData() {
-    return [
-        {
-            id: 1,
-            returnNumber: "C-1130",
-            refNumber: "1130",
-            store: "0001 - NPDRM1",
-            supplier: "EASY PHARMA SDN BHD",
-            createdBy: "SYSTEM",
-            status: "Held"
-        },
-        {
-            id: 2,
-            returnNumber: "C-1124",
-            refNumber: "1124",
-            store: "0001 - NPDRM1",
-            supplier: "MEDIC PHARMA SDN BHD",
-            createdBy: "SYSTEM",
-            status: "Updated"
-        }
-    ];
-}
-
 async function searchData(page) {
     currentPage = page || 0;
     AppUtils.showLoading();
     
-    setTimeout(() => {
-        var data = generateMockData();
-        var meta = { page: 1, perPage: perPage, totalData: 2, totalPage: 1 };
-        
-        allData = data;
+    var form = document.getElementById('filterForm');
+    var formData = new FormData(form);
+    var params = new URLSearchParams();
+
+    for (var pair of formData.entries()) {
+        var key = pair[0];
+        var value = pair[1];
+        if (value && value.trim() !== '') {
+            if (key === 'supplier') key = 'supplierCode';
+            params.append(key, value.trim());
+        }
+    }
+
+    params.append('page', currentPage + 1);
+    params.append('perPage', perPage);
+
+    try {
+        var res = await ConsignmentService.searchCSRNC(params);
+        var data = [];
+        var meta = res.meta || { page: 1, perPage: perPage, totalData: 0, totalPage: 1 };
+
+        if (res.data && Array.isArray(res.data)) {
+            data = res.data;
+        } else if (res.items && Array.isArray(res.items)) {
+            data = res.items;
+        } else if (res.data && res.data.content && Array.isArray(res.data.content)) {
+            data = res.data.content;
+            meta = { page: res.data.page, perPage: res.data.perPage, totalData: res.data.total, totalPage: Math.ceil(res.data.total / res.data.perPage) };
+        } else if (Array.isArray(res)) {
+            data = res;
+        }
+
+        allData = data.map(item => ({
+            id: item.id || item.docNo,
+            returnNumber: item.docNo || '-',
+            refNumber: item.csrnDocNo || item.referenceNo || '-',
+            store: item.store || '-',
+            supplier: item.supplierCode || '-',
+            createdBy: item.createdBy || '-',
+            status: item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1).toLowerCase() : 'Held'
+        }));
+
         renderTable(allData, meta);
+    } catch (e) {
+        console.error(e);
+        AppUtils.showToast('Failed to load data', 'danger');
+        renderTable([], { page: 1, perPage: perPage, totalData: 0, totalPage: 1 });
+    } finally {
         AppUtils.hideLoading();
-    }, 500);
+    }
 }
 
 function renderTable(data, meta) {
@@ -237,7 +255,7 @@ function renderTable(data, meta) {
         
         var actionHtml = row.status === 'Held' ? 
             `<a href="/consignment/stock-return-collect/details?id=\${row.id}" class="mr-2" title="Edit"><i class="fas fa-edit text-primary"></i></a>
-             <button class="btn btn-link p-0 m-0 text-success" title="Update" onclick="updateRow(\${row.id})"><i class="fas fa-check"></i></button>` :
+             <button class="btn btn-link p-0 m-0 text-success" title="Update" onclick="updateRow('\${row.id}')"><i class="fas fa-check"></i></button>` :
             `<a href="/consignment/stock-return-collect/details?id=\${row.id}" title="View"><i class="fas fa-eye text-primary"></i></a>`;
             
         var tr = `<tr>
@@ -295,17 +313,34 @@ function batchUpdate() {
     }
 
     if (confirm('Are you sure you want to change status to updated for ' + ids.length + ' document(s)?')) {
-        AppUtils.showToast('Documents successfully updated & posted to inventory.', 'success');
-        allData.forEach(d => { if (ids.includes(d.id.toString())) d.status = 'Updated'; });
-        searchData(currentPage);
+        AppUtils.showLoading();
+        Promise.all(ids.map(id => ConsignmentService.completeCSRNC(id)))
+            .then(() => {
+                AppUtils.showToast('Documents successfully updated & posted to inventory.', 'success');
+                searchData(currentPage);
+                $('#selectAll').prop('checked', false);
+            })
+            .catch(e => {
+                console.error(e);
+                AppUtils.showToast('Error updating documents', 'danger');
+            })
+            .finally(() => AppUtils.hideLoading());
     }
 }
 
 function updateRow(id) {
     if (confirm('Confirm update status to "Updated" and post to inventory?')) {
-        AppUtils.showToast('Document successfully updated.', 'success');
-        allData.forEach(d => { if (d.id == id) d.status = 'Updated'; });
-        searchData(currentPage);
+        AppUtils.showLoading();
+        ConsignmentService.completeCSRNC(id)
+            .then(() => {
+                AppUtils.showToast('Document successfully updated.', 'success');
+                searchData(currentPage);
+            })
+            .catch(e => {
+                console.error(e);
+                AppUtils.showToast('Error updating document', 'danger');
+            })
+            .finally(() => AppUtils.hideLoading());
     }
 }
 

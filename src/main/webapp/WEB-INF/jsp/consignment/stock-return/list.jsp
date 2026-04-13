@@ -202,7 +202,7 @@
         </div>
 
         <jsp:include page="/WEB-INF/jsp/common/footer.jsp" />
-        <script src="/static/js/services/consignment-service.js"></script>
+        <script src="/static/js/services/consignment-service.js?v=2"></script>
         <script src="/static/js/consignment-master-data.js"></script>
         <script>
             var allData = [];
@@ -239,7 +239,7 @@
                 params.append('perPage', perPage);
 
                 try {
-                    var res = await ConsignmentService.searchCSR(params);
+                    var res = await ConsignmentService.searchCSRN(params);
                     var data = [];
                     var meta = res.meta || { page: 1, perPage: perPage, totalData: 0, totalPage: 1 };
 
@@ -284,9 +284,9 @@
 
                 data.forEach(function (row) {
                     var badgeClass = '';
-                    if (row.status === 'Held') badgeClass = 'badge-warning';
-                    else if (row.status === 'Released') badgeClass = 'badge-success';
-                    else if (row.status === 'Completed') badgeClass = 'badge-secondary';
+                    if (row.status === 'HELD') badgeClass = 'badge-warning';
+                    else if (row.status === 'RELEASED') badgeClass = 'badge-success';
+                    else if (row.status === 'COMPLETED') badgeClass = 'badge-secondary';
 
                     var actionHtml = '<a href="/consignment/stock-return/details?id=' + row.id + '"><i class="fas fa-edit text-primary"></i></a>';
 
@@ -349,7 +349,7 @@
 
                 if (confirm('Are you sure you want to release the selected ' + ids.length + ' document(s)?')) {
                     AppUtils.showLoading();
-                    Promise.all(ids.map(id => ConsignmentService.releaseCSR(id)))
+                    Promise.all(ids.map(id => ConsignmentService.releaseCSRN(id)))
                         .then(() => {
                             AppUtils.showToast('Documents successfully released.', 'success');
                             searchData(currentPage);
@@ -381,7 +381,7 @@
 
                 if (confirm('Are you sure you want to complete the selected ' + ids.length + ' document(s)?')) {
                     AppUtils.showLoading();
-                    Promise.all(ids.map(id => ConsignmentService.completeCSR(id)))
+                    Promise.all(ids.map(id => ConsignmentService.completeCSRN(id)))
                         .then(() => {
                             AppUtils.showToast('Documents successfully completed.', 'success');
                             searchData(currentPage);

@@ -56,11 +56,16 @@
                                 <option value="">Select Store</option>
                             </select>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-3 mb-3">
                             <label class="small text-muted mb-1">Supplier <span class="text-danger">*</span></label>
                             <select class="form-control" name="supplierCode" id="supplierCode" required>
                                 <option value="">Select Supplier</option>
                             </select>
+                        </div>
+                        <div class="col-md-3 mb-3 position-relative">
+                            <label class="small text-muted mb-1">CSO Document No <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="csoDocNo" id="csoDocNo" required autocomplete="off" placeholder="Search CSO...">
+                            <div id="csoSuggestions" class="list-group position-absolute w-100 shadow-sm" style="z-index: 1000; display: none; max-height: 200px; overflow-y: auto;"></div>
                         </div>
                     </div>
 
@@ -128,7 +133,7 @@
 </div>
 
 <jsp:include page="/WEB-INF/jsp/common/footer.jsp" />
-<script src="/static/js/services/consignment-service.js"></script>
+<script src="/static/js/services/consignment-service.js?v=2"></script>
 <script src="/static/js/consignment-master-data.js"></script>
 
 <script>
@@ -140,24 +145,10 @@ document.addEventListener('configLoaded', function() {
     var urlParams = new URLSearchParams(window.location.search);
     var id = urlParams.get('id');
 
+    setupCsoAutocomplete();
+
     if (id) {
-        document.getElementById('breadcrumbAction').textContent = 'Return No: ' + (1130 + parseInt(id));
-        document.getElementById('headerTitle').textContent = 'Document Details';
-        document.getElementById('btnNext').classList.add('d-none');
-        document.getElementById('btnSave').classList.remove('d-none');
-        
-        // Mock logic: if ID is 3, simulate "Released" status 
-        if (id === '3') {
-            isReleased = true;
-            document.getElementById('thActualQuantity').classList.remove('d-none');
-            document.getElementById('btnAddRow').classList.add('d-none');
-            document.getElementById('thAction').classList.add('d-none');
-        }
-        
-        showItemDetails();
-        
-        // Load mock initial data
-        loadMockItem();
+        loadDocumentData(id);
     } else {
         document.getElementById('breadcrumbAction').textContent = 'Add New';
         document.getElementById('headerTitle').textContent = 'Add New - Header';
@@ -171,38 +162,99 @@ function showItemDetails() {
     document.getElementById('btnSave').classList.remove('d-none');
 }
 
-function loadMockItem() {
-    var tbody = document.getElementById('itemsTableBody');
-    tbody.innerHTML = '';
-    
-    var tr = document.createElement('tr');
-    tr.innerHTML = `
-        <td class="text-center align-middle">1</td>
-        <td>
-            <select class="form-control form-control-sm" name="itemCode" \${isReleased ? 'disabled' : ''}>
-                <option value="100201185">100201185 - HL SMOOTH HAIR CONDITIONER</option>
-            </select>
-        </td>
-        <td class="align-middle">1 UNIT</td>
-        <td>
-            <input type="number" class="form-control form-control-sm text-right" name="quantity" value="1.000000" \${isReleased ? 'disabled' : ''} />
-        </td>
-    `;
-    if (isReleased) {
-        tr.innerHTML += `<td><input type="number" class="form-control form-control-sm text-right" name="actualQuantity" value="0.000000" /></td>`;
+async function loadDocumentData(id) {
+    AppUtils.showLoading();
+    try {
+        var res = await ConsignmentService.getCSRN(id);
+        var data = res.data || res;
+        
+        document.getElementById('breadcrumbAction').textContent = 'Return No: ' + (data.docNo || id);
+        document.getElementById('headerTitle').textContent = 'Document Details - ' + (data.docNo || id);
+        
+        isReleased = (data.status === 'RELEASED' || data.status === 'COMPLETED');
+        
+        if (isReleased) {
+            document.getElementById('thActualQuantity').classList.remove('d-none');
+            document.getElementById('btnAddRow').classList.add('d-none');
+            document.getElementById('thAction').classList.add('d-none');
+        }
+        
+        // Fill base form
+        var form = document.getElementById('detailsForm');
+        if (form.querySelector('input[name="csoDocNo"]')) form.querySelector('input[name="csoDocNo"]').value = data.csoDocNo || '';
+        form.querySelector('input[name="internalSupplierStore"]').value = data.internalSupplierStore || '';
+        form.querySelector('input[name="supplierConfirmNote"]').value = data.supplierConfirmNote || '';
+        form.querySelector('input[name="reason"]').value = data.reasonCode || data.reason || '';
+        form.querySelector('textarea[name="remark"]').value = data.remark || '';
+        
+        if (isReleased) {
+            // Disable all form inputs
+            var inputs = form.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => input.disabled = true);
+        }
+        
+        ConsignmentMasterData.setValues({
+            company: data.company,
+            store: data.store,
+            supplier: data.supplierCode,
+            contract: data.supplierContract
+        });
+        
+        // Manually inject <option> elements to immediately display prefilled values
+        // This avoids race conditions where setValues internally clears dropdowns before loading them.
+        if (data.company) $('#company').empty().append(new Option(data.company, data.company, true, true));
+        if (data.store) $('#store').empty().append(new Option(data.store, data.store, true, true));
+        if (data.supplierCode) $('#supplierCode').empty().append(new Option(data.supplierCode, data.supplierCode, true, true));
+        if (data.supplierContract) $('#supplierContract').empty().append(new Option(data.supplierContract, data.supplierContract, true, true));
+        
+        // Populate items table
+        var tbody = document.getElementById('itemsTableBody');
+        tbody.innerHTML = '';
+        if (data.items && data.items.length > 0) {
+            data.items.forEach((item, index) => {
+                var tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="text-center align-middle">\${index + 1}</td>
+                    <td>
+                        <select class="form-control form-control-sm item-code-dropdown" data-name="itemCode" data-selected="\${item.itemCode}" \${isReleased ? 'disabled' : ''}>
+                            <option value="\${item.itemCode}" selected>\${item.itemCode}</option>
+                        </select>
+                    </td>
+                    <td class="align-middle">
+                        <input type="text" class="form-control form-control-sm text-center" name="uom" value="\${item.uom || 'UNIT'}" \${isReleased ? 'disabled' : ''} />
+                    </td>
+                    <td>
+                        <input type="number" class="form-control form-control-sm text-right" name="quantity" value="\${item.qty || 0}" \${isReleased ? 'disabled' : ''} />
+                    </td>
+                `;
+                if (isReleased) {
+                    tr.innerHTML += `<td><input type="number" class="form-control form-control-sm text-right" name="actualQuantity" value="\${item.actualQty || 0}" /></td>`;
+                }
+                tr.innerHTML += `
+                    <td>
+                        <input type="text" class="form-control form-control-sm" name="batchId" placeholder="Batch ID" value="\${item.batchId || ''}" \${isReleased ? 'disabled' : ''} />
+                    </td>
+                    <td>
+                        <input type="date" class="form-control form-control-sm" name="expiryDate" value="\${item.expiryDate ? item.expiryDate.substring(0, 10) : ''}" \${isReleased ? 'disabled' : ''} />
+                    </td>
+                `;
+                if (!isReleased) {
+                    tr.innerHTML += `<td class="text-center align-middle"><button type="button" class="btn btn-sm text-danger" onclick="this.closest('tr').remove()"><i class="fas fa-trash"></i></button></td>`;
+                }
+                tbody.appendChild(tr);
+            });
+        }
+        
+        showItemDetails();
+        
+        // Load available items so the dropdowns have full options instead of only the selected one
+        setTimeout(loadAvailableItems, 500);
+    } catch(e) {
+        console.error('Failed to load document data:', e);
+        AppUtils.showToast('Failed to load document data.', 'danger');
+    } finally {
+        AppUtils.hideLoading();
     }
-    tr.innerHTML += `
-        <td>
-            <input type="text" class="form-control form-control-sm" name="batchId" placeholder="Batch ID" value="0" \${isReleased ? 'disabled' : ''} />
-        </td>
-        <td>
-            <input type="date" class="form-control form-control-sm" name="expiryDate" value="9999-12-31" \${isReleased ? 'disabled' : ''} />
-        </td>
-    `;
-    if (!isReleased) {
-        tr.innerHTML += `<td class="text-center align-middle"><button type="button" class="btn btn-sm text-danger" onclick="this.closest('tr').remove()"><i class="fas fa-trash"></i></button></td>`;
-    }
-    tbody.appendChild(tr);
 }
 
 function addEmptyRow() {
@@ -213,11 +265,13 @@ function addEmptyRow() {
     tr.innerHTML = `
         <td class="text-center align-middle">\${rowCount}</td>
         <td>
-            <select class="form-control form-control-sm" name="itemCode">
+            <select class="form-control form-control-sm item-code-dropdown" data-name="itemCode">
                 <option value="">Select Item</option>
             </select>
         </td>
-        <td class="align-middle">-</td>
+        <td class="align-middle">
+            <input type="text" class="form-control form-control-sm text-center" name="uom" value="UNIT" />
+        </td>
         <td>
             <input type="number" class="form-control form-control-sm text-right" name="quantity" value="0.000000" />
         </td>
@@ -241,10 +295,116 @@ function addEmptyRow() {
 
 function addItemRow() {
     addEmptyRow();
-    var values = ConsignmentMasterData.getValues();
-    if (values.company && values.store && values.supplier && values.contract) {
-        ConsignmentMasterData.loadItems(values.company, values.store, values.supplier, values.contract);
+    refreshItemCodeDropdowns();
+}
+
+var availableItems = [];
+
+async function loadAvailableItems() {
+    let company = $('#company').val();
+    let store = $('#store').val();
+    let supplierCode = $('#supplierCode').val();
+    let supplierContract = $('#supplierContract').val();
+
+    if(!company || !store || !supplierCode || !supplierContract) return;
+
+    try {
+        let url = '/master-data/items?company=' + encodeURIComponent(company) +
+                  '&store=' + encodeURIComponent(store) +
+                  '&supplierCode=' + encodeURIComponent(supplierCode) +
+                  '&supplierContract=' + encodeURIComponent(supplierContract);
+        let res = await ApiClient.get('CONSIGNMENT', url);
+        let data = res.data || res;
+        availableItems = Array.isArray(data) ? data : [];
+        refreshItemCodeDropdowns();
+    } catch(e) {
+        console.error('Failed to load available items:', e);
     }
+}
+
+function refreshItemCodeDropdowns() {
+    $('#itemsTableBody tr').each(function() {
+        let $select = $(this).find('.item-code-dropdown');
+        let currentVal = $select.attr('data-selected') || $select.val();
+        let options = '<option value="">Select Item</option>';
+        availableItems.forEach(function(item) {
+            let selected = (item === currentVal) ? 'selected' : '';
+            options += '<option value="' + item + '" ' + selected + '>' + item + '</option>';
+        });
+        $select.html(options);
+        if (currentVal && availableItems.includes(currentVal)) {
+            $select.val(currentVal);
+        }
+    });
+}
+
+// When master data changes, refresh our customized item list
+$(document).on('change', '#company, #store, #supplierCode, #supplierContract', function() {
+    loadAvailableItems();
+});
+
+function setupCsoAutocomplete() {
+    var csoInput = document.getElementById('csoDocNo');
+    var suggestionsBox = document.getElementById('csoSuggestions');
+    var timeout = null;
+
+    csoInput.addEventListener('input', function() {
+        var keyword = this.value.trim();
+        
+        clearTimeout(timeout);
+        suggestionsBox.innerHTML = '';
+        suggestionsBox.style.display = 'none';
+
+        if (keyword.length < 2) return;
+
+        timeout = setTimeout(async function() {
+            try {
+                var res = await ConsignmentService.searchCSO({
+                    page: 1,
+                    perPage: 20,
+                    docNo: keyword
+                });
+
+                var dataList = [];
+                if (res.data && Array.isArray(res.data)) dataList = res.data;
+                else if (res.data && res.data.content) dataList = res.data.content;
+                else if (Array.isArray(res)) dataList = res;
+
+                if (dataList.length > 0) {
+                    suggestionsBox.innerHTML = '';
+                    dataList.forEach(cso => {
+                        var csoHtml = `<a href="#" class="list-group-item list-group-item-action py-2" data-docno="\${cso.docNo}">
+                            <div class="font-weight-bold">\${cso.docNo}</div>
+                            <small class="text-muted">\${cso.company} - \${cso.store}</small>
+                        </a>`;
+                        suggestionsBox.insertAdjacentHTML('beforeend', csoHtml);
+                    });
+                    suggestionsBox.style.display = 'block';
+
+                    // Attach click handlers
+                    suggestionsBox.querySelectorAll('a').forEach(a => {
+                        a.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            csoInput.value = this.getAttribute('data-docno');
+                            suggestionsBox.style.display = 'none';
+                        });
+                    });
+                } else {
+                    suggestionsBox.innerHTML = '<div class="list-group-item text-muted py-2">No results found</div>';
+                    suggestionsBox.style.display = 'block';
+                }
+            } catch(e) {
+                console.error('CSO Autocomplete Error:', e);
+            }
+        }, 500);
+    });
+
+    // Close on click outside
+    document.addEventListener('click', function(e) {
+        if (!csoInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+            suggestionsBox.style.display = 'none';
+        }
+    });
 }
 
 async function saveDocument() {
@@ -265,7 +425,9 @@ async function saveDocument() {
     var rows = document.querySelectorAll('#itemsTableBody tr');
     
     rows.forEach(function(tr) {
-        var itemCode = tr.querySelector('select[name="itemCode"]').value;
+        var itemCodeSelect = tr.querySelector('.item-code-dropdown');
+        var itemCode = itemCodeSelect ? itemCodeSelect.value : null;
+        var uom = tr.querySelector('input[name="uom"]') ? tr.querySelector('input[name="uom"]').value : "UNIT";
         var quantity = tr.querySelector('input[name="quantity"]') ? parseFloat(tr.querySelector('input[name="quantity"]').value) : 0;
         var batchId = tr.querySelector('input[name="batchId"]') ? tr.querySelector('input[name="batchId"]').value : '';
         var expiryDate = tr.querySelector('input[name="expiryDate"]') ? tr.querySelector('input[name="expiryDate"]').value : null;
@@ -273,7 +435,7 @@ async function saveDocument() {
         if (itemCode && quantity > 0) {
             items.push({
                 itemCode: itemCode,
-                uom: "UNIT",
+                uom: uom,
                 qty: quantity,
                 batchId: batchId || undefined,
                 expiryDate: expiryDate ? expiryDate + "T00:00:00Z" : undefined
@@ -297,27 +459,29 @@ async function saveDocument() {
         supplierConfirmNote: formData.get('supplierConfirmNote') || undefined,
         reason: formData.get('reason'),
         remark: formData.get('remark') || undefined,
+        csoDocNo: formData.get('csoDocNo'),
         createdBy: "SYSTEM",
         items: items
     };
 
     try {
         var urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('id')) {
-            // Already created, but API doesn't support generic PUT for CSR header right now.
-            // Mock success for edit view if API isn't available
-            AppUtils.showToast("Actual quantity update isn't fully wired for generic update", 'warning');
-            btn.disabled = false;
-            btn.innerHTML = originalBtnText;
+        var id = urlParams.get('id');
+        if (id) {
+            await ConsignmentService.updateCSRN(id, payload);
+            AppUtils.showToast('Document updated successfully!', 'success');
+            setTimeout(function() {
+                window.location.href = '/consignment/stock-return';
+            }, 1500);
         } else {
-            await ConsignmentService.createCSR(payload);
+            await ConsignmentService.createCSRN(payload);
             AppUtils.showToast('Document created successfully!', 'success');
             setTimeout(function() {
                 window.location.href = '/consignment/stock-return';
             }, 1500);
         }
     } catch (e) {
-        console.error('Error saving CSR:', e);
+        console.error('Error saving CSRN:', e);
         AppUtils.showToast('Failed to save document. Please check the network log.', 'error');
         btn.disabled = false;
         btn.innerHTML = originalBtnText;

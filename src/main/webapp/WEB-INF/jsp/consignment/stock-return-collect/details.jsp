@@ -109,7 +109,7 @@
 </div>
 
 <jsp:include page="/WEB-INF/jsp/common/footer.jsp" />
-<script src="/static/js/services/consignment-service.js"></script>
+<script src="/static/js/services/consignment-service.js?v=2"></script>
 <script src="/static/js/consignment-master-data.js"></script>
 
 <script>
@@ -183,7 +183,7 @@ async function saveDocument() {
         }
         
         // Mocking detailId as 1 for demonstration
-        await ConsignmentService.updateCSRActualQty(id, 1, actualQty);
+        await ConsignmentService.updateCSRNCActualQty(id, 1, actualQty);
         AppUtils.showToast('Actual quantity saved successfully!', 'success');
     } catch (e) {
         console.error('Error saving actual quantity:', e);
@@ -207,7 +207,7 @@ async function updateDocument() {
         try {
             if (id) {
                 // Assuming complete or release API applies to updating CSRN-C status based on endpoint docs
-                await ConsignmentService.completeCSR(id);
+                await ConsignmentService.completeCSRNC(id);
             }
             AppUtils.showToast('Document updated and posted to inventory!', 'success');
             document.getElementById('docStatus').value = 'Updated';

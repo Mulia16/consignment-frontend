@@ -274,56 +274,101 @@ var ConsignmentService = {
     },
 
     // ══════════════════════════════════════════════════════════
-    // CSR CONTROLLER (Consignment Stock Return) - /api/csr
+    // CSRN CONTROLLER (Consignment Stock Return) - /api/csrn
     // ══════════════════════════════════════════════════════════
 
     /**
-     * Search CSR Documents
-     * GET /api/csr
+     * Search CSRN Documents
+     * GET /api/csrn
      */
-    searchCSR: async function(params) {
+    searchCSRN: async function(params) {
         var query = new URLSearchParams(params).toString();
-        return ApiClient.get('CONSIGNMENT', '/csr' + (query ? '?' + query : ''));
+        return ApiClient.get('CONSIGNMENT', '/csrn' + (query ? '?' + query : ''));
     },
 
     /**
-     * Get CSR by ID
-     * GET /api/csr/{id}
+     * Get CSRN by ID
+     * GET /api/csrn/{id}
      */
-    getCSR: async function(id) {
-        return ApiClient.get('CONSIGNMENT', '/csr/' + id);
+    getCSRN: async function(id) {
+        return ApiClient.get('CONSIGNMENT', '/csrn/' + id);
     },
 
     /**
-     * Create CSR Document
-     * POST /api/csr
+     * Create CSRN Document
+     * POST /api/csrn
      */
-    createCSR: async function(data) {
-        return ApiClient.post('CONSIGNMENT', '/csr', data);
+    createCSRN: async function(data) {
+        return ApiClient.post('CONSIGNMENT', '/csrn', data);
     },
 
     /**
-     * Release CSR Document
-     * PUT /api/csr/{id}/release
+     * Update CSRN Document
+     * PUT /api/csrn/{id}
      */
-    releaseCSR: async function(id) {
-        return ApiClient.put('CONSIGNMENT', '/csr/' + id + '/release', {});
+    updateCSRN: async function(id, data) {
+        return ApiClient.put('CONSIGNMENT', '/csrn/' + id, data);
+    },
+
+    /**
+     * Release CSRN Document
+     * PUT /api/csrn/{id}/release
+     */
+    releaseCSRN: async function(id) {
+        return ApiClient.put('CONSIGNMENT', '/csrn/' + id + '/release', {});
     },
 
     /**
      * Update Actual Quantity
-     * PUT /api/csr/{id}/detail/{detailId}/actual-qty
+     * PUT /api/csrn/{id}/detail/{detailId}/actual-qty
      */
-    updateCSRActualQty: async function(id, detailId, actualQty) {
-        return ApiClient.put('CONSIGNMENT', '/csr/' + id + '/detail/' + detailId + '/actual-qty', { actualQty: actualQty });
+    updateCSRNActualQty: async function(id, detailId, actualQty) {
+        return ApiClient.put('CONSIGNMENT', '/csrn/' + id + '/detail/' + detailId + '/actual-qty', { actualQty: actualQty });
     },
 
     /**
-     * Complete CSR Document
-     * PUT /api/csr/{id}/complete
+     * Complete CSRN Document
+     * PUT /api/csrn/{id}/complete
      */
-    completeCSR: async function(id) {
-        return ApiClient.put('CONSIGNMENT', '/csr/' + id + '/complete', {});
+    completeCSRN: async function(id) {
+        return ApiClient.put('CONSIGNMENT', '/csrn/' + id + '/complete', {});
+    },
+
+    // ══════════════════════════════════════════════════════════
+    // CSRN-C CONTROLLER (Consignment Stock Return Collect) - /api/csrn-c
+    // ══════════════════════════════════════════════════════════
+
+    /**
+     * Search CSRN-C Documents
+     * GET /api/csrn-c
+     */
+    searchCSRNC: async function(params) {
+        var query = new URLSearchParams(params).toString();
+        return ApiClient.get('CONSIGNMENT', '/csrn-c' + (query ? '?' + query : ''));
+    },
+
+    /**
+     * Get CSRN-C by ID
+     * GET /api/csrn-c/{id}
+     */
+    getCSRNC: async function(id) {
+        return ApiClient.get('CONSIGNMENT', '/csrn-c/' + id);
+    },
+
+    /**
+     * Update Actual Quantity for CSRN-C
+     * PUT /api/csrn-c/{id}/detail/{detailId}/actual-qty
+     */
+    updateCSRNCActualQty: async function(id, detailId, actualQty) {
+        return ApiClient.put('CONSIGNMENT', '/csrn-c/' + id + '/detail/' + detailId + '/actual-qty', { actualQty: actualQty });
+    },
+
+    /**
+     * Complete CSRN-C Document
+     * PUT /api/csrn-c/{id}/complete
+     */
+    completeCSRNC: async function(id) {
+        return ApiClient.put('CONSIGNMENT', '/csrn-c/' + id + '/complete', {});
     },
 
     searchCSRQ: async function(params) {
