@@ -45,6 +45,19 @@
                 </a>
             </li>
 
+            <!-- Settlement -->
+            <li class="menu-header">Settlement</li>
+            <li>
+                <a href="/consignment/settlement/customer-compute" id="nav-consignment-customer-compute">
+                    <i class="fas fa-calculator"></i> Compute Customer Settlement
+                </a>
+            </li>
+            <li>
+                <a href="/consignment/settlement/customer-billing" id="nav-consignment-customer-billing">
+                    <i class="fas fa-file-invoice-dollar"></i> Customer Billing Request
+                </a>
+            </li>
+
             <!-- Master Data -->
             <li class="menu-header">Master Data</li>
             <li>

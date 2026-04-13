@@ -120,48 +120,78 @@ document.addEventListener('DOMContentLoaded', function() {
     var id = urlParams.get('id');
 
     if (id) {
-        document.getElementById('breadcrumbAction').textContent = 'CSRN-C No: C-113' + id;
-        
-        // Mock logic: if ID is 2, simulate "Updated" status 
-        if (id === '2') {
-            isUpdated = true;
-            document.getElementById('docStatus').value = 'Updated';
-            document.getElementById('btnSave').classList.add('d-none');
-            document.getElementById('btnUpdate').classList.add('d-none');
-        }
-        
-        loadMockItem();
+        loadDocumentData(id);
     } else {
-        alert("CSRN-C documents are only auto-created. Cannot create manually in this mockup.");
+        AppUtils.showToast("CSRN-C documents are auto-generated from CSRN. Cannot create manually.", 'warning');
         window.history.back();
     }
 });
 
-function loadMockItem() {
+async function loadDocumentData(id) {
+    try {
+        AppUtils.showLoading();
+        let res = await ConsignmentService.getCSRNC(id);
+        let data = res.data || res;
+        
+        document.getElementById('breadcrumbAction').textContent = 'CSRN-C No: ' + (data.docNo || id);
+        
+        // Fill header mappings
+        document.querySelector('input[name="company"]').value = data.company || '';
+        document.querySelector('input[name="store"]').value = data.store || '';
+        document.querySelector('input[name="supplier"]').value = data.supplierCode || '';
+        document.querySelector('input[name="supplierContract"]').value = data.supplierContract || '';
+        
+        document.getElementById('docStatus').value = data.status || 'HELD';
+        
+        isUpdated = (data.status === 'RELEASED' || data.status === 'UPDATED' || data.status === 'COMPLETED');
+        if (isUpdated) {
+            document.getElementById('btnSave').classList.add('d-none');
+            document.getElementById('btnUpdate').classList.add('d-none');
+        }
+        
+        renderItems(data.items || []);
+    } catch(e) {
+        console.error('Failed to load document data:', e);
+        AppUtils.showToast('Failed to load document data.', 'danger');
+    } finally {
+        AppUtils.hideLoading();
+    }
+}
+
+function renderItems(items) {
     var tbody = document.getElementById('itemsTableBody');
     tbody.innerHTML = '';
     
-    var tr = document.createElement('tr');
-    tr.innerHTML = `
-        <td class="text-center align-middle">1</td>
-        <td>
-            <input type="text" class="form-control form-control-sm" value="100201185 - HL SMOOTH HAIR CONDITIONER" disabled />
-        </td>
-        <td class="align-middle">1 UNIT</td>
-        <td>
-            <input type="number" class="form-control form-control-sm text-right" value="1.000000" disabled />
-        </td>
-        <td class="table-warning">
-            <input type="number" name="actualQuantity" class="form-control form-control-sm text-right border-warning" value="\${isUpdated ? '1.000000' : '0.000000'}" \${isUpdated ? 'disabled' : ''} />
-        </td>
-        <td>
-            <input type="text" class="form-control form-control-sm" value="BAT-12345" disabled />
-        </td>
-        <td>
-            <input type="date" class="form-control form-control-sm" value="2025-12-31" disabled />
-        </td>
-    `;
-    tbody.appendChild(tr);
+    if (items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4">No records found.</td></tr>';
+        return;
+    }
+
+    items.forEach((item, index) => {
+        var tr = document.createElement('tr');
+        var actualQty = item.actualQty !== null && item.actualQty !== undefined ? item.actualQty : 0.0;
+        tr.innerHTML = `
+            <td class="text-center align-middle">\${index + 1}</td>
+            <td>
+                <input type="hidden" name="itemId" value="\${item.id}" />
+                <input type="text" class="form-control form-control-sm" value="\${item.itemCode || ''}" disabled />
+            </td>
+            <td class="align-middle">\${item.uom || 'UNIT'}</td>
+            <td>
+                <input type="number" class="form-control form-control-sm text-right" value="\${parseFloat(item.qty || 0).toFixed(6)}" disabled />
+            </td>
+            <td class="table-warning">
+                <input type="number" name="actualQuantity" class="form-control form-control-sm text-right border-warning input-actual-qty" value="\${parseFloat(actualQty).toFixed(6)}" \${isUpdated ? 'disabled' : ''} />
+            </td>
+            <td>
+                <input type="text" class="form-control form-control-sm" value="\${item.batchId || ''}" disabled />
+            </td>
+            <td>
+                <input type="date" class="form-control form-control-sm" value="\${item.expiryDate ? item.expiryDate.substring(0,10) : ''}" disabled />
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
 async function saveDocument() {
@@ -175,19 +205,27 @@ async function saveDocument() {
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
     
     try {
-        var tr = document.querySelector('#itemsTableBody tr');
-        var actualQty = 0;
-        if (tr) {
-            var input = tr.querySelector('input[name="actualQuantity"]');
-            if (input) actualQty = parseFloat(input.value) || 0;
-        }
+        var promises = [];
+        var rows = document.querySelectorAll('#itemsTableBody tr');
+        rows.forEach(tr => {
+            var inputItemId = tr.querySelector('input[name="itemId"]');
+            var inputActualQty = tr.querySelector('input[name="actualQuantity"]');
+            if (inputItemId && inputActualQty) {
+                var detailId = inputItemId.value;
+                var actualQty = parseFloat(inputActualQty.value) || 0;
+                promises.push(ConsignmentService.updateCSRNCActualQty(id, detailId, actualQty));
+            }
+        });
         
-        // Mocking detailId as 1 for demonstration
-        await ConsignmentService.updateCSRNCActualQty(id, 1, actualQty);
-        AppUtils.showToast('Actual quantity saved successfully!', 'success');
+        if (promises.length > 0) {
+            await Promise.all(promises);
+            AppUtils.showToast('Actual quantity saved successfully!', 'success');
+        } else {
+            AppUtils.showToast('No items to save.', 'warning');
+        }
     } catch (e) {
         console.error('Error saving actual quantity:', e);
-        AppUtils.showToast("Actual quantity update isn't fully wired. Saved locally.", 'warning');
+        AppUtils.showToast("Failed to save actual quantity.", 'danger');
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalBtnText;
@@ -206,23 +244,13 @@ async function updateDocument() {
 
         try {
             if (id) {
-                // Assuming complete or release API applies to updating CSRN-C status based on endpoint docs
                 await ConsignmentService.completeCSRNC(id);
             }
             AppUtils.showToast('Document updated and posted to inventory!', 'success');
-            document.getElementById('docStatus').value = 'Updated';
-            isUpdated = true;
-            document.getElementById('btnSave').classList.add('d-none');
-            document.getElementById('btnUpdate').classList.add('d-none');
-            loadMockItem();
+            setTimeout(() => { window.location.reload(); }, 1500);
         } catch(e) {
             console.error('Error updating status:', e);
-            AppUtils.showToast('Status update mock action applied. API hit failed.', 'info');
-            document.getElementById('docStatus').value = 'Updated';
-            isUpdated = true;
-            document.getElementById('btnSave').classList.add('d-none');
-            document.getElementById('btnUpdate').classList.add('d-none');
-            loadMockItem();
+            AppUtils.showToast('Failed to update document status.', 'danger');
         } finally {
             btn.disabled = false;
             btn.innerHTML = originalBtnText;

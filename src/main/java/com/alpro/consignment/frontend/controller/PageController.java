@@ -207,6 +207,21 @@ public class PageController {
         return "settlement/payments";
     }
 
+    @GetMapping("/consignment/settlement/customer-compute")
+    public String customerConsignmentCompute() {
+        return "consignment/settlement/customer-compute";
+    }
+
+    @GetMapping("/consignment/settlement/customer-billing")
+    public String customerConsignmentBillingList() {
+        return "consignment/settlement/customer-billing/list";
+    }
+
+    @GetMapping("/consignment/settlement/customer-billing/details")
+    public String customerConsignmentBillingDetails() {
+        return "consignment/settlement/customer-billing/details";
+    }
+
     // ─── Audit & Trace Log ──────────────────────────────────
     @GetMapping("/audit/logs")
     public String auditLogs() {
