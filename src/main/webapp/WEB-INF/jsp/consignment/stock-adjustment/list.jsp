@@ -74,8 +74,8 @@
                                     <label class="small text-muted mb-1">Transaction Type</label>
                                     <select class="form-control" name="transactionType">
                                         <option value="">All</option>
-                                        <option value="ADJUSTMENT_IN">ADJ IN</option>
-                                        <option value="ADJUSTMENT_OUT">ADJ OUT</option>
+                                        <option value="ADJ_IN">ADJ IN</option>
+                                        <option value="ADJ_OUT">ADJ OUT</option>
                                     </select>
                                 </div>
                                 <div class="col-md-3 mb-3">
@@ -97,7 +97,7 @@
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="small text-muted mb-1">Reference Number</label>
-                                    <input type="text" class="form-control" name="referenceNumber">
+                                    <input type="text" class="form-control" name="referenceNo">
                                 </div>
                             </div>
 
@@ -293,7 +293,7 @@
                 else if (displayStatus === 'Released') badgeClass = 'badge-success';
                 else badgeClass = 'badge-secondary';
 
-                var typeFormatted = row.transactionType === 'ADJUSTMENT_IN' ? 'Adjustment In' : (row.transactionType === 'ADJUSTMENT_OUT' ? 'Adjustment Out' : row.transactionType);
+                var typeFormatted = row.transactionType === 'ADJ_IN' ? 'Adjustment In' : (row.transactionType === 'ADJ_OUT' ? 'Adjustment Out' : row.transactionType);
 
                 var tr = `<tr>
         <td><input type="checkbox" class="row-checkbox" value="\${row.id}"></td>

@@ -58,31 +58,47 @@
                             </select>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="small text-muted mb-1">Reason <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="reasonCode" id="reasonCode" required>
+                            <label class="small text-muted mb-1">Supplier Code <span class="text-danger">*</span></label>
+                            <select class="form-control" name="supplierCode" id="supplierCode" required>
+                                <option value="">Select Supplier</option>
+                            </select>
                         </div>
                     </div>
 
                     <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="small text-muted mb-1">Supplier Contract <span class="text-danger">*</span></label>
+                            <select class="form-control" name="supplierContract" id="supplierContract" required>
+                                <option value="">Select Contract</option>
+                            </select>
+                        </div>
                         <div class="col-md-4 mb-3">
                             <label class="small text-muted mb-1">Transaction Type <span class="text-danger">*</span></label>
                             <select class="form-control" name="transactionType" id="transactionType" required onchange="handleTransactionTypeChange()">
                                 <option value="">Select Type</option>
-                                <option value="ADJUSTMENT_IN">ADJ IN</option>
-                                <option value="ADJUSTMENT_OUT">ADJ OUT</option>
+                                <option value="ADJ_IN">ADJ IN</option>
+                                <option value="ADJ_OUT">ADJ OUT</option>
                             </select>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="small text-muted mb-1">Reference Number</label>
-                            <input type="text" class="form-control" name="referenceNumber" id="referenceNumber">
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="small text-muted mb-1">Create Method</label>
-                            <input type="text" class="form-control bg-light" name="createMethod" id="createMethod" value="Manual" readonly>
+                            <label class="small text-muted mb-1">Reason Code <span class="text-danger">*</span></label>
+                            <select class="form-control" name="reasonCode" id="reasonCode" required>
+                                <option value="">Select Reason</option>
+                                <option value="RECOUNT">RECOUNT</option>
+                                <option value="DAMAGE">DAMAGE</option>
+                                <option value="LOSS">LOSS</option>
+                                <option value="FOUND">FOUND</option>
+                                <option value="CORRECTION">CORRECTION</option>
+                                <option value="OTHER">OTHER</option>
+                            </select>
                         </div>
                     </div>
 
                     <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="small text-muted mb-1">Reference Number</label>
+                            <input type="text" class="form-control" name="referenceNo" id="referenceNo">
+                        </div>
                         <div class="col-md-4 mb-3">
                             <label class="small text-muted mb-1">Created Date</label>
                             <input type="text" class="form-control bg-light" name="createdAt" id="createdAt" readonly>
@@ -94,9 +110,13 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <label class="small text-muted mb-1">Remarks <span class="text-danger">*</span></label>
-                            <textarea class="form-control" name="remark" id="remark" rows="2" maxlength="150" required></textarea>
+                        <div class="col-md-8 mb-3">
+                            <label class="small text-muted mb-1">Remarks</label>
+                            <textarea class="form-control" name="remark" id="remark" rows="2" maxlength="150"></textarea>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="small text-muted mb-1">Status</label>
+                            <input type="text" class="form-control bg-light" name="status" id="status" value="NEW" readonly>
                         </div>
                     </div>
                 </form>
@@ -118,12 +138,11 @@
                         <thead class="bg-light">
                             <tr>
                                 <th width="50">No.</th>
-                                <th>Item Code</th>
+                                <th width="180">Item Code</th>
                                 <th>Item Name</th>
                                 <th width="120">Quantity</th>
                                 <th width="100">UOM</th>
-                                <th width="150">Batch ID</th>
-                                <th>Settlement</th>
+                                <th width="220">Settlement Decision</th>
                                 <th width="60" id="thAction">Action</th>
                             </tr>
                         </thead>
@@ -143,12 +162,12 @@
 <script src="/static/js/consignment-master-data.js"></script>
 
 <script>
-var isReadOnly = false; 
+var isReadOnly = false;
 var docId = null;
 
 document.addEventListener('configLoaded', function() {
     ConsignmentMasterData.init();
-    
+
     var urlParams = new URLSearchParams(window.location.search);
     docId = urlParams.get('id');
 
@@ -166,7 +185,7 @@ document.addEventListener('configLoaded', function() {
         document.getElementById('btnNext').classList.add('d-none');
         document.getElementById('btnSave').classList.remove('d-none');
         document.getElementById('btnRelease').classList.remove('d-none');
-        
+
         loadDocumentDetails(docId);
     } else {
         document.getElementById('breadcrumbAction').textContent = 'Add New';
@@ -184,15 +203,16 @@ function updateSettlementOptions(transactionType) {
     var selects = document.querySelectorAll('.settlement-select');
     selects.forEach(function(select) {
         var currentValue = select.value;
-        select.innerHTML = '<option value="">Select Settlement</option>';
-        if (transactionType === 'ADJUSTMENT_IN') {
-            select.innerHTML += '<option value="POST_UNPOST_SALES_RETURN" selected>Post to Unpost Sales Return</option>';
-            select.innerHTML += '<option value="DIRECT_INC_SUPPLIER_INV">Direct Increase to Supplier Book Value Inventory</option>';
-            if (currentValue === 'DIRECT_INC_SUPPLIER_INV') select.value = currentValue;
-        } else if (transactionType === 'ADJUSTMENT_OUT') {
-            select.innerHTML += '<option value="POST_UNPOST_SALES" selected>Post to Unpost Sales</option>';
-            select.innerHTML += '<option value="DIRECT_DED_SUPPLIER_INV">Direct Deduct to Supplier Book Value Inventory</option>';
-            if (currentValue === 'DIRECT_DED_SUPPLIER_INV') select.value = currentValue;
+        select.innerHTML = '<option value="">Select Settlement Decision</option>';
+        if (transactionType === 'ADJ_IN') {
+            select.innerHTML += '<option value="DIRECT_BV_INCREASE">Direct BV Increase</option>';
+            select.innerHTML += '<option value="POST_TO_UNPOST_SALES_RETURN">Post to Unpost Sales Return</option>';
+        } else if (transactionType === 'ADJ_OUT') {
+            select.innerHTML += '<option value="DIRECT_BV_DECREASE">Direct BV Decrease</option>';
+            select.innerHTML += '<option value="POST_TO_UNPOST_SALES">Post to Unpost Sales</option>';
+        }
+        if (currentValue) {
+            select.value = currentValue;
         }
     });
 }
@@ -214,27 +234,38 @@ async function loadDocumentDetails(id) {
         var res = await ConsignmentService.getCSA(id);
         var data = res.data || res;
 
-        // Populate header
-        document.getElementById('company').value = data.company || '';
-        document.getElementById('store').value = data.store || '';
+        // Populate header - set values and trigger cascade for master data dropdowns
+        var company = data.company || '';
+        var store = data.store || '';
+        var supplierCode = data.supplierCode || '';
+        var supplierContract = data.supplierContract || '';
+
+        // Use setValues to cascade-load all dropdowns properly
+        ConsignmentMasterData.setValues({
+            company: company,
+            store: store,
+            supplier: supplierCode,
+            contract: supplierContract
+        });
+
         document.getElementById('transactionType').value = data.transactionType || '';
-        document.getElementById('reasonCode').value = data.reasonCode || data.reason || '';
-        document.getElementById('referenceNumber').value = data.referenceNumber || '';
+        document.getElementById('reasonCode').value = data.reasonCode || '';
+        document.getElementById('referenceNo').value = data.referenceNo || '';
         document.getElementById('remark').value = data.remark || '';
         document.getElementById('createdAt').value = data.createdAt ? new Date(data.createdAt).toISOString().split('T')[0] : '';
         document.getElementById('createdBy').value = data.createdBy || '';
-        
+        document.getElementById('status').value = data.status || 'HELD';
+
         var status = data.status ? data.status.toUpperCase() : 'HELD';
 
         if (status === 'RELEASED' || status === 'COMPLETED') {
             isReadOnly = true;
-            document.querySelectorAll('#detailsForm input, #detailsForm select, #detailsForm textarea').forEach(el => el.disabled = true);
+            document.querySelectorAll('#detailsForm input, #detailsForm select, #detailsForm textarea').forEach(function(el) { el.disabled = true; });
             document.getElementById('btnAddRow').classList.add('d-none');
             document.getElementById('thAction').classList.add('d-none');
             document.getElementById('btnSave').classList.add('d-none');
             document.getElementById('btnRelease').classList.add('d-none');
         } else {
-            // It is HELD
             isReadOnly = false;
         }
 
@@ -246,20 +277,10 @@ async function loadDocumentDetails(id) {
         var tbody = document.getElementById('itemsTableBody');
         tbody.innerHTML = '';
         var items = data.items || [];
-        
-        if (items.length === 0) {
-            // Mock one if none returned for dev
-            items = [{
-                itemCode: 'ITEM-TEST-001',
-                itemName: 'TEST ITEM - ' + data.docNo,
-                qty: 5.0,
-                uom: 'UNIT',
-                batchId: 'B-001',
-                settlement: data.transactionType === 'ADJUSTMENT_IN' ? 'POST_UNPOST_SALES_RETURN' : 'POST_UNPOST_SALES'
-            }];
-        }
 
-        items.forEach((item, index) => renderItemRow(item, index + 1));
+        items.forEach(function(item, index) {
+            renderItemRow(item, index + 1);
+        });
         updateTotalSku();
     } catch (e) {
         console.error(e);
@@ -272,99 +293,152 @@ async function loadDocumentDetails(id) {
 function renderItemRow(item, rowIndex) {
     var tbody = document.getElementById('itemsTableBody');
     var tr = document.createElement('tr');
-    tr.innerHTML = `
-        <td class="text-center align-middle sr-no">\${rowIndex}</td>
-        <td>
-            <select class="form-control form-control-sm item-code-select" name="itemCode" \${isReadOnly ? 'disabled' : ''}>
-                <option value="\${item.itemCode || ''}">\${item.itemCode || 'Select Item'}</option>
-            </select>
-        </td>
-        <td class="align-middle item-name-td">\${item.itemName || '-'}</td>
-        <td>
-            <input type="number" class="form-control form-control-sm text-right qty-input" name="quantity" value="\${item.qty || 1.000000}" step="0.01" \${isReadOnly ? 'disabled' : ''} onchange="updateTotalSku()" />
-        </td>
-        <td class="align-middle uom-td">\${item.uom || 'UNIT'}</td>
-        <td>
-            <input type="text" class="form-control form-control-sm" name="batchId" value="\${item.batchId || ''}" placeholder="Batch ID" \${isReadOnly ? 'disabled' : ''} />
-        </td>
-        <td>
-            <select class="form-control form-control-sm settlement-select" name="settlement" \${isReadOnly ? 'disabled' : ''}>
-                <option value="\${item.settlement || ''}">\${item.settlement || 'Select Settlement'}</option>
-            </select>
-        </td>
-    `;
+    tr.innerHTML = '\
+        <td class="text-center align-middle sr-no">' + rowIndex + '</td>\
+        <td>\
+            <select class="form-control form-control-sm item-code-select" name="itemCode" ' + (isReadOnly ? 'disabled' : '') + '>\
+                <option value="' + (item.itemCode || '') + '">' + (item.itemCode || 'Select Item') + '</option>\
+            </select>\
+        </td>\
+        <td class="align-middle item-name-td">' + (item.itemName || '-') + '</td>\
+        <td>\
+            <input type="number" class="form-control form-control-sm text-right qty-input" name="quantity" value="' + (item.qty || 1) + '" step="0.01" ' + (isReadOnly ? 'disabled' : '') + ' onchange="updateTotalSku()" />\
+        </td>\
+        <td class="align-middle uom-td">' + (item.uom || 'PCS') + '</td>\
+        <td>\
+            <select class="form-control form-control-sm settlement-select" name="settlementDecision" ' + (isReadOnly ? 'disabled' : '') + '>\
+                <option value="' + (item.settlementDecision || '') + '">' + (item.settlementDecision || 'Select Settlement Decision') + '</option>\
+            </select>\
+        </td>';
 
     if (!isReadOnly) {
-        tr.innerHTML += `<td class="text-center align-middle"><button type="button" class="btn btn-sm text-danger" onclick="removeRow(this)"><i class="fas fa-trash"></i></button></td>`;
+        tr.innerHTML += '<td class="text-center align-middle"><button type="button" class="btn btn-sm text-danger" onclick="removeRow(this)"><i class="fas fa-trash"></i></button></td>';
     }
 
     tbody.appendChild(tr);
 
-    // Initial populate settlement specific to this row
+    // Populate settlement options based on transaction type
     var select = tr.querySelector('.settlement-select');
     var type = document.getElementById('transactionType').value;
-    
-    // Reset innerHTML
-    var currVal = select.value;
-    select.innerHTML = '<option value="">Select Settlement</option>';
-    if (type === 'ADJUSTMENT_IN') {
-        select.innerHTML += '<option value="POST_UNPOST_SALES_RETURN">Post to Unpost Sales Return</option>';
-        select.innerHTML += '<option value="DIRECT_INC_SUPPLIER_INV">Direct Increase to Supplier Book Value Inventory</option>';
-    } else if (type === 'ADJUSTMENT_OUT') {
-        select.innerHTML += '<option value="POST_UNPOST_SALES">Post to Unpost Sales</option>';
-        select.innerHTML += '<option value="DIRECT_DED_SUPPLIER_INV">Direct Deduct to Supplier Book Value Inventory</option>';
+    var currVal = item.settlementDecision || select.value;
+
+    select.innerHTML = '<option value="">Select Settlement Decision</option>';
+    if (type === 'ADJ_IN') {
+        select.innerHTML += '<option value="DIRECT_BV_INCREASE">Direct BV Increase</option>';
+        select.innerHTML += '<option value="POST_TO_UNPOST_SALES_RETURN">Post to Unpost Sales Return</option>';
+    } else if (type === 'ADJ_OUT') {
+        select.innerHTML += '<option value="DIRECT_BV_DECREASE">Direct BV Decrease</option>';
+        select.innerHTML += '<option value="POST_TO_UNPOST_SALES">Post to Unpost Sales</option>';
     }
-    
+
     if (currVal) {
         select.value = currVal;
-    } else {
-        // Default based on type
-        if (type === 'ADJUSTMENT_IN') select.value = 'POST_UNPOST_SALES_RETURN';
-        else if (type === 'ADJUSTMENT_OUT') select.value = 'POST_UNPOST_SALES';
+    }
+
+    // Bind item code change to load item details
+    if (!isReadOnly) {
+        bindItemSelect(tr);
+    }
+}
+
+/**
+ * Bind item code select to load item details from master data
+ */
+function bindItemSelect(tr) {
+    var itemSelect = tr.querySelector('.item-code-select');
+    if (!itemSelect) return;
+
+    // Load available items based on current supplier/contract selection
+    loadAvailableItems(itemSelect);
+
+    itemSelect.addEventListener('change', function(e) {
+        var itemCode = e.target.value;
+        if (itemCode) {
+            // Auto-populate item name and UOM from the selected option data
+            var selectedOption = e.target.options[e.target.selectedIndex];
+            var itemName = selectedOption.getAttribute('data-item-name') || itemCode;
+            var uom = selectedOption.getAttribute('data-uom') || 'PCS';
+            tr.querySelector('.item-name-td').textContent = itemName;
+            tr.querySelector('.uom-td').textContent = uom;
+        } else {
+            tr.querySelector('.item-name-td').textContent = '-';
+            tr.querySelector('.uom-td').textContent = 'PCS';
+        }
+    });
+}
+
+/**
+ * Load available items into a select element based on current company/store/supplier/contract
+ */
+async function loadAvailableItems(selectElement) {
+    var company = document.getElementById('company').value;
+    var store = document.getElementById('store').value;
+    var supplierCode = document.getElementById('supplierCode').value;
+    var supplierContract = document.getElementById('supplierContract').value;
+
+    if (!company || !store || !supplierCode || !supplierContract) return;
+
+    try {
+        var res = await ApiClient.get('CONSIGNMENT', '/master-data/items?company=' + encodeURIComponent(company) +
+            '&store=' + encodeURIComponent(store) +
+            '&supplierCode=' + encodeURIComponent(supplierCode) +
+            '&supplierContract=' + encodeURIComponent(supplierContract));
+        var items = res.data || res || [];
+        var currentVal = selectElement.value;
+
+        selectElement.innerHTML = '<option value="">Select Item</option>';
+        items.forEach(function(item) {
+            // Items may be strings (item codes) or objects
+            var itemCode, itemName, uom;
+            if (typeof item === 'string') {
+                itemCode = item;
+                itemName = item;
+                uom = 'PCS';
+            } else {
+                itemCode = item.itemCode || item.code || '';
+                itemName = item.itemName || item.name || itemCode;
+                uom = item.uom || 'PCS';
+            }
+            var option = document.createElement('option');
+            option.value = itemCode;
+            option.textContent = itemCode + ' - ' + itemName;
+            option.setAttribute('data-item-name', itemName);
+            option.setAttribute('data-uom', uom);
+            selectElement.appendChild(option);
+        });
+
+        if (currentVal) selectElement.value = currentVal;
+    } catch (e) {
+        console.error('Failed to load items:', e);
     }
 }
 
 function addEmptyRow() {
     var tbody = document.getElementById('itemsTableBody');
     var rowCount = tbody.rows.length + 1;
-    renderItemRow({ qty: 1.0000 }, rowCount);
+    renderItemRow({ qty: 1 }, rowCount);
     updateTotalSku();
 }
 
 function addItemRow() {
     addEmptyRow();
-    // Simulate updating select options
-    var selects = document.querySelectorAll('.item-code-select');
-    var lastSelect = selects[selects.length - 1];
-    if (lastSelect) {
-        lastSelect.innerHTML += '<option value="100176585">100176585 - ITEM TEST ZS</option>';
-        lastSelect.addEventListener('change', function(e) {
-            var tr = e.target.closest('tr');
-            if (e.target.value === '100176585') {
-                tr.querySelector('.item-name-td').textContent = 'ITEM TEST ZS CDD 02122024-002';
-                tr.querySelector('.uom-td').textContent = 'UNIT';
-            }
-        });
-    }
 }
 
 function removeRow(btn) {
     btn.closest('tr').remove();
     updateTotalSku();
     // Re-number
-    document.querySelectorAll('.sr-no').forEach((td, idx) => td.textContent = idx + 1);
+    document.querySelectorAll('.sr-no').forEach(function(td, idx) { td.textContent = idx + 1; });
 }
 
 function updateTotalSku() {
-    var total = 0;
-    document.querySelectorAll('.qty-input').forEach(input => {
-        var val = parseFloat(input.value) || 0;
-        if (val > 0) total++; // Counting SKU lines or total qty depending on requirement. Says "Total SKU", usually means distinct items/rows.
-    });
-    // Wait, the requirement says "Total SKU: Count of items". So just row length.
     document.getElementById('totalSkuCount').textContent = document.querySelectorAll('#itemsTableBody tr').length;
 }
 
+/**
+ * Collect form data and submit to CSA API
+ * POST /consignment/api/csa
+ */
 async function saveDocument() {
     var form = document.getElementById('detailsForm');
     if (!form.checkValidity()) {
@@ -377,22 +451,24 @@ async function saveDocument() {
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
 
+    // Collect items from table
     var items = [];
     var rows = document.querySelectorAll('#itemsTableBody tr');
-    
+
     rows.forEach(function(tr) {
         var itemCode = tr.querySelector('select[name="itemCode"]').value;
+        var itemName = tr.querySelector('.item-name-td').textContent.trim();
         var quantity = parseFloat(tr.querySelector('input[name="quantity"]').value) || 0;
-        var batchId = tr.querySelector('input[name="batchId"]').value;
-        var settlement = tr.querySelector('select[name="settlement"]').value;
-        
+        var uom = tr.querySelector('.uom-td').textContent.trim();
+        var settlementDecision = tr.querySelector('select[name="settlementDecision"]').value;
+
         if (itemCode && quantity > 0) {
             items.push({
                 itemCode: itemCode,
+                itemName: itemName !== '-' ? itemName : '',
                 qty: quantity,
-                uom: tr.querySelector('.uom-td').textContent,
-                batchId: batchId || undefined,
-                settlement: settlement || undefined
+                uom: uom || 'PCS',
+                settlementDecision: settlementDecision || undefined
             });
         }
     });
@@ -404,31 +480,29 @@ async function saveDocument() {
         return;
     }
 
+    // Build payload matching API format
     var payload = {
         company: document.getElementById('company').value,
         store: document.getElementById('store').value,
+        supplierCode: document.getElementById('supplierCode').value,
+        supplierContract: document.getElementById('supplierContract').value,
         transactionType: document.getElementById('transactionType').value,
+        referenceNo: document.getElementById('referenceNo').value || null,
         reasonCode: document.getElementById('reasonCode').value,
-        referenceNumber: document.getElementById('referenceNumber').value || undefined,
-        remark: document.getElementById('remark').value,
+        remark: document.getElementById('remark').value || null,
+        createFrom: null,
         createdBy: document.getElementById('createdBy').value,
         items: items
     };
 
     try {
-        if (docId) {
-            // Has ID, maybe PUT / update, but there is no update endpoint in apiClient for CSA explicitly.
-            // Using post for saving/creating
-            AppUtils.showToast("Mock: Document updated successfully!", 'success');
-             setTimeout(() => window.location.href = '/consignment/stock-adjustment', 1000);
-        } else {
-            await ConsignmentService.createCSA(payload);
-            AppUtils.showToast('Document created successfully! Status: HELD', 'success');
-            setTimeout(() => window.location.href = '/consignment/stock-adjustment', 1000);
-        }
+        var result = await ConsignmentService.createCSA(payload);
+        var docNo = (result.data && result.data.docNo) ? result.data.docNo : 'Document';
+        AppUtils.showToast('Document created successfully! Doc No: ' + docNo + ' - Status: HELD', 'success');
+        setTimeout(function() { window.location.href = '/consignment/stock-adjustment'; }, 1500);
     } catch (e) {
         console.error('Error saving CSA:', e);
-        AppUtils.showToast('Failed to save document.', 'error');
+        AppUtils.showToast('Failed to save document: ' + (e.message || 'Unknown error'), 'danger');
         btn.disabled = false;
         btn.innerHTML = originalBtnText;
     }
@@ -439,14 +513,14 @@ async function releaseDocument() {
         AppUtils.showToast('Cannot release a new document without saving. Please save first.', 'warning');
         return;
     }
-    
+
     if (confirm("Are you sure you want to release this document?")) {
         AppUtils.showLoading();
         try {
-            var username = Auth.getUser() ? Auth.getUser().username : 'OPR';
+            var username = (window.Auth && window.Auth.getUser()) ? Auth.getUser().username : 'OPR';
             await ConsignmentService.releaseCSA(docId, username);
             AppUtils.showToast('Document released successfully!', 'success');
-            setTimeout(() => window.location.reload(), 1000);
+            setTimeout(function() { window.location.reload(); }, 1000);
         } catch(e) {
             console.error('Error releasing document:', e);
             AppUtils.showToast('Failed to release document.', 'danger');

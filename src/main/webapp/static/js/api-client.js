@@ -140,14 +140,33 @@ var ApiClient = {
                 }
                 // CSA - Consignment Stock Adjustment
                 else if (path.includes('/csa')) {
-                    item.id = 'CSA-' + (1000 + i);
-                    item.docNo = 'CSA-2024-' + (1000 + i);
-                    item.company = 'COMP-01';
-                    item.store = 'STORE-' + i;
-                    item.supplierCode = 'SUP-' + (100 + i);
-                    item.transactionType = ['ADJUSTMENT_IN', 'ADJUSTMENT_OUT'][i % 2];
-                    item.status = ['DRAFT', 'RELEASED', 'COMPLETED'][i % 3];
+                    item.id = 'csa-' + (1000 + i) + '-mock-id';
+                    item.docNo = 'CSA-' + String(1000 + i).padStart(5, '0');
+                    item.company = 'COMP01';
+                    item.store = 'STORE01';
+                    item.supplierCode = 'SUPP001';
+                    item.supplierContract = 'CONTRACT-2024-' + (1000 + i);
+                    item.transactionType = ['ADJ_IN', 'ADJ_OUT'][i % 2];
+                    item.referenceNo = i % 2 === 0 ? 'REF-' + (1000 + i) : null;
+                    item.reasonCode = ['RECOUNT', 'DAMAGE', 'LOSS', 'CORRECTION'][i % 4];
+                    item.remark = null;
+                    item.createFrom = null;
+                    item.status = ['HELD', 'RELEASED'][i % 2];
+                    item.createdBy = 'admin';
+                    item.releasedAt = i % 2 === 1 ? '2024-03-31T12:00:00Z' : null;
+                    item.releasedBy = i % 2 === 1 ? 'admin' : null;
                     item.createdAt = '2024-03-31T10:00:00Z';
+                    item.updatedAt = '2024-03-31T10:00:00Z';
+                    item.items = [
+                        {
+                            id: 'csa-item-' + i + '-mock-id',
+                            itemCode: 'ITEM001',
+                            itemName: 'Laptop Pro 15',
+                            qty: (i * 2) + 0.0000,
+                            uom: 'PCS',
+                            settlementDecision: item.transactionType === 'ADJ_IN' ? 'DIRECT_BV_INCREASE' : 'DIRECT_BV_DECREASE'
+                        }
+                    ];
                 }
                 // CSO - Consignment Stock Out
                 else if (path.includes('/cso')) {
