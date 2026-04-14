@@ -222,6 +222,31 @@ public class PageController {
         return "consignment/settlement/customer-billing/details";
     }
 
+    @GetMapping("/consignment/settlement/supplier-compute")
+    public String supplierConsignmentCompute() {
+        return "consignment/settlement/supplier-compute";
+    }
+
+    @GetMapping("/consignment/settlement/supplier-billing")
+    public String supplierConsignmentBillingList() {
+        return "consignment/settlement/supplier-billing/list";
+    }
+
+    @GetMapping("/consignment/settlement/supplier-billing/details")
+    public String supplierConsignmentBillingDetails() {
+        return "consignment/settlement/supplier-billing/details";
+    }
+
+    @GetMapping("/consignment/settlement/failure-customer")
+    public String failureCustomerList() {
+        return "consignment/settlement/failure-customer";
+    }
+
+    @GetMapping("/consignment/settlement/failure-supplier")
+    public String failureSupplierList() {
+        return "consignment/settlement/failure-supplier";
+    }
+
     // ─── Audit & Trace Log ──────────────────────────────────
     @GetMapping("/audit/logs")
     public String auditLogs() {

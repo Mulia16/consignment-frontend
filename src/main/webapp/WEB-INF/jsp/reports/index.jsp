@@ -63,6 +63,12 @@
                         <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="generateReport('consignment-performance')">
                             Consignment Performance <span class="badge badge-info badge-pill"><i class="fas fa-download"></i></span>
                         </a>
+                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="generateReport('monthly-settlement-external')">
+                            Monthly Settlement (External) <span class="badge badge-info badge-pill"><i class="fas fa-download"></i></span>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="generateReport('monthly-settlement-outlet')">
+                            Monthly Settlement (Outlet) <span class="badge badge-info badge-pill"><i class="fas fa-download"></i></span>
+                        </a>
                     </div>
                 </div>
             </div>

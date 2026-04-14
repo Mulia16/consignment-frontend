@@ -57,6 +57,26 @@
                     <i class="fas fa-file-invoice-dollar"></i> Customer Billing Request
                 </a>
             </li>
+            <li>
+                <a href="/consignment/settlement/failure-customer" id="nav-consignment-failure-customer">
+                    <i class="fas fa-exclamation-triangle"></i> Failed Customer Compute
+                </a>
+            </li>
+            <li>
+                <a href="/consignment/settlement/supplier-compute" id="nav-consignment-supplier-compute">
+                    <i class="fas fa-calculator"></i> Compute Supplier Settlement
+                </a>
+            </li>
+            <li>
+                <a href="/consignment/settlement/supplier-billing" id="nav-consignment-supplier-billing">
+                    <i class="fas fa-file-invoice"></i> Supplier Billing Request
+                </a>
+            </li>
+            <li>
+                <a href="/consignment/settlement/failure-supplier" id="nav-consignment-failure-supplier">
+                    <i class="fas fa-exclamation-triangle"></i> Failed Supplier Compute
+                </a>
+            </li>
 
             <!-- Master Data -->
             <li class="menu-header">Master Data</li>
