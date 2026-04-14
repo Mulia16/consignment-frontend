@@ -88,6 +88,52 @@ var ApiClient = {
                     
                     mockData.meta.totalData = mockData.data.length;
                     mockData.meta.totalPage = 1;
+                } else if (method === 'POST' && path.includes('/customer-billing/compute')) {
+                    mockData = {
+                        message: 'Customer billing request computed',
+                        status: 201,
+                        data: {
+                            id: 'cbr-uuid-' + Date.now(),
+                            docNo: 'CBR-' + String(Math.floor(Math.random() * 10000)).padStart(5, '0'),
+                            periodType: 'MONTHLY',
+                            fromDate: '2026-04-01',
+                            toDate: '2026-04-30',
+                            store: 'STORE01',
+                            customerCode: null,
+                            status: 'HELD',
+                            processStatus: 'COMPLETED',
+                            createdBy: 'admin',
+                            releasedAt: null,
+                            details: [
+                                { id: 'detail-uuid-001', customerCode: null, itemCode: 'ITEM001', uom: 'PCS', salesQty: 24.5, returnQty: 0.0, billingQty: 24.5, unitPrice: 15000000.0, lineAmount: 367500000.0, actualReturnQty: null },
+                                { id: 'detail-uuid-002', customerCode: null, itemCode: 'ITEM002', uom: 'PCS', salesQty: 25.0, returnQty: 0.0, billingQty: 25.0, unitPrice: 10000000.0, lineAmount: 250000000.0, actualReturnQty: null }
+                            ]
+                        }
+                    };
+                } else if (method === 'GET' && path.includes('/customer-billing/') && !path.includes('/customer-billing?')) {
+                    // Get by ID - return single item with details
+                    var mockId = path.split('/customer-billing/')[1];
+                    mockData = {
+                        message: 'success',
+                        status: 200,
+                        data: {
+                            id: mockId,
+                            docNo: 'CBR-00001',
+                            periodType: 'MONTHLY',
+                            fromDate: '2026-04-01',
+                            toDate: '2026-04-30',
+                            store: 'STORE01',
+                            customerCode: null,
+                            status: 'HELD',
+                            processStatus: 'COMPLETED',
+                            createdBy: 'admin',
+                            releasedAt: null,
+                            details: [
+                                { id: 'detail-uuid-001', customerCode: null, itemCode: 'ITEM001', uom: 'PCS', salesQty: 24.5, returnQty: 0.0, billingQty: 24.5, unitPrice: 15000000.0, lineAmount: 367500000.0, actualReturnQty: null },
+                                { id: 'detail-uuid-002', customerCode: null, itemCode: 'ITEM002', uom: 'PCS', salesQty: 25.0, returnQty: 0.0, billingQty: 25.0, unitPrice: 10000000.0, lineAmount: 250000000.0, actualReturnQty: null }
+                            ]
+                        }
+                    };
                 } else if (method === 'GET' && path.includes('?')) {
                     mockData.data = this.generateMockItems(serviceName, path, 15);
                     mockData.meta.totalData = 45;
@@ -237,6 +283,46 @@ var ApiClient = {
                     item.customerCode = 'CUST-' + (100 + i);
                     item.status = ['DRAFT', 'RELEASED', 'COMPLETED'][i % 3];
                     item.createdAt = '2024-03-31T10:00:00Z';
+                }
+                // Customer Billing
+                else if (path.includes('/customer-billing')) {
+                    item.id = 'cbr-uuid-' + (1000 + i);
+                    item.docNo = 'CBR-' + String(1000 + i).padStart(5, '0');
+                    item.periodType = ['MONTHLY', 'WEEKLY'][i % 2];
+                    item.fromDate = '2026-04-01';
+                    item.toDate = '2026-04-30';
+                    item.store = 'STORE0' + ((i % 3) + 1);
+                    item.customerCode = i % 3 === 0 ? null : 'CUST-' + (100 + i);
+                    item.status = ['HELD', 'RELEASED'][i % 2];
+                    item.processStatus = 'COMPLETED';
+                    item.createdBy = 'admin';
+                    item.releasedAt = i % 2 === 1 ? '2026-04-13T06:00:00Z' : null;
+                    item.details = [
+                        {
+                            id: 'detail-uuid-' + (1000 + i) + '-1',
+                            customerCode: null,
+                            itemCode: 'ITEM001',
+                            uom: 'PCS',
+                            salesQty: 24.5,
+                            returnQty: 0.0,
+                            billingQty: 24.5,
+                            unitPrice: 15000000.0,
+                            lineAmount: 367500000.0,
+                            actualReturnQty: null
+                        },
+                        {
+                            id: 'detail-uuid-' + (1000 + i) + '-2',
+                            customerCode: null,
+                            itemCode: 'ITEM002',
+                            uom: 'PCS',
+                            salesQty: 25.0,
+                            returnQty: 0.0,
+                            billingQty: 25.0,
+                            unitPrice: 10000000.0,
+                            lineAmount: 250000000.0,
+                            actualReturnQty: null
+                        }
+                    ];
                 }
                 // Settlement
                 else if (path.includes('/settlement')) {

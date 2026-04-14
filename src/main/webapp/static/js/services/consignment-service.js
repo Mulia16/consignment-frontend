@@ -679,6 +679,151 @@ var ConsignmentService = {
     },
 
     // ══════════════════════════════════════════════════════════
+    // CUSTOMER BILLING CONTROLLER - /api/customer-billing
+    // ══════════════════════════════════════════════════════════
+
+    /**
+     * Compute Customer Billing Request
+     * POST /api/customer-billing/compute
+     * @param {Object} data
+     * @param {string} data.store - Store code (required)
+     * @param {string} data.fromDate - YYYY-MM-DD (required)
+     * @param {string} data.toDate - YYYY-MM-DD (required)
+     * @param {string} data.periodType - MONTHLY / WEEKLY
+     * @param {string|null} data.customerCode - null = all customers
+     * @param {string} data.createdBy - Creator username
+     */
+    computeCustomerBilling: async function(data) {
+        return ApiClient.post('CONSIGNMENT', '/customer-billing/compute', data);
+    },
+
+    /**
+     * List Customer Billing Requests
+     * GET /api/customer-billing
+     * @param {Object} params - Query parameters
+     * @param {number} params.page - Page number (default: 1)
+     * @param {number} params.perPage - Items per page (default: 20)
+     * @param {string} params.docNo - Filter by document number
+     * @param {string} params.store - Filter by store
+     * @param {string} params.customerCode - Filter by customer code
+     * @param {string} params.customerBranch - Filter by customer branch
+     * @param {string} params.periodType - MONTHLY / WEEKLY
+     * @param {string} params.status - HELD / RELEASED
+     * @param {string} params.processStatus - COMPLETED / FAILED
+     * @param {string} params.fromDate - YYYY-MM-DD
+     * @param {string} params.toDate - YYYY-MM-DD
+     */
+    listCustomerBilling: async function(params) {
+        var query = new URLSearchParams(params).toString();
+        return ApiClient.get('CONSIGNMENT', '/customer-billing' + (query ? '?' + query : ''));
+    },
+
+    /**
+     * Get Customer Billing by ID
+     * GET /api/customer-billing/{id}
+     */
+    getCustomerBilling: async function(id) {
+        return ApiClient.get('CONSIGNMENT', '/customer-billing/' + id);
+    },
+
+    /**
+     * Release Customer Billing (HELD → RELEASED)
+     * PUT /api/customer-billing/{id}/release
+     */
+    releaseCustomerBilling: async function(id) {
+        return ApiClient.put('CONSIGNMENT', '/customer-billing/' + id + '/release', {});
+    },
+
+    /**
+     * Update Actual Return Qty on a detail line (RELEASED only)
+     * PUT /api/customer-billing/{id}/detail/{detailId}/actual-return-qty
+     * @param {string} billingId - Billing document ID
+     * @param {string} detailId - Detail line ID from details[].id
+     * @param {number} actualReturnQty - Actual return quantity
+     */
+    updateCustomerBillingActualReturnQty: async function(billingId, detailId, actualReturnQty) {
+        return ApiClient.put('CONSIGNMENT', '/customer-billing/' + billingId + '/detail/' + detailId + '/actual-return-qty', { actualReturnQty: actualReturnQty });
+    },
+
+    /**
+     * Delete Customer Billing (HELD only — for reprocess)
+     * DELETE /api/customer-billing/{id}
+     */
+    deleteCustomerBilling: async function(id) {
+        return ApiClient.delete('CONSIGNMENT', '/customer-billing/' + id);
+    },
+
+    // ══════════════════════════════════════════════════════════
+    // MASTER DATA CONTROLLER - /api/master-data
+    // ══════════════════════════════════════════════════════════
+
+    /**
+     * Get Companies
+     * GET /api/master-data/companies
+     */
+    getCompanies: async function() {
+        return ApiClient.get('CONSIGNMENT', '/master-data/companies');
+    },
+
+    /**
+     * Get Stores by Company
+     * GET /api/master-data/stores?company={company}
+     * @param {string} company - Company code (optional)
+     */
+    getStores: async function(company) {
+        var query = company ? '?company=' + encodeURIComponent(company) : '';
+        return ApiClient.get('CONSIGNMENT', '/master-data/stores' + query);
+    },
+
+    /**
+     * Get Suppliers by Company+Store
+     * GET /api/master-data/suppliers?company={company}&store={store}
+     * @param {string} company - Company code (optional)
+     * @param {string} store - Store code (optional)
+     */
+    getSuppliers: async function(company, store) {
+        var params = new URLSearchParams();
+        if (company) params.append('company', company);
+        if (store) params.append('store', store);
+        var query = params.toString();
+        return ApiClient.get('CONSIGNMENT', '/master-data/suppliers' + (query ? '?' + query : ''));
+    },
+
+    /**
+     * Get Contracts by Supplier
+     * GET /api/master-data/contracts?company={company}&store={store}&supplierCode={supplierCode}
+     * @param {string} company - Company code (optional)
+     * @param {string} store - Store code (optional)
+     * @param {string} supplierCode - Supplier code (optional)
+     */
+    getContracts: async function(company, store, supplierCode) {
+        var params = new URLSearchParams();
+        if (company) params.append('company', company);
+        if (store) params.append('store', store);
+        if (supplierCode) params.append('supplierCode', supplierCode);
+        var query = params.toString();
+        return ApiClient.get('CONSIGNMENT', '/master-data/contracts' + (query ? '?' + query : ''));
+    },
+
+    /**
+     * Get Items by Supplier+Contract
+     * GET /api/master-data/items?company={company}&store={store}&supplierCode={supplierCode}&supplierContract={supplierContract}
+     * @param {string} company - Company code (optional)
+     * @param {string} store - Store code (optional)
+     * @param {string} supplierCode - Supplier code (optional)
+     * @param {string} supplierContract - Contract number (optional)
+     */
+    getMasterItems: async function(company, store, supplierCode, supplierContract) {
+        var params = new URLSearchParams();
+        if (company) params.append('company', company);
+        if (store) params.append('store', store);
+        if (supplierCode) params.append('supplierCode', supplierCode);
+        if (supplierContract) params.append('supplierContract', supplierContract);
+        var query = params.toString();
+        return ApiClient.get('CONSIGNMENT', '/master-data/items' + (query ? '?' + query : ''));
+    },
+
+    // ══════════════════════════════════════════════════════════
     // MASTER SYNC CONTROLLER - /api/acmm/master-sync
     // ══════════════════════════════════════════════════════════
 
