@@ -753,6 +753,41 @@ var ConsignmentService = {
         return ApiClient.delete('CONSIGNMENT', '/customer-billing/' + id);
     },
 
+    /**
+     * Search Failed Customer Billing Records
+     * GET /api/customer-billing/failed
+     * @param {Object} params - Query parameters
+     * @param {string} params.company - Filter by company name (optional)
+     * @param {string} params.store - Filter by store code (optional)
+     * @param {string} params.customerCode - Filter by customer code (optional)
+     * @param {string} params.fromDate - Filter from date YYYY-MM-DD (optional)
+     * @param {string} params.toDate - Filter to date YYYY-MM-DD (optional)
+     * @param {number} params.page - Page number (default: 1)
+     * @param {number} params.perPage - Items per page (default: 20)
+     */
+    searchFailedCBR: async function(params) {
+        var query = new URLSearchParams(params).toString();
+        return ApiClient.get('CONSIGNMENT', '/customer-billing/failed' + (query ? '?' + query : ''));
+    },
+
+    /**
+     * Confirm Failed Customer Billing Record
+     * PUT /api/customer-billing/{cbrId}/confirm-failed
+     * @param {string} cbrId - Customer Billing Record ID to confirm
+     */
+    confirmFailedCBR: async function(cbrId) {
+        return ApiClient.put('CONSIGNMENT', '/customer-billing/' + cbrId + '/confirm-failed', {});
+    },
+
+    /**
+     * Delete Failed Customer Billing Record
+     * DELETE /api/customer-billing/{cbrId}/failed
+     * @param {string} cbrId - Customer Billing Record ID to delete
+     */
+    deleteFailedCBR: async function(cbrId) {
+        return ApiClient.delete('CONSIGNMENT', '/customer-billing/' + cbrId + '/failed');
+    },
+
     // ══════════════════════════════════════════════════════════
     // MASTER DATA CONTROLLER - /api/master-data
     // ══════════════════════════════════════════════════════════

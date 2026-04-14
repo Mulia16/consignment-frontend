@@ -110,6 +110,32 @@ var ApiClient = {
                             ]
                         }
                     };
+                } else if (method === 'GET' && path.includes('/customer-billing/failed')) {
+                    // Failed CBR list
+                    mockData.data = [];
+                    var companies = ['Alpro Pharmacy SDN BHD', 'HealthMart SDN BHD', 'MediCare Malaysia'];
+                    var stores = ['1001', '1002', '1003', '1004', '1005'];
+                    var customers = ['0000000659 - BLUE SKY SJ', '0000000660 - RED SEA KL', '0000000661 - GREEN VALLEY', '0000000662 - GOLDEN GATE', '0000000663 - SILVER LINING'];
+                    var errors = ['Insufficient inventory tracking data', 'Cost mapping misaligned', 'Missing supplier contract reference', 'Duplicate billing period detected', 'Price discrepancy in item mapping'];
+                    for (var fi = 1; fi <= 10; fi++) {
+                        mockData.data.push({
+                            id: 'failed-cbr-uuid-' + fi,
+                            docNo: 'CBR-' + String(9000 + fi).padStart(5, '0'),
+                            company: companies[fi % companies.length],
+                            store: stores[fi % stores.length],
+                            customerCode: customers[fi % customers.length],
+                            fromDate: '2026-04-01',
+                            toDate: '2026-04-30',
+                            periodType: 'MONTHLY',
+                            errorReason: errors[fi % errors.length],
+                            processStatus: 'FAILED',
+                            status: 'HELD',
+                            createdBy: 'admin',
+                            createdAt: '2026-04-' + String(10 + fi).padStart(2, '0') + 'T10:' + String(10 + fi).padStart(2, '0') + ':00Z'
+                        });
+                    }
+                    mockData.meta.totalData = 10;
+                    mockData.meta.totalPage = 1;
                 } else if (method === 'GET' && path.includes('/customer-billing/') && !path.includes('/customer-billing?')) {
                     // Get by ID - return single item with details
                     var mockId = path.split('/customer-billing/')[1];
