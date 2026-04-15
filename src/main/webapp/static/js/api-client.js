@@ -160,6 +160,18 @@ var ApiClient = {
                             ]
                         }
                     };
+                } else if (method === 'GET' && path.includes('/reports/settlement-detail/')) {
+                    // R08 - Settlement Detail by ID
+                    var settlementId = path.split('/reports/settlement-detail/')[1];
+                    mockData = {
+                        message: 'success',
+                        status: 200,
+                        data: [
+                            { docNo: 'SETTL-' + settlementId, documentType: 'CSO', company: 'COMP01', store: 'STORE01', itemCode: 'ITEM001', qty: 50, unitPrice: 150000, lineAmount: 7500000, uom: 'PCS', businessDate: '2024-01-15', createdAt: '2024-01-15T08:00:00Z' },
+                            { docNo: 'SETTL-' + settlementId, documentType: 'CSO', company: 'COMP01', store: 'STORE01', itemCode: 'ITEM002', qty: 30, unitPrice: 200000, lineAmount: 6000000, uom: 'PCS', businessDate: '2024-01-16', createdAt: '2024-01-16T08:00:00Z' },
+                            { docNo: 'SETTL-' + settlementId, documentType: 'CSO', company: 'COMP01', store: 'STORE01', itemCode: 'ITEM003', qty: 20, unitPrice: 100000, lineAmount: 2000000, uom: 'PCS', businessDate: '2024-01-17', createdAt: '2024-01-17T08:00:00Z' }
+                        ]
+                    };
                 } else if (method === 'GET' && path.includes('?')) {
                     mockData.data = this.generateMockItems(serviceName, path, 15);
                     mockData.meta.totalData = 45;
@@ -363,7 +375,146 @@ var ApiClient = {
                     item.status = ['DRAFT', 'PREPARED', 'BILLED', 'SETTLED'][i % 4];
                     item.createdAt = '2024-03-31T10:00:00Z';
                 }
-                // Reports
+                // Reports - R01 CSRQ
+                else if (path.includes('/reports/csrq')) {
+                    item.docNo = 'CSRQ-' + String(1000 + i).padStart(5, '0');
+                    item.documentType = 'CSRQ';
+                    item.company = 'COMP01';
+                    item.store = 'STORE0' + ((i % 3) + 1);
+                    item.supplierCode = 'SUPP-' + String(100 + i).padStart(3, '0');
+                    item.supplierContract = 'CONTRACT-2024-' + (100 + i);
+                    item.customerCode = null;
+                    item.itemCode = 'ITEM-' + (1000 + i);
+                    item.qty = 50 + (i * 10);
+                    item.unitPrice = 150000 + (i * 10000);
+                    item.lineAmount = item.qty * item.unitPrice;
+                    item.uom = 'PCS';
+                    item.status = ['HELD', 'RELEASED', 'COMPLETED'][i % 3];
+                    item.businessDate = '2024-0' + ((i % 3) + 1) + '-' + String(10 + i).padStart(2, '0');
+                    item.createdAt = '2024-0' + ((i % 3) + 1) + '-' + String(10 + i).padStart(2, '0') + 'T08:00:00Z';
+                }
+                // Reports - R02 CSRV
+                else if (path.includes('/reports/csrv')) {
+                    item.docNo = 'CSRV-' + String(2000 + i).padStart(5, '0');
+                    item.documentType = 'CSRV';
+                    item.company = 'COMP01';
+                    item.store = 'STORE0' + ((i % 3) + 1);
+                    item.supplierCode = 'SUPP-' + String(100 + i).padStart(3, '0');
+                    item.itemCode = 'ITEM-' + (1000 + i);
+                    item.qty = 100 + (i * 5);
+                    item.status = ['HELD', 'RELEASED'][i % 2];
+                    item.businessDate = '2024-0' + ((i % 3) + 1) + '-' + String(10 + i).padStart(2, '0');
+                    item.createdAt = '2024-0' + ((i % 3) + 1) + '-' + String(10 + i).padStart(2, '0') + 'T08:00:00Z';
+                }
+                // Reports - R03 CSO
+                else if (path.includes('/reports/cso')) {
+                    item.docNo = 'CSO-' + String(3000 + i).padStart(5, '0');
+                    item.documentType = 'CSO';
+                    item.company = 'COMP01';
+                    item.store = 'STORE0' + ((i % 3) + 1);
+                    item.customerCode = 'CUST-' + String(200 + i).padStart(3, '0');
+                    item.itemCode = 'ITEM-' + (1000 + i);
+                    item.qty = 20 + (i * 3);
+                    item.uom = 'PCS';
+                    item.status = ['HELD', 'RELEASED', 'COMPLETED'][i % 3];
+                    item.businessDate = '2024-0' + ((i % 3) + 1) + '-' + String(10 + i).padStart(2, '0');
+                    item.createdAt = '2024-0' + ((i % 3) + 1) + '-' + String(10 + i).padStart(2, '0') + 'T08:00:00Z';
+                }
+                // Reports - R04 CSDO
+                else if (path.includes('/reports/csdo')) {
+                    item.docNo = 'CSDO-' + String(4000 + i).padStart(5, '0');
+                    item.documentType = 'CSDO';
+                    item.company = 'COMP01';
+                    item.store = 'STORE0' + ((i % 3) + 1);
+                    item.customerCode = 'CUST-' + String(200 + i).padStart(3, '0');
+                    item.itemCode = 'ITEM-' + (1000 + i);
+                    item.qty = 30 + (i * 2);
+                    item.uom = 'PCS';
+                    item.status = ['HELD', 'RELEASED'][i % 2];
+                    item.businessDate = '2024-0' + ((i % 3) + 1) + '-' + String(10 + i).padStart(2, '0');
+                    item.createdAt = '2024-0' + ((i % 3) + 1) + '-' + String(10 + i).padStart(2, '0') + 'T08:00:00Z';
+                }
+                // Reports - R05 CSR
+                else if (path.includes('/reports/csr')) {
+                    item.docNo = 'CSR-' + String(5000 + i).padStart(5, '0');
+                    item.documentType = 'CSR';
+                    item.company = 'COMP01';
+                    item.store = 'STORE0' + ((i % 3) + 1);
+                    item.supplierCode = 'SUPP-' + String(100 + i).padStart(3, '0');
+                    item.itemCode = 'ITEM-' + (1000 + i);
+                    item.qty = 5 + i;
+                    item.uom = 'PCS';
+                    item.status = ['COMPLETED', 'RELEASED'][i % 2];
+                    item.businessDate = '2024-0' + ((i % 3) + 1) + '-' + String(10 + i).padStart(2, '0');
+                    item.createdAt = '2024-0' + ((i % 3) + 1) + '-' + String(10 + i).padStart(2, '0') + 'T08:00:00Z';
+                }
+                // Reports - R06 CSA
+                else if (path.includes('/reports/csa')) {
+                    item.docNo = 'CSA-' + String(6000 + i).padStart(5, '0');
+                    item.documentType = 'CSA';
+                    item.company = 'COMP01';
+                    item.store = 'STORE0' + ((i % 3) + 1);
+                    item.supplierCode = 'SUPP-' + String(100 + i).padStart(3, '0');
+                    item.itemCode = 'ITEM-' + (1000 + i);
+                    item.qty = 3 + i;
+                    item.uom = 'PCS';
+                    item.status = ['HELD', 'RELEASED'][i % 2];
+                    item.businessDate = '2024-0' + ((i % 3) + 1) + '-' + String(10 + i).padStart(2, '0');
+                    item.createdAt = '2024-0' + ((i % 3) + 1) + '-' + String(10 + i).padStart(2, '0') + 'T08:00:00Z';
+                }
+                // Reports - R07 Settlement Summary
+                else if (path.includes('/reports/settlement-summary')) {
+                    item.docNo = 'SETTL-' + String(7000 + i).padStart(5, '0');
+                    item.documentType = 'SETTLEMENT';
+                    item.company = 'COMP01';
+                    item.store = 'STORE0' + ((i % 3) + 1);
+                    item.customerCode = 'CUST-' + String(200 + i).padStart(3, '0');
+                    item.lineAmount = 5000000 + (i * 1000000);
+                    item.uom = 'IDR';
+                    item.status = ['HELD', 'RELEASED', 'COMPLETED'][i % 3];
+                    item.businessDate = '2024-0' + ((i % 3) + 1) + '-' + String(10 + i).padStart(2, '0');
+                    item.createdAt = '2024-0' + ((i % 3) + 1) + '-' + String(10 + i).padStart(2, '0') + 'T08:00:00Z';
+                }
+                // Reports - R09 Supplier Book Value
+                else if (path.includes('/reports/supplier-book-value')) {
+                    item.store = 'STORE0' + ((i % 3) + 1);
+                    item.supplierCode = 'SUPP-' + String(100 + i).padStart(3, '0');
+                    item.supplierContract = 'CONTRACT-2024-' + (100 + i);
+                    item.itemCode = 'ITEM-' + (1000 + i);
+                    item.purchaseQty = 200 + (i * 10);
+                    item.closingQty = 100 + (i * 5);
+                    item.unbillQty = item.purchaseQty - item.closingQty;
+                }
+                // Reports - R10 Customer Inventory
+                else if (path.includes('/reports/customer-inventory')) {
+                    item.issueFromStore = 'STORE0' + ((i % 3) + 1);
+                    item.customerCode = 'CUST-' + String(200 + i).padStart(3, '0');
+                    item.branchCode = 'BRANCH-' + String(10 + i);
+                    item.itemCode = 'ITEM-' + (1000 + i);
+                    item.qty = 30 + (i * 5);
+                }
+                // Reports - R11 Reservations
+                else if (path.includes('/reports/reservations')) {
+                    item.docNo = 'CSO-' + String(3000 + i).padStart(5, '0');
+                    item.documentType = 'CSO';
+                    item.store = 'STORE0' + ((i % 3) + 1);
+                    item.itemCode = 'ITEM-' + (1000 + i);
+                    item.qty = 15 + (i * 3);
+                    item.uom = 'Allocate';
+                    item.businessDate = '2024-0' + ((i % 3) + 1) + '-' + String(10 + i).padStart(2, '0');
+                    item.createdAt = '2024-0' + ((i % 3) + 1) + '-' + String(10 + i).padStart(2, '0') + 'T08:00:00Z';
+                }
+                // Reports - R12 Consignment Setup
+                else if (path.includes('/reports/consignment-setup')) {
+                    item.itemCode = 'ITEM-' + (1000 + i);
+                    item.company = 'COMP01';
+                    item.store = 'STORE0' + ((i % 3) + 1);
+                    item.supplierCode = 'SUPP-' + String(100 + i).padStart(3, '0');
+                    item.supplierContract = 'CONTRACT-2024-' + (100 + i);
+                    item.uom = ['EXTERNAL', 'INTERNAL'][i % 2];
+                    item.createdAt = '2024-01-' + String(10 + i).padStart(2, '0') + 'T00:00:00Z';
+                }
+                // Reports - Generic fallback
                 else if (path.includes('/reports')) {
                     item.docNo = 'RPT-2024-' + (1000 + i);
                     item.documentType = ['CSRQ', 'CSRV', 'CSO', 'CSDO', 'CSR', 'CSA'][i % 6];

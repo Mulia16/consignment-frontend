@@ -128,7 +128,67 @@
             <li class="menu-header">Report</li>
             <li>
                 <a href="/reports" id="nav-reports">
-                    <i class="fas fa-chart-bar"></i> Reports
+                    <i class="fas fa-chart-bar"></i> Report Center
+                </a>
+            </li>
+            <li>
+                <a href="/reports?type=csrq" id="nav-report-csrq">
+                    <i class="fas fa-clipboard-list"></i> CSRQ Report
+                </a>
+            </li>
+            <li>
+                <a href="/reports?type=csrv" id="nav-report-csrv">
+                    <i class="fas fa-box-open"></i> CSRV Report
+                </a>
+            </li>
+            <li>
+                <a href="/reports?type=cso" id="nav-report-cso">
+                    <i class="fas fa-box"></i> CSO Report
+                </a>
+            </li>
+            <li>
+                <a href="/reports?type=csdo" id="nav-report-csdo">
+                    <i class="fas fa-truck-loading"></i> CSDO Report
+                </a>
+            </li>
+            <li>
+                <a href="/reports?type=csr" id="nav-report-csr">
+                    <i class="fas fa-undo-alt"></i> CSR Report
+                </a>
+            </li>
+            <li>
+                <a href="/reports?type=csa" id="nav-report-csa">
+                    <i class="fas fa-sliders-h"></i> CSA Report
+                </a>
+            </li>
+            <li>
+                <a href="/reports?type=settlement-summary" id="nav-report-settlement-summary">
+                    <i class="fas fa-handshake"></i> Settlement Summary
+                </a>
+            </li>
+            <li>
+                <a href="/reports?type=settlement-detail" id="nav-report-settlement-detail">
+                    <i class="fas fa-file-invoice-dollar"></i> Settlement Detail
+                </a>
+            </li>
+            <li>
+                <a href="/reports?type=supplier-book-value" id="nav-report-supplier-book-value">
+                    <i class="fas fa-book"></i> Supplier Book Value
+                </a>
+            </li>
+            <li>
+                <a href="/reports?type=customer-inventory" id="nav-report-customer-inventory">
+                    <i class="fas fa-warehouse"></i> Customer Inventory
+                </a>
+            </li>
+            <li>
+                <a href="/reports?type=reservations" id="nav-report-reservations">
+                    <i class="fas fa-bookmark"></i> Reservations
+                </a>
+            </li>
+            <li>
+                <a href="/reports?type=consignment-setup" id="nav-report-consignment-setup">
+                    <i class="fas fa-cogs"></i> Consignment Setup
                 </a>
             </li>
 
