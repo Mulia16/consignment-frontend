@@ -438,6 +438,14 @@ var ConsignmentService = {
     },
 
     /**
+     * Update CSRV Document
+     * PUT /api/csrv/{id}
+     */
+    updateCSRV: async function(id, data) {
+        return ApiClient.put('CONSIGNMENT', '/csrv/' + id, data);
+    },
+
+    /**
      * Release CSRV Document
      * PUT /api/csrv/{id}/release
      */

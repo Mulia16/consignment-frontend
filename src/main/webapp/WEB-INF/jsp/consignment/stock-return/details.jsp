@@ -149,11 +149,15 @@ document.addEventListener('configLoaded', function() {
         // For existing documents: only bind events, skip init() to avoid race condition.
         // loadDocumentData() will call setValues() which handles the full cascade.
         ConsignmentMasterData.bindEvents();
+        document.getElementById('breadcrumbAction').textContent = 'Update';
+        document.getElementById('headerTitle').textContent = 'Update - Header';
+        document.getElementById('btnSave').textContent = 'Update';
         loadDocumentData(id);
     } else {
         ConsignmentMasterData.init();
-        document.getElementById('breadcrumbAction').textContent = 'Add New';
-        document.getElementById('headerTitle').textContent = 'Add New - Header';
+        document.getElementById('breadcrumbAction').textContent = 'Create';
+        document.getElementById('headerTitle').textContent = 'Create - Header';
+        document.getElementById('btnSave').textContent = 'Create';
         addEmptyRow();
     }
 });
@@ -170,8 +174,8 @@ async function loadDocumentData(id) {
         var res = await ConsignmentService.getCSRN(id);
         var data = res.data || res;
         
-        document.getElementById('breadcrumbAction').textContent = 'Return No: ' + (data.docNo || id);
-        document.getElementById('headerTitle').textContent = 'Document Details - ' + (data.docNo || id);
+        document.getElementById('breadcrumbAction').textContent = 'Update - ' + (data.docNo || id);
+        document.getElementById('headerTitle').textContent = 'Update - ' + (data.docNo || id);
         
         isReleased = (data.status === 'RELEASED' || data.status === 'COMPLETED');
         
@@ -411,8 +415,11 @@ async function saveDocument() {
 
     var btn = document.getElementById('btnSave');
     var originalBtnText = btn.innerHTML;
+    var urlParams = new URLSearchParams(window.location.search);
+    var id = urlParams.get('id');
+    var isUpdate = !!id;
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> ' + (isUpdate ? 'Updating...' : 'Creating...');
 
     var formData = new FormData(form);
     
@@ -460,9 +467,7 @@ async function saveDocument() {
     };
 
     try {
-        var urlParams = new URLSearchParams(window.location.search);
-        var id = urlParams.get('id');
-        if (id) {
+        if (isUpdate) {
             await ConsignmentService.updateCSRN(id, payload);
             AppUtils.showToast('Document updated successfully!', 'success');
             setTimeout(function() {

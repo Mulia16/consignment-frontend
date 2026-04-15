@@ -186,7 +186,7 @@
             
             <div class="card-footer bg-light d-flex justify-content-end" id="actionFooter">
                 <button type="button" class="btn btn-outline-secondary mr-2" onclick="window.history.back()">Cancel</button>
-                <button type="button" class="btn btn-primary px-4" id="btnSave" onclick="saveDocument()"><i class="fas fa-save mr-1"></i> Save</button>
+                <button type="button" class="btn btn-primary px-4" id="btnSave" onclick="saveDocument()"><i class="fas fa-save mr-1"></i> <span id="btnSaveText">Create</span></button>
             </div>
         </div>
 
@@ -232,8 +232,8 @@
 
 <jsp:include page="/WEB-INF/jsp/common/footer.jsp" />
 
-<script src="/static/js/consignment-master-data.js"></script>
-<script src="/static/js/services/consignment-service.js"></script>
+<script src="/static/js/consignment-master-data.js?v=2"></script>
+<script src="/static/js/services/consignment-service.js?v=2"></script>
 
 <script>
 var docId = new URLSearchParams(window.location.search).get('id');
@@ -519,7 +519,7 @@ async function loadDocument(id) {
         }
 
         // Update breadcrumb
-        $('#breadcrumbDocNumber').text(data.docNo || 'Document');
+        $('#breadcrumbDocNumber').text('Update - ' + (data.docNo || 'Document'));
 
         // Update status badge
         $('#headerStatusBadge').text(currentStatus)
@@ -554,6 +554,7 @@ async function loadDocument(id) {
         } else {
             $('#btnRelease').show();
             $('#btnSave').show();
+            $('#btnSaveText').text('Update');
             $('#addItemSection').show();
         }
 
@@ -603,25 +604,24 @@ async function saveDocument() {
 
     var payload = buildSavePayload();
     var saveBtn = $('#btnSave');
-    saveBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Saving...');
+    var isUpdate = !!docId;
+    var btnText = isUpdate ? 'Update' : 'Create';
+    var spinnerText = isUpdate ? 'Updating...' : 'Creating...';
+    saveBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> ' + spinnerText);
 
     try {
         var response;
-        if (docId) {
-            // For existing documents, create is not available - show message
-            // The API only supports create, not update. Re-create is not applicable.
-            AppUtils.showToast('Update is not supported. Document already saved.', 'info');
-            saveBtn.prop('disabled', false).html('<i class="fas fa-save mr-1"></i> Save');
-            return;
+        if (isUpdate) {
+            response = await ConsignmentService.updateCSRV(docId, payload);
         } else {
             response = await ConsignmentService.createCSRV(payload);
         }
 
         var savedData = response.data;
-        AppUtils.showToast('Document saved successfully with status HELD.', 'success');
+        AppUtils.showToast(isUpdate ? 'Document updated successfully.' : 'Document saved successfully with status HELD.', 'success');
         
         // Redirect to the saved document
-        if (savedData && savedData.id) {
+        if (!isUpdate && savedData && savedData.id) {
             setTimeout(function() {
                 window.location.href = '/consignment/receiving/details?id=' + savedData.id;
             }, 1000);
@@ -633,7 +633,7 @@ async function saveDocument() {
     } catch (error) {
         console.error('Error saving document:', error);
         AppUtils.showToast('Failed to save document: ' + (error.message || 'Unknown error'), 'danger');
-        saveBtn.prop('disabled', false).html('<i class="fas fa-save mr-1"></i> Save');
+        saveBtn.prop('disabled', false).html('<i class="fas fa-save mr-1"></i> ' + btnText);
     }
 }
 
