@@ -100,12 +100,12 @@ var ConsignmentMasterData = {
      * GET /consignment/api/master-data/companies
      * Response: { message: "success", status: 200, data: ["COMP01", "COMP02"] }
      */
-    loadCompanies: async function(selectedValue) {
+    loadCompanies: async function(selectedValue, silent) {
         try {
             var res = await ApiClient.get('CONSIGNMENT', '/master-data/companies');
             var data = res.data || res;
             this.populateDropdown(this.selectors.company, 'Select Company', data, selectedValue);
-            if (selectedValue) {
+            if (selectedValue && !silent) {
                 $(this.selectors.company).trigger('change');
             }
         } catch (e) {
@@ -118,12 +118,12 @@ var ConsignmentMasterData = {
      * GET /consignment/api/master-data/stores?company={company}
      * Response: { message: "success", status: 200, data: ["STORE01", "STORE02", "STORE03"] }
      */
-    loadStores: async function(company, selectedValue) {
+    loadStores: async function(company, selectedValue, silent) {
         try {
             var res = await ApiClient.get('CONSIGNMENT', '/master-data/stores?company=' + encodeURIComponent(company));
             var data = res.data || res;
             this.populateDropdown(this.selectors.store, 'Select Store', data, selectedValue);
-            if (selectedValue) {
+            if (selectedValue && !silent) {
                 $(this.selectors.store).trigger('change');
             }
         } catch (e) {
@@ -136,13 +136,13 @@ var ConsignmentMasterData = {
      * GET /consignment/api/master-data/suppliers?company={company}&store={store}
      * Response: { message: "success", status: 200, data: ["SUPP001", "SUPP002"] }
      */
-    loadSuppliers: async function(company, store, selectedValue) {
+    loadSuppliers: async function(company, store, selectedValue, silent) {
         try {
             var url = '/master-data/suppliers?company=' + encodeURIComponent(company) + '&store=' + encodeURIComponent(store);
             var res = await ApiClient.get('CONSIGNMENT', url);
             var data = res.data || res;
             this.populateDropdown(this.selectors.supplier, 'Select Supplier', data, selectedValue);
-            if (selectedValue) {
+            if (selectedValue && !silent) {
                 $(this.selectors.supplier).trigger('change');
             }
         } catch (e) {
@@ -155,7 +155,7 @@ var ConsignmentMasterData = {
      * GET /consignment/api/master-data/contracts?company={company}&store={store}&supplierCode={supplierCode}
      * Response: { message: "success", status: 200, data: ["CONTRACT-2024-001", "CONTRACT-2024-002"] }
      */
-    loadContracts: async function(company, store, supplierCode, selectedValue) {
+    loadContracts: async function(company, store, supplierCode, selectedValue, silent) {
         try {
             var url = '/master-data/contracts?company=' + encodeURIComponent(company) + 
                       '&store=' + encodeURIComponent(store) + 
@@ -163,7 +163,7 @@ var ConsignmentMasterData = {
             var res = await ApiClient.get('CONSIGNMENT', url);
             var data = res.data || res;
             this.populateDropdown(this.selectors.contract, 'Select Contract', data, selectedValue);
-            if (selectedValue) {
+            if (selectedValue && !silent) {
                 $(this.selectors.contract).trigger('change');
             }
         } catch (e) {
@@ -212,13 +212,16 @@ var ConsignmentMasterData = {
         if (!values) return;
         
         if (values.company) {
-            self.loadCompanies(values.company).then(function() {
+            // Pass silent=true to prevent triggering 'change' events which would
+            // cause a competing cascade that clears dropdowns without selected values.
+            // The cascade is handled explicitly via the .then() chain below.
+            self.loadCompanies(values.company, true).then(function() {
                 if (values.store) {
-                    self.loadStores(values.company, values.store).then(function() {
+                    self.loadStores(values.company, values.store, true).then(function() {
                         if (values.supplier) {
-                            self.loadSuppliers(values.company, values.store, values.supplier).then(function() {
+                            self.loadSuppliers(values.company, values.store, values.supplier, true).then(function() {
                                 if (values.contract) {
-                                    self.loadContracts(values.company, values.store, values.supplier, values.contract).then(function() {
+                                    self.loadContracts(values.company, values.store, values.supplier, values.contract, true).then(function() {
                                         if (values.item) {
                                             self.loadItems(values.company, values.store, values.supplier, values.contract, values.item);
                                         }

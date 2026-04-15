@@ -320,11 +320,13 @@ document.addEventListener('configLoaded', function() {
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     document.getElementById('hDate').value = now.toISOString().slice(0,16);
 
-    ConsignmentMasterData.init();
-
     if (docId) {
+        // For existing documents: only bind events, skip init() to avoid race condition.
+        // loadDocument() will populate dropdowns and call triggerCascade() -> setValues().
+        ConsignmentMasterData.bindEvents();
         loadDocument(docId);
     } else {
+        ConsignmentMasterData.init();
         addItemRow(); // empty row
     }
 });

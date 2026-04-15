@@ -140,16 +140,18 @@
 var isReleased = false; // Mock status flag
 
 document.addEventListener('configLoaded', function() {
-    ConsignmentMasterData.init();
-    
     var urlParams = new URLSearchParams(window.location.search);
     var id = urlParams.get('id');
 
     setupCsoAutocomplete();
 
     if (id) {
+        // For existing documents: only bind events, skip init() to avoid race condition.
+        // loadDocumentData() will call setValues() which handles the full cascade.
+        ConsignmentMasterData.bindEvents();
         loadDocumentData(id);
     } else {
+        ConsignmentMasterData.init();
         document.getElementById('breadcrumbAction').textContent = 'Add New';
         document.getElementById('headerTitle').textContent = 'Add New - Header';
         addEmptyRow();
@@ -199,13 +201,6 @@ async function loadDocumentData(id) {
             supplier: data.supplierCode,
             contract: data.supplierContract
         });
-        
-        // Manually inject <option> elements to immediately display prefilled values
-        // This avoids race conditions where setValues internally clears dropdowns before loading them.
-        if (data.company) $('#company').empty().append(new Option(data.company, data.company, true, true));
-        if (data.store) $('#store').empty().append(new Option(data.store, data.store, true, true));
-        if (data.supplierCode) $('#supplierCode').empty().append(new Option(data.supplierCode, data.supplierCode, true, true));
-        if (data.supplierContract) $('#supplierContract').empty().append(new Option(data.supplierContract, data.supplierContract, true, true));
         
         // Populate items table
         var tbody = document.getElementById('itemsTableBody');

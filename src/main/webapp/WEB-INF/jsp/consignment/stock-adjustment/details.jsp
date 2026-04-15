@@ -166,8 +166,6 @@ var isReadOnly = false;
 var docId = null;
 
 document.addEventListener('configLoaded', function() {
-    ConsignmentMasterData.init();
-
     var urlParams = new URLSearchParams(window.location.search);
     docId = urlParams.get('id');
 
@@ -180,6 +178,9 @@ document.addEventListener('configLoaded', function() {
     }
 
     if (docId) {
+        // For existing documents: only bind events, skip init() to avoid race condition.
+        // loadDocumentDetails() will call setValues() which handles the full cascade.
+        ConsignmentMasterData.bindEvents();
         document.getElementById('breadcrumbAction').textContent = 'Adjustment No: ' + docId;
         document.getElementById('headerTitle').textContent = 'Document Details';
         document.getElementById('btnNext').classList.add('d-none');
@@ -188,6 +189,7 @@ document.addEventListener('configLoaded', function() {
 
         loadDocumentDetails(docId);
     } else {
+        ConsignmentMasterData.init();
         document.getElementById('breadcrumbAction').textContent = 'Add New';
         document.getElementById('headerTitle').textContent = 'Add New - Header';
         addEmptyRow();

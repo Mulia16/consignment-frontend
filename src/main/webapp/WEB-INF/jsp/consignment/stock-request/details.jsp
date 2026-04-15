@@ -165,12 +165,13 @@ document.addEventListener('configLoaded', function() {
     $('#nav-consignment-stock-request').addClass('active');
     $('#menu-outbound').addClass('active');
     
-    // Init master data cascading dropdowns
-    ConsignmentMasterData.init();
-
     if (documentId) {
+        // For existing documents: only bind events, skip init() to avoid race condition.
+        // loadDocumentDetails() will populate dropdowns and call triggerCascade() -> setValues().
+        ConsignmentMasterData.bindEvents();
         loadDocumentDetails(documentId);
     } else {
+        ConsignmentMasterData.init();
         addItemRow(); // Default one empty row
     }
 });
