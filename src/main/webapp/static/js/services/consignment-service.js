@@ -789,6 +789,71 @@ var ConsignmentService = {
     },
 
     // ══════════════════════════════════════════════════════════
+    // SUPPLIER BILLING CONTROLLER - /api/supplier-billing
+    // ══════════════════════════════════════════════════════════
+
+    /**
+     * Compute Supplier Consignment Billing Request (SCBR)
+     * POST /api/supplier-billing/compute
+     * @param {Object} data
+     * @param {string} data.company - Company code (required)
+     * @param {string} data.store - Store code (required)
+     * @param {string} data.supplierCode - Supplier code (required)
+     * @param {string} data.supplierContract - Contract number (required)
+     * @param {string} data.periodType - MONTHLY / WEEKLY
+     * @param {string} data.fromDate - YYYY-MM-DD (required)
+     * @param {string} data.toDate - YYYY-MM-DD (required)
+     * @param {boolean} data.carryForwardDecimal - Carry forward decimal to next period
+     * @param {string} data.createdBy - Creator username
+     */
+    computeSupplierBilling: async function(data) {
+        return ApiClient.post('CONSIGNMENT', '/supplier-billing/compute', data);
+    },
+
+    /**
+     * Search / List Supplier Billing Requests (SCBR)
+     * GET /api/supplier-billing
+     * @param {Object} params - Query parameters
+     * @param {string} params.company - Filter by company code
+     * @param {string} params.store - Filter by store code
+     * @param {string} params.supplierCode - Filter by supplier code
+     * @param {string} params.status - HELD / RELEASED
+     * @param {number} params.page - Page number (default: 1)
+     * @param {number} params.perPage - Items per page (default: 20)
+     */
+    listSupplierBilling: async function(params) {
+        var query = new URLSearchParams(params).toString();
+        return ApiClient.get('CONSIGNMENT', '/supplier-billing' + (query ? '?' + query : ''));
+    },
+
+    /**
+     * Get Supplier Billing by ID
+     * GET /api/supplier-billing/{id}
+     * @param {string} id - SCBR document ID
+     */
+    getSupplierBilling: async function(id) {
+        return ApiClient.get('CONSIGNMENT', '/supplier-billing/' + id);
+    },
+
+    /**
+     * Release Supplier Billing (HELD → RELEASED)
+     * PUT /api/supplier-billing/{id}/release
+     * @param {string} id - SCBR document ID
+     */
+    releaseSupplierBilling: async function(id) {
+        return ApiClient.put('CONSIGNMENT', '/supplier-billing/' + id + '/release', {});
+    },
+
+    /**
+     * Delete Supplier Billing (HELD only)
+     * DELETE /api/supplier-billing/{id}
+     * @param {string} id - SCBR document ID
+     */
+    deleteSupplierBilling: async function(id) {
+        return ApiClient.delete('CONSIGNMENT', '/supplier-billing/' + id);
+    },
+
+    // ══════════════════════════════════════════════════════════
     // MASTER DATA CONTROLLER - /api/master-data
     // ══════════════════════════════════════════════════════════
 
