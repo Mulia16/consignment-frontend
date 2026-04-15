@@ -152,7 +152,8 @@
 </div>
 
 <jsp:include page="/WEB-INF/jsp/common/footer.jsp" />
-<script src="/static/js/consignment-master-data.js"></script>
+<script src="/static/js/consignment-master-data.js?v=2"></script>
+<script src="/static/js/services/consignment-service.js?v=2"></script>
 
 <script>
 let itemIdCounter = 1;
@@ -338,7 +339,7 @@ async function populateForm(data) {
     $('#internalSupplierStore').val(data.internalSupplierStore || '');
     $('#notes').val(data.notes || '');
 
-    $('#breadcrumbDocNo').text(data.docNo || data.id);
+    $('#breadcrumbDocNo').text('Update - ' + (data.docNo || data.id));
     currentStatus = data.status || 'NEW';
     
     // Status Badge
@@ -419,39 +420,37 @@ async function saveDocument(postActionStatus) {
     let $btnSave = $('#btnSave');
     let $btnSaveRelease = $('#btnSaveRelease');
     let originalBtnText = $btnSave.html();
-    $btnSave.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+    let isUpdate = !!documentId;
+    let spinnerText = isUpdate ? 'Updating...' : 'Creating...';
+    $btnSave.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> ' + spinnerText);
     $btnSaveRelease.prop('disabled', true);
 
     try {
-        let apiUrl = '/consignment/api/csrq';
-        let method = 'POST';
+        let result;
+        if (isUpdate) {
+            result = await ConsignmentService.updateCSRQ(documentId, payload);
+        } else {
+            result = await ConsignmentService.createCSRQ(payload);
+        }
 
-        // NOTE: The API specification only provided POST for create, PUT for release, DELETE
-        // It didn't explicitly provide PUT for update, but typically update is PUT /csrq/{id}
-        // In the absence of an update endpoint specification, we will treat 'Update' via POST overriding?
-        // Let's assume POST creates it, and if it's already there we'd logically PUT, 
-        // to simplify based on user Postman we just use POST.
-        
-        let result = await ApiClient.post('CONSIGNMENT', '/csrq', payload);
-        let newId = result.id || (result.data ? result.data.id : null);
+        let savedId = isUpdate ? documentId : (result.id || (result.data ? result.data.id : null));
         
         if(postActionStatus === 'RELEASED') {
-            if(!newId) {
-                // if mocking / newId missing
-                newId = documentId || "csrq-mock-123";
+            if(!savedId) {
+                savedId = documentId || "csrq-mock-123";
             }
             
             // Call Release API
             try {
-                await ApiClient.put('CONSIGNMENT', `/csrq/\${newId}/release`, {});
-                AppUtils.showToast("Successfully created and released CSRQ.", "success");
+                await ConsignmentService.releaseCSRQ(savedId);
+                AppUtils.showToast(isUpdate ? "Successfully updated and released CSRQ." : "Successfully created and released CSRQ.", "success");
                 window.location.href = '/consignment/stock-request';
             } catch (relErr) {
-                AppUtils.showToast("Created but error during Release.", "warning");
-                window.location.href = `/consignment/stock-request/details?id=\${newId}`;
+                AppUtils.showToast(isUpdate ? "Updated but error during Release." : "Created but error during Release.", "warning");
+                window.location.href = '/consignment/stock-request/details?id=' + savedId;
             }
         } else {
-            AppUtils.showToast("Successfully created CSRQ.", "success");
+            AppUtils.showToast(isUpdate ? "Successfully updated CSRQ." : "Successfully created CSRQ.", "success");
             setTimeout(() => {
                 window.location.href = '/consignment/stock-request';
             }, 1000);

@@ -297,8 +297,8 @@
             <div class="card-footer bg-light d-flex justify-content-end" id="actionFooter">
                 <button type="button" class="btn btn-outline-secondary mr-2" onclick="window.history.back()">Cancel</button>
                 <button type="button" class="btn btn-light mr-2" onclick="resetItems()">Reset</button>
-                <button type="button" class="btn btn-primary mr-2" onclick="saveDocument('HELD')">Create</button>
-                <button type="button" class="btn btn-success" onclick="saveDocument('RELEASED')">Create & Release</button>
+                <button type="button" class="btn btn-primary mr-2" id="btnSave" onclick="saveDocument('HELD')">Create</button>
+                <button type="button" class="btn btn-success" id="btnSaveRelease" onclick="saveDocument('RELEASED')">Create & Release</button>
             </div>
         </div>
 
@@ -306,7 +306,8 @@
 </div>
 
 <jsp:include page="/WEB-INF/jsp/common/footer.jsp" />
-<script src="/static/js/consignment-master-data.js"></script>
+<script src="/static/js/consignment-master-data.js?v=2"></script>
+<script src="/static/js/services/consignment-service.js?v=2"></script>
 
 <script>
 var docId = new URLSearchParams(window.location.search).get('id');
@@ -456,7 +457,9 @@ async function loadDocument(id) {
         
         currentStatus = (data.status || 'ERROR').toUpperCase();
         
-        $('#breadcrumbDocNumber').text('Doc #' + (data.docNo || id));
+        $('#breadcrumbDocNumber').text('Update - ' + (data.docNo || id));
+        $('#btnSave').text('Update');
+        $('#btnSaveRelease').text('Update & Release');
         
         var badgeClass = 'badge-warning';
         if(currentStatus === 'RELEASED') badgeClass = 'badge-success';
@@ -547,6 +550,7 @@ async function saveDocument(status) { // 'HELD' or 'RELEASED'
     
     try {
         var isAutoCsdo = $('#csdoAuto').is(':checked');
+        var isUpdate = !!docId;
         var payload = {
             company: $('#company').val(),
             store: $('#store').val(),
@@ -575,16 +579,20 @@ async function saveDocument(status) { // 'HELD' or 'RELEASED'
             }))
         };
 
-        var targetUrl = '/cso';
+        var res;
+        if (isUpdate) {
+            res = await ConsignmentService.updateCSO(docId, payload);
+        } else {
+            res = await ConsignmentService.createCSO(payload);
+        }
 
-        var res = await ApiClient.post('CONSIGNMENT', targetUrl, payload);
-        var createdCsoId = (res.data && res.data.id) ? res.data.id : (res.id ? res.id : 'cso-created');
+        var savedId = isUpdate ? docId : ((res.data && res.data.id) ? res.data.id : (res.id ? res.id : ''));
         
-        if (status === 'RELEASED') {
-            await ApiClient.put('CONSIGNMENT', '/cso/' + createdCsoId + '/release');
+        if (status === 'RELEASED' && savedId) {
+            await ConsignmentService.releaseCSO(savedId);
         }
         
-        AppUtils.showToast("Document saved with status: " + status, "success");
+        AppUtils.showToast(isUpdate ? "Document updated successfully." : "Document saved with status: " + status, "success");
         setTimeout(() => { window.location.href = '/consignment/stock-out'; }, 1500);
 
     } catch (e) {

@@ -257,6 +257,14 @@ var ConsignmentService = {
         return ApiClient.post('CONSIGNMENT', '/cso', data);
     },
 
+    /**
+     * Update CSO Document
+     * PUT /api/cso/{id}
+     */
+    updateCSO: async function(id, data) {
+        return ApiClient.put('CONSIGNMENT', '/cso/' + id, data);
+    },
+
     releaseCSO: async function(id, user) {
         var headers = user ? { 'X-User': user } : {};
         return ApiClient.request('CONSIGNMENT', '/cso/' + id + '/release', {
@@ -390,6 +398,14 @@ var ConsignmentService = {
      */
     createCSRQ: async function(data) {
         return ApiClient.post('CONSIGNMENT', '/csrq', data);
+    },
+
+    /**
+     * Update CSRQ Document
+     * PUT /api/csrq/{id}
+     */
+    updateCSRQ: async function(id, data) {
+        return ApiClient.put('CONSIGNMENT', '/csrq/' + id, data);
     },
 
     /**
