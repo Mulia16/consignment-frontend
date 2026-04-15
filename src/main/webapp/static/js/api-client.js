@@ -172,6 +172,52 @@ var ApiClient = {
                             { docNo: 'SETTL-' + settlementId, documentType: 'CSO', company: 'COMP01', store: 'STORE01', itemCode: 'ITEM003', qty: 20, unitPrice: 100000, lineAmount: 2000000, uom: 'PCS', businessDate: '2024-01-17', createdAt: '2024-01-17T08:00:00Z' }
                         ]
                     };
+                } else if (method === 'GET' && path.includes('/csdo/') && !path.includes('?') && path.match(/\/csdo\/[^/]+$/)) {
+                    // GET /csdo/{id} - Single CSDO document by ID
+                    var csdoId = path.split('/csdo/')[1];
+                    mockData = {
+                        message: 'success',
+                        status: 200,
+                        data: {
+                            id: csdoId,
+                            docNo: csdoId,
+                            csoDocNo: 'CSO-2024-1001',
+                            csoId: 'CSO-2024-1001',
+                            company: 'COMP01',
+                            store: 'STORE01',
+                            customerCode: 'CUST-101',
+                            customerBranch: 'BRANCH-01',
+                            customerEmail: 'customer@example.com',
+                            status: 'HELD',
+                            requireGenerateCdo: true,
+                            shippingMode: 'COURIER',
+                            transporter: 'JNE',
+                            shippingId: 'TT12345MY',
+                            shippingAddress: 'JALAN TEKNO 10/3',
+                            createdBy: 'admin',
+                            createdAt: '2024-03-31T10:00:00Z',
+                            items: [
+                                { itemCode: 'ITEM001', itemName: 'Item Sample 1', qty: 10.000000, uom: 'UNIT' },
+                                { itemCode: 'ITEM002', itemName: 'Item Sample 2', qty: 5.000000, uom: 'UNIT' }
+                            ]
+                        }
+                    };
+                } else if ((method === 'PUT') && path.includes('/csdo/') && !path.includes('/release') && !path.includes('/reverse')) {
+                    // PUT /csdo/{id} - Update CSDO document
+                    var updateId = path.split('/csdo/')[1];
+                    mockData = {
+                        message: 'Document updated successfully',
+                        status: 200,
+                        data: { id: updateId, status: 'HELD' }
+                    };
+                } else if ((method === 'PUT') && path.includes('/csdo/') && path.includes('/release')) {
+                    // PUT /csdo/{id}/release - Release CSDO document
+                    var releaseId = path.split('/csdo/')[1].replace('/release', '');
+                    mockData = {
+                        message: 'Document released successfully',
+                        status: 200,
+                        data: { id: releaseId, status: 'RELEASED' }
+                    };
                 } else if (method === 'GET' && path.includes('?')) {
                     mockData.data = this.generateMockItems(serviceName, path, 15);
                     mockData.meta.totalData = 45;

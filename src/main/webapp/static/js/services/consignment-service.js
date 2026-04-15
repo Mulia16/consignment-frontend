@@ -507,6 +507,14 @@ var ConsignmentService = {
     },
 
     /**
+     * Update CSDO Document
+     * PUT /api/csdo/{id}
+     */
+    updateCSDO: async function(id, data) {
+        return ApiClient.put('CONSIGNMENT', '/csdo/' + id, data);
+    },
+
+    /**
      * Release CSDO Document
      * PUT /api/csdo/{id}/release
      */

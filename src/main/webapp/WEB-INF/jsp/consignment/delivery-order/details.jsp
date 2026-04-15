@@ -226,6 +226,8 @@
                 <button type="button" class="btn btn-outline-secondary mr-2" onclick="window.history.back()">Cancel</button>
                 <button id="btnCreate" type="button" class="btn btn-primary mr-2" onclick="saveDocument('HELD')">Create</button>
                 <button id="btnCreateRelease" type="button" class="btn btn-success" onclick="saveDocument('RELEASED')">Create & Release</button>
+                <button id="btnUpdate" type="button" class="btn btn-primary mr-2 d-none" onclick="saveDocument('HELD')">Update</button>
+                <button id="btnUpdateRelease" type="button" class="btn btn-success d-none" onclick="saveDocument('RELEASED')">Update & Release</button>
             </div>
         </div>
 
@@ -233,6 +235,7 @@
 </div>
 
 <jsp:include page="/WEB-INF/jsp/common/footer.jsp" />
+<script src="/static/js/services/consignment-service.js?v=3"></script>
 
 <script>
 var docId = new URLSearchParams(window.location.search).get('id');
@@ -243,7 +246,13 @@ var availableItems = [];
 
 document.addEventListener('configLoaded', function() {
     if (docId) {
-        // Edit/View Mode
+        // Edit/View Mode - immediately set Update wording
+        $('#breadcrumbDocNumber').text('Update - ' + docId);
+        $('#docDetailsTitle').html('Update Delivery Order');
+        $('#btnCreate').addClass('d-none');
+        $('#btnCreateRelease').addClass('d-none');
+        $('#btnUpdate').removeClass('d-none');
+        $('#btnUpdateRelease').removeClass('d-none');
         loadDocument(docId);
     } else {
         // Create Mode
@@ -279,13 +288,13 @@ function proceedToDetails() {
 }
 
 function addItemRow() {
-    if(currentStatus === 'RELEASED') return;
+    if(currentStatus === 'RELEASED' || currentStatus === 'REVERSED') return;
     itemsList.push({ itemCode: '', itemName: '', qty: 0.0, uom: 'UNIT' });
     renderItems();
 }
 
 function removeItem(index) {
-    if(currentStatus === 'RELEASED') return;
+    if(currentStatus === 'RELEASED' || currentStatus === 'REVERSED') return;
     itemsList.splice(index, 1);
     renderItems();
 }
@@ -298,7 +307,7 @@ function renderItems() {
     var tbody = $('#itemTableBody');
     tbody.empty();
     
-    var isReadOnly = currentStatus === 'RELEASED';
+    var isReadOnly = currentStatus === 'RELEASED' || currentStatus === 'REVERSED';
     var disableInputs = isReadOnly ? 'disabled' : '';
     
     if (itemsList.length === 0) {
@@ -332,12 +341,13 @@ function renderItems() {
             "<button class='btn btn-sm text-danger border-0 bg-transparent' onclick=\"removeItem(" + index + ")\"><i class='fas fa-trash'></i></button>" : 
             "<i class='fas fa-lock text-muted'></i>";
 
+        var qtyVal = (parseFloat(item.qty) || 0).toFixed(6);
         var row = `<tr>
             <td class="text-center align-middle">\${index + 1}</td>
             <td class="align-middle">\${htmlItemCode}</td>
             <td class="text-right align-middle">
                 <input type="number" step="0.01" class="form-control form-control-sm text-right mx-auto" 
-                    value="\${item.qty.toFixed(6)}" \${disableInputs}
+                    value="\${qtyVal}" \${disableInputs}
                     onchange="updateItem(\${index}, 'qty', parseFloat(this.value)||0)">
             </td>
             <td class="text-center align-middle">\${htmlUom}</td>
@@ -348,19 +358,23 @@ function renderItems() {
 }
 
 function resetItems() {
-    if(currentStatus === 'RELEASED') return;
+    if(currentStatus === 'RELEASED' || currentStatus === 'REVERSED') return;
     itemsList = [{ itemCode: '0100012', itemName: 'ACITRAL SUSPENSI 120ML', qty: 2.0, uom: 'UNIT' }];
     renderItems();
 }
 
 async function loadDocument(id) {
-    AppUtils.showLoading();
+    console.log('[CSDO] Loading document:', id);
+    showGlobalLoading();
     try {
-        var data = await ApiClient.get('CONSIGNMENT', `/csdo/\${id}`);
+        var response = await ConsignmentService.getCSDO(id);
+        console.log('[CSDO] API response:', response);
+        var data = response.data || response;
+        console.log('[CSDO] Document data:', data);
         // Map details
         currentStatus = data.status ? data.status.toUpperCase() : 'HELD';
-        $('#breadcrumbDocNumber').text('Doc #' + data.docNo);
-        $('#docDetailsTitle').html(`Document Details \${data.docNo} <small class="text-muted ml-2">(Ref: \${data.csoDocNo || data.csoId})</small>`);
+        $('#breadcrumbDocNumber').text('Update - ' + (data.docNo || id));
+        $('#docDetailsTitle').html('Update - ' + (data.docNo || id) + ' <small class="text-muted ml-2">(Ref: ' + (data.csoDocNo || data.csoId || '-') + ')</small>');
         
         $('#lblCompany').text(data.company || '-');
         $('#lblStore').text(data.store || '-');
@@ -386,82 +400,130 @@ async function loadDocument(id) {
         
         // Hide/disable rules
         if (currentStatus === 'RELEASED' || currentStatus === 'REVERSED') {
+            // No actions at all for released/reversed documents
             $('#headerForm :input').prop('disabled', true);
-            $('#actionFooter').hide();
+            $('#actionFooter').removeClass('d-flex').addClass('d-none');
             $('#btnAddRow').hide();
+            $('#topActions').hide();
         } else if (currentStatus === 'HELD') {
             $('#headerForm :input').prop('disabled', true);
             $('#btnAddRow').hide();
-            $('#btnCreate').hide();
-            $('#btnCreateRelease').text('Release');
-            $('#btnCreateRelease').removeClass('btn-success').addClass('btn-primary');
-            $('#btnCreateRelease').attr('onclick', "saveDocument('RELEASED')");
+            $('#btnCreate').addClass('d-none');
+            $('#btnCreateRelease').addClass('d-none');
+            $('#btnUpdate').removeClass('d-none');
+            $('#btnUpdateRelease').removeClass('d-none').text('Update & Release');
+            $('#actionFooter').removeClass('d-none').addClass('d-flex');
         }
         
     } catch(e) {
-        console.error(e);
-        AppUtils.showToast("Failed to load document", "danger");
+        console.error('[CSDO] Load error:', e);
+        AppUtils.showToast("Failed to load document: " + (e.message || 'Unknown error'), "danger");
     } finally {
-        AppUtils.hideLoading();
+        hideGlobalLoading();
         $('#step1-header').hide();
         $('#step2-items').show();
         renderItems();
     }
 }
 
+function showGlobalLoading() {
+    if ($('#globalLoadingOverlay').length === 0) {
+        $('body').append('<div id="globalLoadingOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.3);z-index:9998;display:flex;align-items:center;justify-content:center;"><div class="bg-white rounded shadow p-4 text-center"><div class="spinner-border text-primary mb-2" role="status"><span class="sr-only">Loading...</span></div><div class="text-muted">Processing...</div></div></div>');
+    }
+}
+
+function hideGlobalLoading() {
+    $('#globalLoadingOverlay').remove();
+}
+
 async function saveDocument(status) {
-    if (currentStatus === 'RELEASED' || currentStatus === 'REVERSED') return;
+    console.log('[CSDO] saveDocument called, status:', status, 'currentStatus:', currentStatus, 'docId:', docId);
     
-    // Release action for an existing HELD document
-    if (currentStatus === 'HELD' && status === 'RELEASED') {
-        AppUtils.showLoading();
-        try {
-            await ApiClient.put('CONSIGNMENT', `/csdo/\${docId}/release`);
-            AppUtils.showToast("Document released successfully.", "success");
-            setTimeout(() => { window.location.href = '/consignment/delivery-order'; }, 1000);
-        } catch(e) {
-            console.error(e);
-            AppUtils.showToast("Error releasing document", "danger");
-        } finally { AppUtils.hideLoading(); }
+    if (currentStatus === 'RELEASED' || currentStatus === 'REVERSED') {
+        console.log('[CSDO] Blocked: document is', currentStatus);
+        return;
+    }
+    
+    // Update mode: id param exists (PUT /api/csdo/{id})
+    if (docId) {
+        // Disable buttons to prevent double-click
+        $('#btnUpdate, #btnUpdateRelease').prop('disabled', true);
+        
+        if (status === 'HELD') {
+            // Update document
+            var payload = {
+                requireGenerateCdo: $('#cdoYes').is(':checked'),
+                shippingMode: $('#shipMode').val() || 'COURIER',
+                transporter: $('#transporter').val() || 'JNE',
+                items: itemsList
+            };
+            
+            console.log('[CSDO] Updating document:', docId, payload);
+            showGlobalLoading();
+            try {
+                var result = await ConsignmentService.updateCSDO(docId, payload);
+                console.log('[CSDO] Update result:', result);
+                AppUtils.showToast("Document updated successfully.", "success");
+                setTimeout(() => { window.location.href = '/consignment/delivery-order'; }, 1000);
+            } catch(e) {
+                console.error('[CSDO] Update error:', e);
+                AppUtils.showToast("Error updating document: " + (e.message || 'Unknown error'), "danger");
+                $('#btnUpdate, #btnUpdateRelease').prop('disabled', false);
+            } finally { hideGlobalLoading(); }
+        } else if (status === 'RELEASED') {
+            // Update & Release document
+            console.log('[CSDO] Releasing document:', docId);
+            showGlobalLoading();
+            try {
+                var releaseResult = await ConsignmentService.releaseCSDO(docId);
+                console.log('[CSDO] Release result:', releaseResult);
+                AppUtils.showToast("Document released successfully.", "success");
+                setTimeout(() => { window.location.href = '/consignment/delivery-order'; }, 1000);
+            } catch(e) {
+                console.error('[CSDO] Release error:', e);
+                AppUtils.showToast("Error releasing document: " + (e.message || 'Unknown error'), "danger");
+                $('#btnUpdate, #btnUpdateRelease').prop('disabled', false);
+            } finally { hideGlobalLoading(); }
+        }
         return;
     }
 
-    // Create action for entirely new document transfer
-    if (currentStatus === 'NEW') {
-        var csoId = $('#inputCsoId').val(); // Selected CSO ID from dropdown
-        if (!csoId || !csoId.trim()) {
-            AppUtils.showToast("Please enter CSO ID to transfer from.", "warning");
-            $('#step2-items').hide();
-            $('#step1-header').show();
-            $('#inputCsoId').focus();
-            return;
-        }
+    // Create mode: no id param (POST /api/csdo/transfer/{csoId})
+    var csoId = $('#inputCsoId').val();
+    if (!csoId || !csoId.trim()) {
+        AppUtils.showToast("Please enter CSO ID to transfer from.", "warning");
+        $('#step2-items').hide();
+        $('#step1-header').show();
+        $('#inputCsoId').focus();
+        return;
+    }
 
-        var payload = {
-            requireGenerateCdo: $('#cdoYes').is(':checked'),
-            shippingMode: $('#shipMode').val() || 'COURIER',
-            transporter: $('#transporter').val() || 'JNE',
-            createdBy: 'user01' // Mock logged in user
-        };
+    var payload = {
+        requireGenerateCdo: $('#cdoYes').is(':checked'),
+        shippingMode: $('#shipMode').val() || 'COURIER',
+        transporter: $('#transporter').val() || 'JNE',
+        createdBy: 'user01' // Mock logged in user
+    };
+    
+    console.log('[CSDO] Creating from CSO:', csoId, payload);
+    showGlobalLoading();
+    try {
+        var transRes = await ConsignmentService.transferFromCSO(csoId.trim(), payload);
+        var transData = transRes.data || transRes;
+        var newId = transData.id || transData.docNo || csoId;
         
-        AppUtils.showLoading();
-        try {
-            var transRes = await ApiClient.post('CONSIGNMENT', `/csdo/transfer/\${csoId.trim()}`, payload);
-            var newId = transRes.id || transRes.docNo || csoId;
-            
-            if (status === 'RELEASED') {
-                await ApiClient.put('CONSIGNMENT', `/csdo/\${newId}/release`);
-                AppUtils.showToast("CSDO created & released successfully.", "success");
-            } else {
-                AppUtils.showToast("CSDO created successfully.", "success");
-            }
-            setTimeout(() => { window.location.href = '/consignment/delivery-order'; }, 1000);
-        } catch(e) {
-            console.error(e);
-            AppUtils.showToast("Error transferring CSDO: " + e.message, "danger");
-        } finally {
-            AppUtils.hideLoading();
+        if (status === 'RELEASED') {
+            await ConsignmentService.releaseCSDO(newId);
+            AppUtils.showToast("CSDO created & released successfully.", "success");
+        } else {
+            AppUtils.showToast("CSDO created successfully.", "success");
         }
+        setTimeout(() => { window.location.href = '/consignment/delivery-order'; }, 1000);
+    } catch(e) {
+        console.error('[CSDO] Create error:', e);
+        AppUtils.showToast("Error transferring CSDO: " + (e.message || 'Unknown error'), "danger");
+    } finally {
+        hideGlobalLoading();
     }
 }
 
