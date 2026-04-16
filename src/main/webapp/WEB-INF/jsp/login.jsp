@@ -81,7 +81,7 @@
                     if(loadedCount === scripts.length) {
                         try {
                             if (Auth.isAuthenticated()) {
-                                window.location.href = '/dashboard';
+                                window.location.href = '/consignment/receiving';
                             }
                         } catch(e) {}
                     }
@@ -107,7 +107,7 @@
         var success = await Auth.login(username, password);
 
         if (success) {
-            window.location.href = '/dashboard';
+            window.location.href = '/consignment/receiving';
         } else {
             $('#loginErrorMsg').text("Invalid username or password");
             $('#loginError').fadeIn();

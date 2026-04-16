@@ -169,6 +169,7 @@ document.addEventListener('configLoaded', function() {
 
     // Show username in header
     if ($('#currentUser').length > 0) {
-        $('#currentUser').text(Auth.getUser());
+        var user = Auth.getUser();
+        $('#currentUser').text(user ? (user.fullName || user.username) : 'User');
     }
 });
