@@ -108,16 +108,16 @@
 
             <!-- Setup -->
             <li class="menu-header">Setup</li>
-            <li>
+            <!--<li>
                 <a href="/setup/system-config" id="nav-system-config">
                     <i class="fas fa-sliders-h"></i> System Config
                 </a>
-            </li>
-            <li>
+            </li>-->
+            <!--<li>
                 <a href="/setup/reference-data" id="nav-reference-data">
                     <i class="fas fa-tags"></i> Reference Data
                 </a>
-            </li>
+            </li>-->
             <li>
                 <a href="/setup/consignment-items" id="nav-consignment-items">
                     <i class="fas fa-boxes"></i> Items Supplier Setup
