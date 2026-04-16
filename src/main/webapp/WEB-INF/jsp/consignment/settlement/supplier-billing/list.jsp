@@ -73,6 +73,7 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
                     <button class="btn btn-primary btn-sm mr-2" onclick="batchRelease()"><i class="fas fa-check-circle"></i> Release</button>
+                    <button class="btn btn-outline-secondary btn-sm mr-2" onclick="batchPrint()"><i class="fas fa-print"></i> Print</button>
                     <button class="btn btn-outline-danger btn-sm" onclick="batchDelete()"><i class="fas fa-trash"></i> Delete</button>
                 </div>
                 <div class="d-flex align-items-center">
@@ -371,6 +372,40 @@
                 document.getElementById('selectAll').checked = false;
                 loadBillingList(currentPage);
             });
+        }
+
+        async function batchPrint() {
+            var selected = getSelectedCheckboxes();
+            if (selected.length === 0) {
+                AppUtils.showToast('Please select at least one document to print.', 'warning');
+                return;
+            }
+
+            AppUtils.showLoading();
+            var successCount = 0;
+            var failCount = 0;
+
+            for (var i = 0; i < selected.length; i++) {
+                try {
+                    await ConsignmentService.printSupplierBillingSlip(selected[i].id);
+                    successCount++;
+                    if (i < selected.length - 1) {
+                        await new Promise(function(r) { setTimeout(r, 500); });
+                    }
+                } catch (e) {
+                    failCount++;
+                    console.error('Print error for ID ' + selected[i].id + ':', e);
+                }
+            }
+
+            AppUtils.hideLoading();
+            if (failCount === 0) {
+                AppUtils.showToast(successCount + ' PDF slip(s) downloaded successfully.', 'success');
+            } else {
+                AppUtils.showToast(successCount + ' downloaded, ' + failCount + ' failed.', 'warning');
+            }
+
+            document.getElementById('selectAll').checked = false;
         }
 
         function resetFilters() {

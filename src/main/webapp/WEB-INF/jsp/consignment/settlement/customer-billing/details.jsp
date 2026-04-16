@@ -49,6 +49,9 @@
                     </ol>
                 </nav>
                 <div>
+                    <button id="btnPrintSlip" class="btn btn-outline-secondary mr-2 d-none" onclick="printSlip()">
+                        <i class="fas fa-print"></i> Print Invoice
+                    </button>
                     <button id="btnRelease" class="btn btn-primary mr-2 d-none" onclick="processRelease()">
                         <i class="fas fa-check-circle"></i> Release
                     </button>
@@ -223,6 +226,8 @@
                     document.getElementById('btnRelease').classList.remove('d-none');
                     document.getElementById('btnDelete').classList.remove('d-none');
                 }
+                // Always show print button for existing documents
+                document.getElementById('btnPrintSlip').classList.remove('d-none');
 
                 // Render items
                 renderItemsTable(billingData.details || []);
@@ -328,6 +333,21 @@
                 } catch (error) {
                     AppUtils.showToast('Delete failed: ' + error.message, 'danger');
                 }
+            });
+        }
+
+        function printSlip() {
+            if (!billingId) {
+                AppUtils.showToast('No document to print', 'warning');
+                return;
+            }
+            AppUtils.showLoading();
+            ConsignmentService.printCustomerBillingSlip(billingId).then(function() {
+                AppUtils.showToast('PDF invoice downloaded successfully', 'success');
+            }).catch(function(err) {
+                console.error('Print slip error:', err);
+            }).finally(function() {
+                AppUtils.hideLoading();
             });
         }
     </script>

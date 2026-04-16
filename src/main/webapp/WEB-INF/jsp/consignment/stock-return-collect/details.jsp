@@ -268,7 +268,19 @@
             }
 
             function printSlip() {
-                AppUtils.showToast('Printing slip...', 'info');
+                var id = docId || documentId || '';
+                if (!id) {
+                    AppUtils.showToast('No document to print', 'warning');
+                    return;
+                }
+                AppUtils.showLoading();
+                ConsignmentService.printCSRNSlip(id).then(function() {
+                    AppUtils.showToast('PDF slip downloaded successfully', 'success');
+                }).catch(function(err) {
+                    console.error('Print slip error:', err);
+                }).finally(function() {
+                    AppUtils.hideLoading();
+                });
             }
         </script>
 

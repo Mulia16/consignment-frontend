@@ -604,7 +604,19 @@ async function saveDocument(status) { // 'HELD' or 'RELEASED'
 }
 
 function printSlip() {
-    AppUtils.showToast("Printing CSO slip...", "info");
+    var id = docId || '';
+    if (!id) {
+        AppUtils.showToast('No document to print', 'warning');
+        return;
+    }
+    AppUtils.showLoading();
+    ConsignmentService.printCSOSlip(id).then(function() {
+        AppUtils.showToast('PDF slip downloaded successfully', 'success');
+    }).catch(function(err) {
+        console.error('Print slip error:', err);
+    }).finally(function() {
+        AppUtils.hideLoading();
+    });
 }
 </script>
 

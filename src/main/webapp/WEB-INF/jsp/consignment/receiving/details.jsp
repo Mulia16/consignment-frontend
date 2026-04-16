@@ -677,7 +677,14 @@ function printSlip() {
         AppUtils.showToast('No document to print', 'warning');
         return;
     }
-    window.open('/consignment/receiving/print?id=' + id, '_blank');
+    AppUtils.showLoading();
+    ConsignmentService.printCSRVSlip(id).then(function() {
+        AppUtils.showToast('PDF slip downloaded successfully', 'success');
+    }).catch(function(err) {
+        console.error('Print slip error:', err);
+    }).finally(function() {
+        AppUtils.hideLoading();
+    });
 }
 
 

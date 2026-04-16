@@ -4,13 +4,9 @@ server:
 spring:
   application:
     name: consignment-frontend
-  mvc:
-    view:
-      prefix: /WEB-INF/jsp/
-      suffix: .jsp
   web:
     resources:
-      static-locations: /static/
+      static-locations: classpath:/static/
 
 # API Service Configuration
 # Aligned with backend API architecture (see plans/api-endpoint.md)

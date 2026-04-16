@@ -33,6 +33,7 @@
                 </ol>
             </nav>
             <div>
+                <button type="button" class="btn btn-sm btn-outline-secondary mr-2 d-none" id="btnPrintSlip" onclick="printSlip()"><i class="fas fa-print mr-1"></i> Print Slip</button>
                 <span id="statusBadge" class="badge badge-secondary p-2 d-none" style="font-size: 14px;"></span>
             </div>
         </div>
@@ -348,6 +349,7 @@ async function populateForm(data) {
     else if(currentStatus === 'RELEASED') badgeClass = 'badge-success';
     
     $('#statusBadge').text(currentStatus).removeClass('d-none').addClass(badgeClass);
+    $('#btnPrintSlip').removeClass('d-none');
 
     $('#itemsBody').empty();
     itemIdCounter = 1;
@@ -461,6 +463,22 @@ async function saveDocument(postActionStatus) {
         $btnSave.prop('disabled', false).html(originalBtnText);
         $btnSaveRelease.prop('disabled', false);
     }
+}
+
+function printSlip() {
+    var id = documentId || '';
+    if (!id) {
+        AppUtils.showToast('No document to print', 'warning');
+        return;
+    }
+    AppUtils.showLoading();
+    ConsignmentService.printCSRQSlip(id).then(function() {
+        AppUtils.showToast('PDF slip downloaded successfully', 'success');
+    }).catch(function(err) {
+        console.error('Print slip error:', err);
+    }).finally(function() {
+        AppUtils.hideLoading();
+    });
 }
 </script>
 

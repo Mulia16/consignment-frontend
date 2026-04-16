@@ -138,6 +138,115 @@ var ReportService = {
     },
 
     // ══════════════════════════════════════════════════════════
+    // EXCEL EXPORT - Transaction Reports
+    // GET /api/reports/{type}/export
+    // ══════════════════════════════════════════════════════════
+
+    /**
+     * Export CSRQ Report to Excel
+     * GET /api/reports/CSRQ/export
+     * @param {Object} params - Query parameters (company, store, supplierCode, fromDate, toDate, status)
+     */
+    exportCSRQReport: async function(params) {
+        var query = this._buildQuery(params);
+        return ApiClient.downloadBlob('CONSIGNMENT', '/reports/CSRQ/export' + query, 'CSRQ_Report.xlsx');
+    },
+
+    /**
+     * Export CSRV Report to Excel
+     * GET /api/reports/CSRV/export
+     * @param {Object} params - Query parameters (company, store, supplierCode, fromDate, toDate)
+     */
+    exportCSRVReport: async function(params) {
+        var query = this._buildQuery(params);
+        return ApiClient.downloadBlob('CONSIGNMENT', '/reports/CSRV/export' + query, 'CSRV_Report.xlsx');
+    },
+
+    /**
+     * Export CSO Report to Excel
+     * GET /api/reports/CSO/export
+     * @param {Object} params - Query parameters (company, store, customerCode, fromDate, toDate)
+     */
+    exportCSOReport: async function(params) {
+        var query = this._buildQuery(params);
+        return ApiClient.downloadBlob('CONSIGNMENT', '/reports/CSO/export' + query, 'CSO_Report.xlsx');
+    },
+
+    /**
+     * Export CSDO Report to Excel
+     * GET /api/reports/CSDO/export
+     * @param {Object} params - Query parameters (company, store, fromDate, toDate)
+     */
+    exportCSDOReport: async function(params) {
+        var query = this._buildQuery(params);
+        return ApiClient.downloadBlob('CONSIGNMENT', '/reports/CSDO/export' + query, 'CSDO_Report.xlsx');
+    },
+
+    /**
+     * Export CSR Report to Excel
+     * GET /api/reports/CSR/export
+     * @param {Object} params - Query parameters (company, store, fromDate, toDate)
+     */
+    exportCSRReport: async function(params) {
+        var query = this._buildQuery(params);
+        return ApiClient.downloadBlob('CONSIGNMENT', '/reports/CSR/export' + query, 'CSR_Report.xlsx');
+    },
+
+    /**
+     * Export CSA Report to Excel
+     * GET /api/reports/CSA/export
+     * @param {Object} params - Query parameters (company, store, fromDate, toDate)
+     */
+    exportCSAReport: async function(params) {
+        var query = this._buildQuery(params);
+        return ApiClient.downloadBlob('CONSIGNMENT', '/reports/CSA/export' + query, 'CSA_Report.xlsx');
+    },
+
+    // ══════════════════════════════════════════════════════════
+    // EXCEL EXPORT - Inventory & Stock Reports
+    // ══════════════════════════════════════════════════════════
+
+    /**
+     * Export Supplier Book Value Inventory to Excel
+     * GET /api/reports/supplier-book-value/export
+     * @param {Object} params - Query parameters (store, supplierCode, supplierContract?)
+     */
+    exportSupplierBookValue: async function(params) {
+        var query = this._buildQuery(params);
+        return ApiClient.downloadBlob('CONSIGNMENT', '/reports/supplier-book-value/export' + query, 'Supplier_Book_Value.xlsx');
+    },
+
+    /**
+     * Export Customer Consignment Inventory to Excel
+     * GET /api/reports/customer-inventory/export
+     * @param {Object} params - Query parameters (store, customerCode)
+     */
+    exportCustomerInventory: async function(params) {
+        var query = this._buildQuery(params);
+        return ApiClient.downloadBlob('CONSIGNMENT', '/reports/customer-inventory/export' + query, 'Customer_Inventory.xlsx');
+    },
+
+    /**
+     * Export Reservations to Excel
+     * GET /api/reports/reservations/export
+     * @param {Object} params - Query parameters (store, itemCode?)
+     */
+    exportReservations: async function(params) {
+        var query = this._buildQuery(params);
+        return ApiClient.downloadBlob('CONSIGNMENT', '/reports/reservations/export' + query, 'Reservations.xlsx');
+    },
+
+    /**
+     * Export Consignment Setup to Excel
+     * GET /api/reports/consignment-setup/export
+     * @param {Object} params - Query parameters (company, store, supplierCode?)
+     */
+    exportConsignmentSetup: async function(params) {
+        var query = this._buildQuery(params);
+        return ApiClient.downloadBlob('CONSIGNMENT', '/reports/consignment-setup/export' + query, 'Consignment_Setup.xlsx');
+    },
+
+    // ══════════════════════════════════════════════════════════
     // HELPER: Build query string from params object (removes null/empty)
     // ══════════════════════════════════════════════════════════
     _buildQuery: function(params) {

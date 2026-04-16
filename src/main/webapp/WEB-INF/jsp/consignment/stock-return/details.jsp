@@ -39,6 +39,7 @@
                     <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.history.back()">Cancel</button>
                     <button type="button" class="btn btn-primary btn-sm ml-2" id="btnNext" onclick="showItemDetails()">Next</button>
                     <button type="button" class="btn btn-primary btn-sm ml-2 d-none" id="btnSave" onclick="saveDocument()">Save</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm ml-2 d-none" id="btnPrintSlip" onclick="printSlip()"><i class="fas fa-print mr-1"></i> Print Slip</button>
                 </div>
             </div>
             <div class="card-body">
@@ -152,6 +153,7 @@ document.addEventListener('configLoaded', function() {
         document.getElementById('breadcrumbAction').textContent = 'Update';
         document.getElementById('headerTitle').textContent = 'Update - Header';
         document.getElementById('btnSave').textContent = 'Update';
+        document.getElementById('btnPrintSlip').classList.remove('d-none');
         loadDocumentData(id);
     } else {
         ConsignmentMasterData.init();
@@ -486,6 +488,23 @@ async function saveDocument() {
         btn.disabled = false;
         btn.innerHTML = originalBtnText;
     }
+}
+
+function printSlip() {
+    var urlParams = new URLSearchParams(window.location.search);
+    var id = urlParams.get('id') || '';
+    if (!id) {
+        AppUtils.showToast('No document to print', 'warning');
+        return;
+    }
+    AppUtils.showLoading();
+    ConsignmentService.printCSRNSlip(id).then(function() {
+        AppUtils.showToast('PDF slip downloaded successfully', 'success');
+    }).catch(function(err) {
+        console.error('Print slip error:', err);
+    }).finally(function() {
+        AppUtils.hideLoading();
+    });
 }
 </script>
 

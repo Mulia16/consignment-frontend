@@ -419,10 +419,25 @@
                 }
             }
 
-            function batchPrint() {
+            async function batchPrint() {
                 var ids = getSelectedIds();
                 if (ids.length === 0) { AppUtils.showToast('Please select a document to print', 'warning'); return; }
-                AppUtils.showToast('Printing listing...', 'info');
+                AppUtils.showLoading();
+                var successCount = 0;
+                for (var i = 0; i < ids.length; i++) {
+                    try {
+                        await ConsignmentService.printCSRNSlip(ids[i]);
+                        successCount++;
+                        if (i < ids.length - 1) await new Promise(function(r) { setTimeout(r, 500); });
+                    } catch (e) {
+                        console.error('Print error for ID ' + ids[i] + ':', e);
+                    }
+                }
+                AppUtils.hideLoading();
+                if (successCount > 0) {
+                    AppUtils.showToast(successCount + ' PDF slip(s) downloaded successfully', 'success');
+                }
+                $('#selectAll').prop('checked', false);
             }
         </script>
 

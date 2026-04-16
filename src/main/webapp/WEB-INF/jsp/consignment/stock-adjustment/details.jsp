@@ -40,6 +40,7 @@
                     <button type="button" class="btn btn-primary btn-sm ml-2" id="btnNext" onclick="showItemDetails()">Next</button>
                     <button type="button" class="btn btn-primary btn-sm ml-2 d-none" id="btnSave" onclick="saveDocument()">Save</button>
                     <button type="button" class="btn btn-success btn-sm ml-2 d-none" id="btnRelease" onclick="releaseDocument()">Release</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm ml-2 d-none" id="btnPrintSlip" onclick="printSlip()"><i class="fas fa-print mr-1"></i> Print Slip</button>
                 </div>
             </div>
             <div class="card-body">
@@ -186,6 +187,7 @@ document.addEventListener('configLoaded', function() {
         document.getElementById('btnNext').classList.add('d-none');
         document.getElementById('btnSave').classList.remove('d-none');
         document.getElementById('btnRelease').classList.remove('d-none');
+        document.getElementById('btnPrintSlip').classList.remove('d-none');
 
         loadDocumentDetails(docId);
     } else {
@@ -530,6 +532,22 @@ async function releaseDocument() {
             AppUtils.hideLoading();
         }
     }
+}
+
+function printSlip() {
+    var id = docId || '';
+    if (!id) {
+        AppUtils.showToast('No document to print', 'warning');
+        return;
+    }
+    AppUtils.showLoading();
+    ConsignmentService.printCSASlip(id).then(function() {
+        AppUtils.showToast('PDF slip downloaded successfully', 'success');
+    }).catch(function(err) {
+        console.error('Print slip error:', err);
+    }).finally(function() {
+        AppUtils.hideLoading();
+    });
 }
 
 </script>

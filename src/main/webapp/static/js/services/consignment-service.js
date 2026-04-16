@@ -965,6 +965,82 @@ var ConsignmentService = {
      */
     syncMasterData: async function(entity, records) {
         return ApiClient.post('CONSIGNMENT', '/acmm/master-sync/' + entity, { records: records });
+    },
+
+    // ══════════════════════════════════════════════════════════
+    // PDF SLIP DOWNLOAD - Print Slip for each module
+    // ══════════════════════════════════════════════════════════
+
+    /**
+     * Print CSRQ (Stock Request) Slip as PDF
+     * GET /api/csrq/{csrqId}/slip
+     * @param {string} csrqId - CSRQ document ID
+     */
+    printCSRQSlip: async function(csrqId) {
+        return ApiClient.downloadBlob('CONSIGNMENT', '/csrq/' + csrqId + '/slip', 'CSRQ_Slip_' + csrqId + '.pdf');
+    },
+
+    /**
+     * Print CSRV (Stock Receiving) Slip as PDF
+     * GET /api/csrv/{csrvId}/slip
+     * @param {string} csrvId - CSRV document ID
+     */
+    printCSRVSlip: async function(csrvId) {
+        return ApiClient.downloadBlob('CONSIGNMENT', '/csrv/' + csrvId + '/slip', 'CSRV_Slip_' + csrvId + '.pdf');
+    },
+
+    /**
+     * Print CSO (Stock Out / Delivery Order) Slip as PDF
+     * GET /api/cso/{csoId}/slip
+     * @param {string} csoId - CSO document ID
+     */
+    printCSOSlip: async function(csoId) {
+        return ApiClient.downloadBlob('CONSIGNMENT', '/cso/' + csoId + '/slip', 'CSO_Slip_' + csoId + '.pdf');
+    },
+
+    /**
+     * Print CSDO (Formal Delivery Order) Slip as PDF
+     * GET /api/csdo/{csdoId}/slip
+     * @param {string} csdoId - CSDO document ID
+     */
+    printCSDOSlip: async function(csdoId) {
+        return ApiClient.downloadBlob('CONSIGNMENT', '/csdo/' + csdoId + '/slip', 'CSDO_Slip_' + csdoId + '.pdf');
+    },
+
+    /**
+     * Print CSRN (Stock Return) Slip as PDF
+     * GET /api/csrn/{csrnId}/slip
+     * @param {string} csrnId - CSRN document ID
+     */
+    printCSRNSlip: async function(csrnId) {
+        return ApiClient.downloadBlob('CONSIGNMENT', '/csrn/' + csrnId + '/slip', 'CSRN_Slip_' + csrnId + '.pdf');
+    },
+
+    /**
+     * Print CSA (Stock Adjustment) Slip as PDF
+     * GET /api/csa/{csaId}/slip
+     * @param {string} csaId - CSA document ID
+     */
+    printCSASlip: async function(csaId) {
+        return ApiClient.downloadBlob('CONSIGNMENT', '/csa/' + csaId + '/slip', 'CSA_Slip_' + csaId + '.pdf');
+    },
+
+    /**
+     * Print Customer Billing Invoice/TN as PDF
+     * GET /api/customer-billing/{cbrId}/slip
+     * @param {string} cbrId - Customer Billing Record ID
+     */
+    printCustomerBillingSlip: async function(cbrId) {
+        return ApiClient.downloadBlob('CONSIGNMENT', '/customer-billing/' + cbrId + '/slip', 'CustomerBilling_Invoice_' + cbrId + '.pdf');
+    },
+
+    /**
+     * Print Supplier Billing PO/GR Summary as PDF
+     * GET /api/supplier-billing/{scbrId}/slip
+     * @param {string} scbrId - Supplier Billing Record ID
+     */
+    printSupplierBillingSlip: async function(scbrId) {
+        return ApiClient.downloadBlob('CONSIGNMENT', '/supplier-billing/' + scbrId + '/slip', 'SupplierBilling_Summary_' + scbrId + '.pdf');
     }
 };
 

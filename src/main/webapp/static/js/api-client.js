@@ -47,6 +47,76 @@ var ApiClient = {
     put: function(serviceName, path, body) { return this.request(serviceName, path, { method: 'PUT', body: JSON.stringify(body) }); },
     delete: function(serviceName, path) { return this.request(serviceName, path, { method: 'DELETE' }); },
 
+    /**
+     * Download a blob (PDF/Excel) from the API.
+     * Uses fetch with blob response type, handles auth & token refresh.
+     * @param {string} serviceName - Service name in API_CONFIG.SERVICES
+     * @param {string} path - API path (e.g. '/csrq/123/slip')
+     * @param {string} [filename] - Suggested filename for the download
+     * @returns {Promise<void>}
+     */
+    downloadBlob: async function(serviceName, path, filename) {
+        var url = API_CONFIG.getUrl(serviceName, path);
+        var token = Auth.getToken();
+
+        var headers = {};
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+
+        try {
+            var response = await fetch(url, {
+                method: 'GET',
+                headers: headers,
+                cache: 'no-store'
+            });
+
+            if (response.status === 401) {
+                var refreshed = await this.refreshToken();
+                if (refreshed) {
+                    headers['Authorization'] = 'Bearer ' + Auth.getToken();
+                    response = await fetch(url, { method: 'GET', headers: headers, cache: 'no-store' });
+                } else {
+                    Auth.logout();
+                    throw new Error("Session expired");
+                }
+            }
+
+            if (!response.ok) {
+                var errorData = await response.json().catch(function() { return {}; });
+                var msg = errorData.message || 'Download failed';
+                AppUtils.showToast(msg, 'danger');
+                throw new Error(msg);
+            }
+
+            // Extract filename from Content-Disposition header if not provided
+            if (!filename) {
+                var disposition = response.headers.get('Content-Disposition');
+                if (disposition && disposition.indexOf('filename=') !== -1) {
+                    var matches = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                    if (matches && matches[1]) {
+                        filename = matches[1].replace(/['"]/g, '');
+                    }
+                }
+                if (!filename) {
+                    // Generate from path
+                    filename = path.replace(/^\//, '').replace(/\//g, '_') + '.pdf';
+                }
+            }
+
+            var blob = await response.blob();
+            var blobUrl = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.error('Download Error:', error);
+            throw error;
+        }
+    },
+
     refreshToken: async function() {
         var refresh = Auth.getRefreshToken();
         if (!refresh) return false;
