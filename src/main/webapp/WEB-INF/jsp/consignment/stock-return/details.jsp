@@ -39,7 +39,7 @@
                     <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.history.back()">Cancel</button>
                     <button type="button" class="btn btn-primary btn-sm ml-2" id="btnNext" onclick="showItemDetails()">Next</button>
                     <button type="button" class="btn btn-primary btn-sm ml-2 d-none" id="btnSave" onclick="saveDocument()">Save</button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm ml-2 d-none" id="btnPrintSlip" onclick="printSlip()"><i class="fas fa-print mr-1"></i> Print Slip</button>
+                    <button type="button" class="btn btn-primary btn-sm ml-2 d-none" id="btnPrintSlip" onclick="printSlip()"><i class="fas fa-print mr-1"></i> Print Slip</button>
                 </div>
             </div>
             <div class="card-body">

@@ -33,7 +33,7 @@
                 </ol>
             </nav>
             <div>
-                <button type="button" class="btn btn-sm btn-outline-secondary mr-2 d-none" id="btnPrintSlip" onclick="printSlip()"><i class="fas fa-print mr-1"></i> Print Slip</button>
+                <button type="button" class="btn btn-sm btn-primary mr-2 d-none" id="btnPrintSlip" onclick="printSlip()"><i class="fas fa-print mr-1"></i> Print Slip</button>
                 <span id="statusBadge" class="badge badge-secondary p-2 d-none" style="font-size: 14px;"></span>
             </div>
         </div>
@@ -141,7 +141,7 @@
                         <button type="button" class="btn btn-outline-secondary mr-2" onclick="resetForm()">Reset</button>
                         <button type="button" class="btn btn-outline-secondary mr-2" onclick="window.location.href='/consignment/stock-request'">Cancel</button>
                         <button type="button" class="btn btn-primary mr-2" onclick="saveDocument('HELD')" id="btnSave">Create</button>
-                        <button type="button" class="btn btn-success" onclick="saveDocument('RELEASED')" id="btnSaveRelease">Create & Release</button>
+                        <button type="button" class="btn btn-primary" onclick="saveDocument('RELEASED')" id="btnSaveRelease">Create & Release</button>
                     </div>
                 </div>
             </div>

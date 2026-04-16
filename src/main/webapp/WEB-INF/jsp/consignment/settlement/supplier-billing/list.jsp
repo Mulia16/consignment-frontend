@@ -73,7 +73,7 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
                     <button class="btn btn-primary btn-sm mr-2" onclick="batchRelease()"><i class="fas fa-check-circle"></i> Release</button>
-                    <button class="btn btn-outline-secondary btn-sm mr-2" onclick="batchPrint()"><i class="fas fa-print"></i> Print</button>
+                    <button class="btn btn-primary btn-sm mr-2" onclick="batchPrint()"><i class="fas fa-print"></i> Print</button>
                     <button class="btn btn-outline-danger btn-sm" onclick="batchDelete()"><i class="fas fa-trash"></i> Delete</button>
                 </div>
                 <div class="d-flex align-items-center">

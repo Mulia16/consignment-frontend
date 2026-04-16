@@ -167,7 +167,7 @@
                             <!-- Bulk Actions -->
                             <div>
                                 <button class="btn btn-primary mr-2" onclick="batchRelease()">Release</button>
-                                <button class="btn btn-outline-secondary mr-2" onclick="batchPrint()"><i
+                                <button class="btn btn-primary mr-2" onclick="batchPrint()"><i
                                         class="fas fa-print"></i> Print</button>
                                 <button class="btn btn-outline-danger" onclick="batchDelete()"><i
                                         class="fas fa-trash"></i> Delete</button>

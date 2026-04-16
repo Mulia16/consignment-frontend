@@ -31,7 +31,7 @@
                 </ol>
             </nav>
             <div id="topActions" style="display: none;">
-               <button class="btn btn-sm btn-outline-secondary mr-2" onclick="printSlip()"><i class="fas fa-print mr-1"></i> Print Slip</button>
+               <button class="btn btn-sm btn-primary mr-2" onclick="printSlip()"><i class="fas fa-print mr-1"></i> Print Slip</button>
                <span id="headerStatusBadge" class="badge badge-warning" style="font-size: 0.9rem;">HELD</span>
             </div>
         </div>
@@ -298,7 +298,7 @@
                 <button type="button" class="btn btn-outline-secondary mr-2" onclick="window.history.back()">Cancel</button>
                 <button type="button" class="btn btn-light mr-2" onclick="resetItems()">Reset</button>
                 <button type="button" class="btn btn-primary mr-2" id="btnSave" onclick="saveDocument('HELD')">Create</button>
-                <button type="button" class="btn btn-success" id="btnSaveRelease" onclick="saveDocument('RELEASED')">Create & Release</button>
+                <button type="button" class="btn btn-primary" id="btnSaveRelease" onclick="saveDocument('RELEASED')">Create & Release</button>
             </div>
         </div>
 

@@ -31,7 +31,7 @@
                 </ol>
             </nav>
             <div id="topActions" style="display: none;">
-               <button class="btn btn-sm btn-outline-secondary mr-2" onclick="printSlip()"><i class="fas fa-print mr-1"></i> Print Slip</button>
+               <button class="btn btn-sm btn-primary mr-2" onclick="printSlip()"><i class="fas fa-print mr-1"></i> Print Slip</button>
                <span id="headerStatusBadge" class="badge badge-warning" style="font-size: 0.9rem;">HELD</span>
             </div>
         </div>
@@ -225,9 +225,9 @@
             <div class="card-footer bg-light d-flex justify-content-end" id="actionFooter">
                 <button type="button" class="btn btn-outline-secondary mr-2" onclick="window.history.back()">Cancel</button>
                 <button id="btnCreate" type="button" class="btn btn-primary mr-2" onclick="saveDocument('HELD')">Create</button>
-                <button id="btnCreateRelease" type="button" class="btn btn-success" onclick="saveDocument('RELEASED')">Create & Release</button>
+                <button id="btnCreateRelease" type="button" class="btn btn-primary" onclick="saveDocument('RELEASED')">Create & Release</button>
                 <button id="btnUpdate" type="button" class="btn btn-primary mr-2 d-none" onclick="saveDocument('HELD')">Update</button>
-                <button id="btnUpdateRelease" type="button" class="btn btn-success d-none" onclick="saveDocument('RELEASED')">Update & Release</button>
+                <button id="btnUpdateRelease" type="button" class="btn btn-primary d-none" onclick="saveDocument('RELEASED')">Update & Release</button>
             </div>
         </div>
 

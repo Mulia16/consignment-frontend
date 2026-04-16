@@ -63,7 +63,7 @@
                         <h6 class="m-0"><i class="fas fa-list"></i> Failed Records</h6>
                         <div>
                             <button class="btn btn-success btn-sm px-3 mr-2" onclick="actionConfirm()"><i class="fas fa-check-circle"></i> Confirm</button>
-                            <button class="btn btn-outline-secondary btn-sm mr-2" onclick="actionPrint()"><i class="fas fa-print"></i> Print Report</button>
+                            <button class="btn btn-primary btn-sm mr-2" onclick="actionPrint()"><i class="fas fa-print"></i> Print Report</button>
                             <button class="btn btn-outline-danger btn-sm" onclick="actionDelete()"><i class="fas fa-trash"></i> Delete</button>
                         </div>
                     </div>

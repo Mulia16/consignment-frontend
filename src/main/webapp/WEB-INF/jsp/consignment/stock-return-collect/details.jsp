@@ -43,7 +43,7 @@
                                 onclick="saveDocument()">Save Actual Quantity</button>
                             <button type="button" class="btn btn-success btn-sm ml-2" id="btnUpdate"
                                 onclick="updateDocument()">Update Status</button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm ml-2" onclick="printSlip()"><i
+                            <button type="button" class="btn btn-primary btn-sm ml-2" onclick="printSlip()"><i
                                     class="fas fa-print"></i> Print Slip</button>
                         </div>
                     </div>

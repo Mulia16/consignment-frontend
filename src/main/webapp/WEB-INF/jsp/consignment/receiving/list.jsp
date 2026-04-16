@@ -178,8 +178,8 @@
 
         <!-- Bulk Actions -->
         <div class="mt-3 d-flex justify-content-end">
-            <button class="btn btn-sm btn-secondary font-weight-bold px-4 mr-2" onclick="batchRelease()">Release</button>
-            <button class="btn btn-sm btn-outline-secondary font-weight-bold px-4 mr-2" onclick="batchPrint()"><i class="fas fa-print mr-1"></i> Print</button>
+            <button class="btn btn-sm btn-primary font-weight-bold px-4 mr-2" onclick="batchRelease()">Release</button>
+            <button class="btn btn-sm btn-primary font-weight-bold px-4 mr-2" onclick="batchPrint()"><i class="fas fa-print mr-1"></i> Print</button>
             <button class="btn btn-sm btn-outline-danger font-weight-bold px-4" onclick="batchDelete()"><i class="fas fa-trash-alt mr-1"></i> Delete</button>
         </div>
 

@@ -49,7 +49,7 @@
                     </ol>
                 </nav>
                 <div>
-                    <button id="btnPrintSlip" class="btn btn-outline-secondary mr-2 d-none" onclick="printSlip()">
+                    <button id="btnPrintSlip" class="btn btn-primary mr-2 d-none" onclick="printSlip()">
                         <i class="fas fa-print"></i> Print Invoice
                     </button>
                     <button id="btnRelease" class="btn btn-primary mr-2 d-none" onclick="processRelease()">

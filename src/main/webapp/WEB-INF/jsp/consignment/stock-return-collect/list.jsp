@@ -154,7 +154,7 @@
                     <!-- Bulk Actions -->
                     <div>
                         <button class="btn btn-primary mr-2" onclick="batchUpdate()">Update</button>
-                        <button class="btn btn-outline-secondary mr-2" onclick="batchPrint()"><i class="fas fa-print"></i> Print</button>
+                        <button class="btn btn-primary mr-2" onclick="batchPrint()"><i class="fas fa-print"></i> Print</button>
                     </div>
                     <div>
                         <small class="text-muted" id="totalInfo">Showing 0 of 0 records</small>

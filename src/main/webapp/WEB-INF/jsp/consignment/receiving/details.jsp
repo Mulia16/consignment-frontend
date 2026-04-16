@@ -31,8 +31,8 @@
                 </ol>
             </nav>
             <div id="topActions" style="display: none;">
-               <button class="btn btn-sm btn-outline-secondary mr-2" onclick="printSlip()"><i class="fas fa-print mr-1"></i> Print Slip</button>
-               <button class="btn btn-sm btn-success mr-2" id="btnRelease" onclick="releaseDocument()"><i class="fas fa-check-circle mr-1"></i> Release</button>
+               <button class="btn btn-sm btn-primary mr-2" onclick="printSlip()"><i class="fas fa-print mr-1"></i> Print Slip</button>
+               <button class="btn btn-sm btn-primary mr-2" id="btnRelease" onclick="releaseDocument()"><i class="fas fa-check-circle mr-1"></i> Release</button>
                <span id="headerStatusBadge" class="badge badge-warning" style="font-size: 0.9rem;">HELD</span>
             </div>
         </div>

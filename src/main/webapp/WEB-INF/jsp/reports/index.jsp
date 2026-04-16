@@ -150,6 +150,8 @@ var REPORT_CONFIG = {
     'csrq': {
         title: 'R01 - CSRQ Report (Stock Requisition)',
         serviceMethod: 'getCSRQReport',
+        exportMethod: 'exportCSRQReport',
+        exportFileName: 'CSRQ_Report.xlsx',
         filters: ['company', 'store', 'fromDate', 'toDate', 'supplierCode', 'status'],
         columns: [
             { key: 'docNo', label: 'Doc No' },
@@ -169,6 +171,8 @@ var REPORT_CONFIG = {
     'csrv': {
         title: 'R02 - CSRV Report (Stock Receiving)',
         serviceMethod: 'getCSRVReport',
+        exportMethod: 'exportCSRVReport',
+        exportFileName: 'CSRV_Report.xlsx',
         filters: ['company', 'store', 'fromDate', 'toDate'],
         columns: [
             { key: 'docNo', label: 'Doc No' },
@@ -186,6 +190,8 @@ var REPORT_CONFIG = {
     'cso': {
         title: 'R03 - CSO Report (Stock Out)',
         serviceMethod: 'getCSOReport',
+        exportMethod: 'exportCSOReport',
+        exportFileName: 'CSO_Report.xlsx',
         filters: ['company', 'store', 'fromDate', 'toDate', 'customerCode'],
         columns: [
             { key: 'docNo', label: 'Doc No' },
@@ -204,6 +210,8 @@ var REPORT_CONFIG = {
     'csdo': {
         title: 'R04 - CSDO Report (Delivery Order)',
         serviceMethod: 'getCSDOReport',
+        exportMethod: 'exportCSDOReport',
+        exportFileName: 'CSDO_Report.xlsx',
         filters: ['company', 'store', 'fromDate', 'toDate'],
         columns: [
             { key: 'docNo', label: 'Doc No' },
@@ -222,6 +230,8 @@ var REPORT_CONFIG = {
     'csr': {
         title: 'R05 - CSR Report (Stock Return)',
         serviceMethod: 'getCSRReport',
+        exportMethod: 'exportCSRReport',
+        exportFileName: 'CSR_Report.xlsx',
         filters: ['company', 'store', 'fromDate', 'toDate'],
         columns: [
             { key: 'docNo', label: 'Doc No' },
@@ -240,6 +250,8 @@ var REPORT_CONFIG = {
     'csa': {
         title: 'R06 - CSA Report (Stock Adjustment)',
         serviceMethod: 'getCSAReport',
+        exportMethod: 'exportCSAReport',
+        exportFileName: 'CSA_Report.xlsx',
         filters: ['company', 'store', 'fromDate', 'toDate'],
         columns: [
             { key: 'docNo', label: 'Doc No' },
@@ -293,6 +305,8 @@ var REPORT_CONFIG = {
     'supplier-book-value': {
         title: 'R09 - Supplier Book Value',
         serviceMethod: 'getSupplierBookValueReport',
+        exportMethod: 'exportSupplierBookValue',
+        exportFileName: 'Supplier_Book_Value.xlsx',
         filters: ['store', 'supplierCode', 'supplierContract'],
         columns: [
             { key: 'store', label: 'Store' },
@@ -307,6 +321,8 @@ var REPORT_CONFIG = {
     'customer-inventory': {
         title: 'R10 - Customer Inventory',
         serviceMethod: 'getCustomerInventoryReport',
+        exportMethod: 'exportCustomerInventory',
+        exportFileName: 'Customer_Inventory.xlsx',
         filters: ['store', 'customerCode'],
         columns: [
             { key: 'issueFromStore', label: 'Store' },
@@ -319,6 +335,8 @@ var REPORT_CONFIG = {
     'reservations': {
         title: 'R11 - Reservations',
         serviceMethod: 'getReservationsReport',
+        exportMethod: 'exportReservations',
+        exportFileName: 'Reservations.xlsx',
         filters: ['store', 'itemCode'],
         columns: [
             { key: 'docNo', label: 'Doc No' },
@@ -334,6 +352,8 @@ var REPORT_CONFIG = {
     'consignment-setup': {
         title: 'R12 - Consignment Setup',
         serviceMethod: 'getConsignmentSetupReport',
+        exportMethod: 'exportConsignmentSetup',
+        exportFileName: 'Consignment_Setup.xlsx',
         filters: ['company', 'store', 'supplierCode'],
         columns: [
             { key: 'itemCode', label: 'Item' },
@@ -454,8 +474,12 @@ function renderFilterForm(filters) {
     });
 
     // Add action buttons
+    var hasExport = REPORT_CONFIG[currentReport] && REPORT_CONFIG[currentReport].exportMethod;
     html += '<div class="col-md-3 mb-3 d-flex align-items-end">';
     html += '<button type="button" class="btn btn-sm btn-primary mr-2" onclick="runReport()"><i class="fas fa-search mr-1"></i> Generate</button>';
+    if (hasExport) {
+        html += '<button type="button" class="btn btn-sm btn-success mr-2" id="btnExportExcel" onclick="exportReport()"><i class="fas fa-file-excel mr-1"></i> Export Excel</button>';
+    }
     html += '<button type="button" class="btn btn-sm btn-light" onclick="clearReportFilter()"><i class="fas fa-eraser mr-1"></i> Clear</button>';
     html += '</div>';
 
@@ -619,6 +643,37 @@ function escapeHtml(text) {
     var div = document.createElement('div');
     div.appendChild(document.createTextNode(text));
     return div.innerHTML;
+}
+
+// ══════════════════════════════════════════════════════════
+// EXCEL EXPORT
+// ══════════════════════════════════════════════════════════
+async function exportReport() {
+    if (!currentReport) return;
+
+    var config = REPORT_CONFIG[currentReport];
+    if (!config || !config.exportMethod) {
+        AppUtils.showToast('Export is not available for this report', 'warning');
+        return;
+    }
+
+    var params = getFilterParams();
+    var btn = $('#btnExportExcel');
+    var originalHtml = btn.html();
+
+    // Disable button and show spinner
+    btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Exporting...');
+
+    try {
+        await ReportService[config.exportMethod](params);
+        AppUtils.showToast('Excel exported successfully!', 'success');
+    } catch (error) {
+        console.error('Export error:', error);
+        AppUtils.showToast('Failed to export Excel. Please try again.', 'danger');
+    } finally {
+        // Restore button
+        btn.prop('disabled', false).html(originalHtml);
+    }
 }
 
 // ══════════════════════════════════════════════════════════
