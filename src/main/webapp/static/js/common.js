@@ -136,6 +136,17 @@ const AppUtils = {
 
     hideLoading: function (targetId) {
         // Will be replaced by actual content
+    },
+
+    // Escape HTML to prevent XSS
+    escapeHtml: function (str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
     }
 };
 

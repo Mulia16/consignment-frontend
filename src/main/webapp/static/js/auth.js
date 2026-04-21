@@ -6,6 +6,10 @@ var Auth = {
     login: async function(username, password) {
         if (API_CONFIG.isDevMode()) {
             this.setSession('dev-token-bypass', 'dev-refresh-bypass', { username: username, role: 'ADMIN' });
+            // In dev mode, load all menus
+            if (typeof MenuService !== 'undefined') {
+                await MenuService.fetchMenus();
+            }
             return true;
         }
 
@@ -27,6 +31,16 @@ var Auth = {
                         roles: result.roles
                     };
                     this.setSession(result.token, null, user);
+
+                    // Fetch user menu permissions after successful login
+                    if (typeof MenuService !== 'undefined') {
+                        try {
+                            await MenuService.fetchMenus();
+                        } catch (menuError) {
+                            console.error('Failed to fetch menus after login:', menuError);
+                        }
+                    }
+
                     return true;
                 }
             }
@@ -41,6 +55,9 @@ var Auth = {
         localStorage.removeItem(this.TOKEN_KEY);
         localStorage.removeItem(this.REFRESH_TOKEN_KEY);
         localStorage.removeItem(this.USER_KEY);
+        if (typeof MenuService !== 'undefined') {
+            MenuService.clearMenus();
+        }
         window.location.href = '/login';
     },
 

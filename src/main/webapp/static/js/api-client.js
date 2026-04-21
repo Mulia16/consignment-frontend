@@ -28,6 +28,11 @@ var ApiClient = {
                 }
             }
 
+            if (response.status === 403) {
+                window.location.href = '/403';
+                throw new Error("Access denied");
+            }
+
             if (!response.ok) {
                 var errorData = await response.json().catch(() => ({}));
                 var msg = errorData.message || 'API request failed';

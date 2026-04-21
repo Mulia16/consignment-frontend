@@ -71,7 +71,7 @@
     if (typeof API_CONFIG !== 'undefined') {
         API_CONFIG.loadConfig().then(function() {
             var ver = new Date().getTime();
-            var scripts = ['/static/js/api-client.js?v=' + ver, '/static/js/common.js?v=' + ver, '/static/js/auth.js?v=' + ver];
+            var scripts = ['/static/js/api-client.js?v=' + ver, '/static/js/common.js?v=' + ver, '/static/js/auth.js?v=' + ver, '/static/js/services/menu-service.js?v=' + ver];
             var loadedCount = 0;
             scripts.forEach(function(src) {
                 var script = document.createElement('script');
@@ -81,7 +81,7 @@
                     if(loadedCount === scripts.length) {
                         try {
                             if (Auth.isAuthenticated()) {
-                                window.location.href = '/consignment/receiving';
+                                redirectToDefaultPage();
                             }
                         } catch(e) {}
                     }
@@ -89,6 +89,31 @@
                 document.body.appendChild(script);
             });
         });
+    }
+
+    /**
+     * Redirect user to their default page based on ACL menus.
+     * Admin → /consignment/receiving | Consignee → /products
+     */
+    function redirectToDefaultPage() {
+        if (typeof MenuService !== 'undefined') {
+            var menus = MenuService.getMenus();
+            if (menus.indexOf('CONSIGNMENT_RECEIVING') !== -1) {
+                window.location.href = '/consignment/receiving';
+            } else if (menus.indexOf('DASHBOARD') !== -1) {
+                window.location.href = '/consignee/dashboard';
+            } else if (menus.indexOf('PRODUCTS') !== -1) {
+                window.location.href = '/products';
+            } else if (menus.indexOf('PURCHASE_ORDERS') !== -1) {
+                window.location.href = '/purchase-orders';
+            } else if (menus.length > 0) {
+                window.location.href = '/dashboard';
+            } else {
+                window.location.href = '/dashboard';
+            }
+        } else {
+            window.location.href = '/consignment/receiving';
+        }
     }
 
     async function handleLogin(e) {
@@ -107,7 +132,7 @@
         var success = await Auth.login(username, password);
 
         if (success) {
-            window.location.href = '/consignment/receiving';
+            redirectToDefaultPage();
         } else {
             $('#loginErrorMsg').text("Invalid username or password");
             $('#loginError').fadeIn();

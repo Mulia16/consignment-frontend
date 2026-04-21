@@ -31,20 +31,78 @@
 <script src="/static/js/api-client.js"></script>
 <script src="/static/js/common.js"></script>
 <script src="/static/js/auth.js"></script>
+<script src="/static/js/services/menu-service.js"></script>
 
 <!-- Initialize Config before any API actions -->
 <script>
     if (typeof API_CONFIG !== 'undefined') {
         API_CONFIG.loadConfig().then(function() {
-            // Signal to individual page JS that they can begin API actions
-            var event = new Event('configLoaded');
-            document.dispatchEvent(event);
-            
-            // Fallback for older pages
-            if (window.initPage) window.initPage();
-            else if (typeof loadData === 'function') {
-                if (!Auth.requireAuth()) return; 
-                loadData();
+            // Apply ACL sidebar filtering and route protection
+            if (typeof MenuService !== 'undefined') {
+                var storedMenus = localStorage.getItem(MenuService.MENUS_KEY);
+
+                var applyAclAndProtect = function() {
+                    // Apply sidebar visibility based on menus
+                    MenuService.applySidebarAcl();
+
+                    // Page-level route protection
+                    var accessResult = MenuService.checkPageAccess();
+                    if (accessResult !== true) {
+                        console.warn('Access denied. Required menu: ' + accessResult);
+                        var menus = MenuService.getMenus();
+                        if (menus.length > 0) {
+                            if (MenuService.hasMenu('DASHBOARD')) {
+                                window.location.href = '/consignee/dashboard';
+                            } else if (MenuService.hasMenu('CONSIGNMENT_RECEIVING')) {
+                                window.location.href = '/consignment/receiving';
+                            } else {
+                                var firstVisible = document.querySelector('#sidebar li[data-menu]:not([style*="display: none"]) a');
+                                if (firstVisible) {
+                                    window.location.href = firstVisible.getAttribute('href');
+                                } else {
+                                    window.location.href = '/login';
+                                }
+                            }
+                        } else {
+                            window.location.href = '/login';
+                        }
+                        return; // Stop further execution
+                    }
+
+                    // Signal to individual page JS that they can begin API actions
+                    var event = new Event('configLoaded');
+                    document.dispatchEvent(event);
+                    
+                    // Fallback for older pages
+                    if (window.initPage) window.initPage();
+                    else if (typeof loadData === 'function') {
+                        if (!Auth.requireAuth()) return; 
+                        loadData();
+                    }
+                };
+
+                if (storedMenus) {
+                    // Apply ACL from cached menus immediately
+                    applyAclAndProtect();
+                } else if (Auth.isAuthenticated()) {
+                    // Fetch menus from API (works for both dev mode and production)
+                    MenuService.fetchMenus().then(function() {
+                        applyAclAndProtect();
+                    });
+                } else {
+                    // Not authenticated, let Auth.requireAuth handle redirect
+                    applyAclAndProtect();
+                }
+            } else {
+                // MenuService not available, proceed without ACL
+                var event = new Event('configLoaded');
+                document.dispatchEvent(event);
+                
+                if (window.initPage) window.initPage();
+                else if (typeof loadData === 'function') {
+                    if (!Auth.requireAuth()) return; 
+                    loadData();
+                }
             }
         });
     }

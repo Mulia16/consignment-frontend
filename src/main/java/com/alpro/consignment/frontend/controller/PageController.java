@@ -17,10 +17,32 @@ public class PageController {
         return "login";
     }
 
+    // ─── Error Pages ────────────────────────────────────────
+    @GetMapping("/403")
+    public String forbidden() {
+        return "error/403";
+    }
+
     // ─── Dashboard ──────────────────────────────────────────
     @GetMapping("/dashboard")
     public String dashboard() {
         return "dashboard";
+    }
+
+    // ─── Consignee Pages (ROLE_CONSIGNEE) ────────────────────
+    @GetMapping("/consignee/dashboard")
+    public String consigneeDashboard() {
+        return "consignee/dashboard";
+    }
+
+    @GetMapping("/products")
+    public String products() {
+        return "consignee/products";
+    }
+
+    @GetMapping("/purchase-orders")
+    public String purchaseOrders() {
+        return "consignee/purchase-orders";
     }
 
     // ─── Master Data (based on API collection - 00 Master Data) ────────────────────────────────────────
@@ -83,7 +105,7 @@ public class PageController {
 
     // ─── Inbound ────────────────────────────────────────────
     @GetMapping("/inbound/purchase-orders")
-    public String purchaseOrders() {
+    public String inboundPurchaseOrders() {
         return "inbound/purchase-orders";
     }
 
