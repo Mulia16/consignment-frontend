@@ -28,9 +28,9 @@
                     <label class="mb-0 small">Status</label>
                     <select class="form-control form-control-sm" id="filterStatus" onchange="applyFilters()">
                         <option value="">All Status</option>
-                        <option value="PENDING">Pending</option>
-                        <option value="CONFIRMED">Confirmed</option>
-                        <option value="DELIVERED">Delivered</option>
+                        <option value="OPEN">Open</option>
+                        <option value="RECEIVED">Received</option>
+                        <option value="CLOSED">Closed</option>
                         <option value="CANCELLED">Cancelled</option>
                     </select>
                 </div>
@@ -202,12 +202,10 @@ function getStatusBadge(status) {
     var statusUpper = status.toUpperCase();
     var badgeClass = 'secondary';
     switch (statusUpper) {
-        case 'PENDING': badgeClass = 'warning'; break;
-        case 'CONFIRMED': badgeClass = 'info'; break;
-        case 'DELIVERED': badgeClass = 'success'; break;
+        case 'OPEN': badgeClass = 'primary'; break;
+        case 'RECEIVED': badgeClass = 'info'; break;
+        case 'CLOSED': badgeClass = 'success'; break;
         case 'CANCELLED': badgeClass = 'danger'; break;
-        case 'COMPLETED': badgeClass = 'success'; break;
-        case 'PROCESSING': badgeClass = 'primary'; break;
         default: badgeClass = 'secondary';
     }
     return '<span class="badge badge-' + badgeClass + '">' + AppUtils.escapeHtml(status) + '</span>';
