@@ -34,11 +34,8 @@
                     <button class="btn btn-sm btn-outline-secondary mr-2" onclick="resetFilters()">
                         <i class="fas fa-redo mr-1"></i>Reset
                     </button>
-                    <button class="btn btn-sm btn-outline-primary mr-2" onclick="loadData()">
+                    <button class="btn btn-sm btn-outline-primary" onclick="loadData()">
                         <i class="fas fa-sync-alt mr-1"></i>Refresh
-                    </button>
-                    <button class="btn btn-sm btn-success" id="btnSync" onclick="syncData()">
-                        <i class="fas fa-cloud-download-alt mr-1"></i>Re-sync
                     </button>
                 </div>
             </div>
@@ -96,23 +93,6 @@ async function loadData() {
     } catch (e) {
         $('#productsTable tbody').html('<tr><td colspan="7" class="text-center text-muted py-4">Failed to load data</td></tr>');
         console.error('Failed to load products:', e);
-    }
-}
-
-async function syncData() {
-    var $btn = $('#btnSync');
-    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-1"></span>Syncing...');
-
-    try {
-        var response = await ApiClient.post('CONSIGNMENT', '/consignee/products/sync');
-        AppUtils.showToast('Products synced successfully', 'success');
-        // Reload data after sync
-        await loadData();
-    } catch (e) {
-        AppUtils.showToast('Failed to sync products: ' + e.message, 'danger');
-        console.error('Sync error:', e);
-    } finally {
-        $btn.prop('disabled', false).html('<i class="fas fa-cloud-download-alt mr-1"></i>Re-sync');
     }
 }
 
